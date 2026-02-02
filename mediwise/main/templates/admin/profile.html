@@ -152,7 +152,7 @@
                 <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
             </a>
 
-            <a href="#" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+            <a href="{% url 'manage_patients' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-id-card-clip text-lg"></i>
                 </div>
@@ -168,6 +168,38 @@
                     </div>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
+            </a>
+
+            <a href="{% url 'medication_management' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-pills text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+            </a>
+
+            <a href="{% url 'generate_report' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Reports</span>
+            </a>
+
+            <a href="{% url 'admin_ratings_feedback' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-star text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Ratings & Feedback</span>
+            </a>
+
+            <a href="{% url 'financial_oversight' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-file-invoice-dollar text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
             </a>
 
             <a href="{% url 'admin_profile' %}" class="nav-item active-link group">

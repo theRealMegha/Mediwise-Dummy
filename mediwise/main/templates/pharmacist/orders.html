@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Mediwise | Pharmacist Orders</title>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 50%, #fef3f2 100%);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { display: none; }
+
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+        }
+
+        .active-link {
+            background: linear-gradient(90deg, #fee2e2 0%, #fef2f2 100%);
+            color: #be123c;
+            border-left: 3px solid #be123c;
+        }
+
+        .sidebar-transition { 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .expanded-sidebar { width: 280px; }
+        .collapsed-sidebar { width: 100px; }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-entrance {
+            animation: fadeInScale 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #be123c 0%, #ea4335 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block; 
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        
+        .status-processing {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .status-completed {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status-successful {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .status-failed {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status-delayed {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .order-item {
+            transition: all 0.3s ease;
+        }
+        
+        .order-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 h-screen sidebar-gradient border-r border-rose-100 z-50 flex flex-col">
+        <div class="p-8">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                    <i class="fas fa-prescription-bottle text-white text-lg"></i>
+                </div>
+                <span class="sidebar-text font-black text-2xl tracking-tighter text-slate-800">Mediwise</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="{% url 'pharmacist_dashboard' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-chart-line text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Dashboard</span>
+            </a>
+            <a href="{% url 'pharmacist_profile' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-shield-halved text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
+            </a>
+            <a href="{% url 'pharmacist_inventory' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-pills text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
+            </a>
+            <a href="{% url 'pharmacist_orders' %}" class="active-link flex items-center p-4 rounded-2xl">
+                <i class="fas fa-box-open text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
+            </a>
+            <a href="{% url 'pharmacist_customers' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-users text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
+            </a>
+            <a href="{% url 'pharmacist_ratings_feedback' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-star text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-rose-50 space-y-2">
+            <button id="toggle-btn" class="w-full flex items-center p-4 rounded-2xl text-slate-400 hover:text-rose-600 transition-all">
+                <i class="fas fa-indent text-lg w-6" id="toggle-icon"></i>
+                <span class="sidebar-text ml-4 font-bold text-xs uppercase tracking-widest">Collapse</span>
+            </button>
+            <a href="{% url 'logout' %}" class="flex items-center p-4 rounded-2xl text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                <i class="fas fa-sign-out-alt text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <main id="main-content" class="sidebar-transition ml-[280px] p-8 lg:p-12">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+            <div>
+                <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight">Customer <span class="gradient-text">Orders</span></h1>
+                <p class="text-slate-500 font-medium mt-2 text-lg">Manage and track customer orders for your pharmacy</p>
+            </div>
+            
+            <div class="flex items-center gap-4 bg-white/80 backdrop-blur-lg p-2 rounded-2xl shadow-sm border border-white">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-200">
+                    PH
+                </div>
+                <div class="pr-4">
+                    <p class="text-xs font-bold text-slate-800 leading-tight">{{ pharmacist.first_name|default:"Pharmacist" }}</p>
+                    <p class="text-[10px] text-slate-500">{{ pharmacist.email|default:"pharmacist@mediwise.com" }}</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div class="glass-card rounded-[2rem] p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Total Orders</p>
+                        <p class="text-3xl font-extrabold text-slate-900 mt-2">{{ total_orders }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                        <i class="fas fa-boxes text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-[2rem] p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Successful</p>
+                        <p class="text-3xl font-extrabold text-slate-900 mt-2">{{ successful_orders }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
+                        <i class="fas fa-check-circle text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-card rounded-[2rem] p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Failed</p>
+                        <p class="text-3xl font-extrabold text-slate-900 mt-2">{{ failed_orders }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600">
+                        <i class="fas fa-times-circle text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-card rounded-[2rem] p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Delayed</p>
+                        <p class="text-3xl font-extrabold text-slate-900 mt-2">{{ delayed_orders }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-yellow-50 flex items-center justify-center text-yellow-600">
+                        <i class="fas fa-clock text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        <div class="glass-card rounded-[2rem] p-8 animate-entrance">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
+                    <i class="fas fa-list text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-900">Order Management</h3>
+                    <p class="text-slate-500 text-sm">View and update order statuses</p>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-6 p-4 rounded-xl 
+                        {% if message.tags == 'success' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                        {% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200
+                        {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if orders %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-4 px-4 font-bold text-slate-700">Order ID</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-700">Customer</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-700">Items</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-700">Amount</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-700">Date</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-700">Status</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr class="order-item border-b border-slate-100 hover:bg-white/50">
+                                <td class="py-4 px-4 font-bold text-slate-900">#{{ order.id }}</td>
+                                <td class="py-4 px-4">
+                                    <div>
+                                        <p class="font-medium text-slate-900">{{ order.patient.first_name }} {{ order.patient.last_name }}</p>
+                                        <p class="text-xs text-slate-500">{{ order.patient.email }}</p>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="space-y-1">
+                                        {% for item in order.items.all %}
+                                            <div class="text-sm">
+                                                <span class="font-medium">{{ item.quantity }}x</span> 
+                                                <span>{{ item.medicine.brand_name }}</span>
+                                                {% if item.course_duration %}
+                                                    <span class="text-xs text-slate-500">(for {{ item.course_duration }})</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 font-bold text-slate-900">₹{{ order.total_amount }}</td>
+                                <td class="py-4 px-4 text-slate-600">
+                                    {{ order.created_at|date:"M d, Y" }}<br>
+                                    <span class="text-xs">{{ order.created_at|time:"H:i" }}</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="status-badge 
+                                        {% if order.status == 'pending' %}status-pending
+                                        {% elif order.status == 'successful' %}status-successful
+                                        {% elif order.status == 'failed' %}status-failed
+                                        {% elif order.status == 'delayed' %}status-delayed{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <form method="post" action="{% url 'update_order_status' order.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <select name="status" onchange="this.form.submit()" 
+                                                class="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+                                            <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                            <option value="successful" {% if order.status == 'successful' %}selected{% endif %}>Successful</option>
+                                            <option value="failed" {% if order.status == 'failed' %}selected{% endif %}>Failed</option>
+                                            <option value="delayed" {% if order.status == 'delayed' %}selected{% endif %}>Delayed</option>
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-16">
+                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                        <i class="fas fa-box-open text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-700 mb-2">No Orders Yet</h3>
+                    <p class="text-slate-500">Customers haven't placed any orders for your pharmacy yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        // Sidebar Logic
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+        let isExpanded = true;
+
+        toggleBtn.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                sidebar.classList.replace('collapsed-sidebar', 'expanded-sidebar');
+                mainContent.style.marginLeft = '280px';
+                toggleIcon.style.transform = 'rotate(0deg)';
+                sidebarTexts.forEach(el => el.style.display = 'inline');
+            } else {
+                sidebar.classList.replace('expanded-sidebar', 'collapsed-sidebar');
+                mainContent.style.marginLeft = '100px';
+                toggleIcon.style.transform = 'rotate(180deg)';
+                sidebarTexts.forEach(el => el.style.display = 'none');
+            }
+        });
+
+        // Auto-hide messages after 5 seconds
+        setTimeout(() => {
+            const messages = document.querySelectorAll('[class*="bg-"][class*="text-"]');
+            messages.forEach(msg => {
+                msg.style.transition = 'opacity 0.5s ease';
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -50,10 +50,14 @@
         }
         
         .gradient-text {
-            background: linear-gradient(135deg, #be123c 0%, #ea4335 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    background: linear-gradient(135deg, #be123c 0%, #ea4335 100%);
+    -webkit-background-clip: text;
+    background-clip: text; /* Standard property for better browser support */
+    -webkit-text-fill-color: transparent;
+    
+    /* The Fix: Ensures the background has dimensions to clip to */
+    display: inline-block; 
+}
 
         .shine-effect {
             position: relative;
@@ -101,9 +105,21 @@
                 <i class="fas fa-shield-halved text-lg w-6"></i>
                 <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
             </a>
-            <a href="#" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+            <a href="{% url 'pharmacist_inventory' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
                 <i class="fas fa-pills text-lg w-6"></i>
                 <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
+            </a>
+            <a href="{% url 'pharmacist_orders' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-box-open text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
+            </a>
+            <a href="{% url 'pharmacist_customers' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-users text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
+            </a>
+            <a href="{% url 'pharmacist_ratings_feedback' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-star text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
             </a>
         </nav>
 
@@ -138,22 +154,7 @@
         </header>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <div class="glass-card rounded-[2rem] p-6 stat-card">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-slate-500 text-sm font-medium">Pending Prescriptions</p>
-                        <p class="text-3xl font-extrabold text-slate-900 mt-2">{{ data.prescriptions_pending }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                        <i class="fas fa-file-prescription text-xl"></i>
-                    </div>
-                </div>
-                <div class="mt-4 pt-4 border-t border-slate-100">
-                    <span class="text-xs text-slate-400">+2 from yesterday</span>
-                </div>
-            </div>
-
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             <div class="glass-card rounded-[2rem] p-6 stat-card">
                 <div class="flex justify-between items-start">
                     <div>

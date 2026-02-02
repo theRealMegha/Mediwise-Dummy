@@ -1,0 +1,197 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Prescription Medicines to Cart - Mediwise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-prescription-bottle-alt text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-bold text-gray-900">Mediwise</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="{% url 'patient_dashboard' %}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-home mr-1"></i> Dashboard
+                    </a>
+                    <a href="{% url 'view_my_prescriptions' %}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-prescription mr-1"></i> My Prescriptions
+                    </a>
+                    <a href="{% url 'patient_notifications' %}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium relative">
+                        <i class="fas fa-bell mr-1"></i> Notifications
+                        {% if cart_count > 0 %}
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                            {{ cart_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-700 text-sm">Welcome, {{ user.name }}</span>
+                    <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-green-50 border-b border-green-200 px-6 py-4">
+                <div class="flex items-center">
+                    <i class="fas fa-cart-plus text-green-600 text-xl mr-3"></i>
+                    <h2 class="text-xl font-bold text-green-800">Add Prescription Medicines to Cart</h2>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 text-lg mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="font-bold text-blue-800 mb-2">Add All Available Medicines</h3>
+                            <p class="text-blue-700">
+                                You are about to add all available medicines from this prescription to your cart. 
+                                This will include:
+                            </p>
+                            <ul class="list-disc list-inside text-blue-700 mt-2 ml-4">
+                                <li>All medicines that are currently in stock</li>
+                                <li>One quantity of each medicine</li>
+                                <li>Prescribed duration will be set automatically</li>
+                                <li>Medicines already in cart will have their quantity increased</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prescription Details -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-gray-800 mb-3">Prescription Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <span class="font-semibold text-gray-700">Uploaded to:</span>
+                            <p class="text-gray-900">
+                                {% if prescription.pharmacist %}
+                                    {{ prescription.pharmacist.pharmacy_name }}
+                                {% else %}
+                                    All Pharmacies
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-700">Upload Date:</span>
+                            <p class="text-gray-900">{{ prescription.created_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-700">Status:</span>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold
+                                {% if prescription.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif prescription.status == 'processed' %}bg-green-100 text-green-800
+                                {% elif prescription.status == 'partially_available' %}bg-orange-100 text-orange-800
+                                {% elif prescription.status == 'not_available' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ prescription.get_status_display }}
+                            </span>
+                        </div>
+                        {% if prescription.notes %}
+                        <div>
+                            <span class="font-semibold text-gray-700">Notes:</span>
+                            <p class="text-gray-900">{{ prescription.notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Available Medicines Preview -->
+                {% if prescription.available_medicines %}
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-green-800 mb-3">
+                        <i class="fas fa-check-circle mr-2"></i>Available Medicines to Add ({{ prescription.available_medicines|length }})
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {% for medicine in prescription.available_medicines %}
+                        <div class="bg-white rounded border border-green-100 p-3">
+                            <div class="font-bold text-green-900">{{ medicine.name }}</div>
+                            {% if medicine.brand %}
+                            <div class="text-sm text-green-700">{{ medicine.brand }}</div>
+                            {% endif %}
+                            <div class="text-xs text-green-600">{{ medicine.strength }}</div>
+                            <div class="text-xs text-green-600">Price: ₹{{ medicine.price }}</div>
+                            <div class="text-xs text-green-600">Stock: {{ medicine.stock }}</div>
+                            {% if medicine.extracted_info %}
+                            <div class="text-xs text-green-700 mt-1">
+                                <span class="font-semibold">Prescribed:</span> {{ medicine.extracted_info.dosage }} for {{ medicine.extracted_info.duration }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Unavailable Medicines Preview -->
+                {% if prescription.unavailable_medicines %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-red-800 mb-3">
+                        <i class="fas fa-times-circle mr-2"></i>Unavailable Medicines ({{ prescription.unavailable_medicines|length }})
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {% for medicine in prescription.unavailable_medicines %}
+                        <div class="bg-white rounded border border-red-100 p-3">
+                            <div class="font-bold text-red-900">{{ medicine.name }}</div>
+                            <div class="text-sm text-red-600">{{ medicine.reason }}</div>
+                            {% if medicine.extracted_info %}
+                            <div class="text-xs text-red-700 mt-1">
+                                <span class="font-semibold">Prescribed:</span> {{ medicine.extracted_info.dosage }} for {{ medicine.extracted_info.duration }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Confirmation Form -->
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    <div class="flex items-center">
+                        <input type="checkbox" id="confirm-add" name="confirm_add" required class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                        <label for="confirm-add" class="ml-2 block text-sm text-gray-900">
+                            I want to add all available medicines from this prescription to my cart
+                        </label>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <button type="submit" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors">
+                            <i class="fas fa-cart-plus mr-2"></i> Add All to Cart
+                        </button>
+                        <a href="{% url 'view_my_prescriptions' %}" 
+                           class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors">
+                            <i class="fas fa-times mr-2"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-500 text-sm">
+                <p>&copy; 2024 Mediwise. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

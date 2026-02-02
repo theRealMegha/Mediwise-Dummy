@@ -1,5 +1,5 @@
 from django import forms
-from . models import Patient, Pharmacist, Doctor
+from . models import Patient, Pharmacist, Doctor, Medicine
 
 class PatientRegistrationForm(forms.ModelForm):
     """
@@ -114,6 +114,13 @@ class PharmacistRegistrationForm(forms.ModelForm):
     Form for initial pharmacist registration with essential fields
     """
 
+    pharmacy_name = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white/50',
+            'placeholder': 'Enter pharmacy name'
+        })
+    )
     
     first_name = forms.CharField(
         max_length=100,
@@ -173,7 +180,7 @@ class PharmacistRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = Pharmacist
-        fields = ['email', 'first_name', 'last_name',  'password', 'license_number', 'phone_number', 'address']
+        fields = ['email', 'pharmacy_name', 'first_name', 'last_name',  'password', 'license_number', 'phone_number', 'address']
 
     def clean_email(self):
         """Validate that the email is unique"""
@@ -276,11 +283,12 @@ class PharmacistProfileUpdateForm(forms.ModelForm):
         model = Pharmacist
         # Removed 'password' from fields
         fields = [
-            'first_name', 'last_name', 'email', 'phone_number', 
+            'pharmacy_name', 'first_name', 'last_name', 'email', 'phone_number', 
             'license_number', 'address'
         ]
         
         widgets = {
+            'pharmacy_name': forms.TextInput(attrs={'placeholder': 'Pharmacy Name', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
             'first_name': forms.TextInput(attrs={'placeholder': 'First Name', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
             'last_name': forms.TextInput(attrs={'placeholder': 'Last Name', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
             'email': forms.EmailInput(attrs={'placeholder': 'Email Address', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
@@ -298,6 +306,28 @@ class PharmacistProfileUpdateForm(forms.ModelForm):
             pharmacist.save()
         return pharmacist
 
+
+class MedicineForm(forms.ModelForm):
+    class Meta:
+        model = Medicine
+        fields = [
+            'brand_name', 'generic_name', 'strength', 'formulation', 
+            'indications', 'batch_number', 'expiry_date', 'manufacture_date', 'quantity', 'price', 'medicine_type'
+        ]
+        widgets = {
+            'brand_name': forms.TextInput(attrs={'placeholder': 'e.g. Panadol', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'generic_name': forms.TextInput(attrs={'placeholder': 'e.g. Paracetamol', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'strength': forms.TextInput(attrs={'placeholder': 'e.g. 500mg', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'formulation': forms.TextInput(attrs={'placeholder': 'e.g. Tablet', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'indications': forms.Textarea(attrs={'rows': 2, 'placeholder': 'What the medicine is for...', 'class': 'w-full p-4 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'batch_number': forms.TextInput(attrs={'placeholder': 'Batch/Lot Number', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'expiry_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'manufacture_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'quantity': forms.NumberInput(attrs={'placeholder': 'Quantity in Stock', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'price': forms.NumberInput(attrs={'placeholder': 'Price per unit', 'step': '0.01', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'}),
+            'medicine_type': forms.Select(attrs={'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all'})
+        }
+
 class DoctorProfileUpdateForm(forms.ModelForm):
     password = forms.CharField(
         required=False, 
@@ -314,7 +344,8 @@ class DoctorProfileUpdateForm(forms.ModelForm):
         fields = [
             'first_name', 'last_name', 'email', 'phone_number', 
             'speciality', 'qualification', 'address', 
-            'license_number', 'cureentHospital', 'description', 'profile_picture'
+            'license_number', 'cureentHospital', 'description', 'profile_picture',
+            'consulting_time_from', 'consulting_time_to'
         ]
         
         widgets = {
@@ -329,6 +360,8 @@ class DoctorProfileUpdateForm(forms.ModelForm):
             'cureentHospital': forms.TextInput(attrs={'placeholder': 'Current Hospital', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
             'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Professional Bio', 'class': 'w-full p-4 pl-0 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
             'profile_picture': forms.FileInput(attrs={'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
+            'consulting_time_from': forms.TimeInput(attrs={'type': 'time', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all', 'placeholder': 'HH:MM'}),
+            'consulting_time_to': forms.TimeInput(attrs={'type': 'time', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all', 'placeholder': 'HH:MM'}),
         }
 
     def save(self, commit=True):

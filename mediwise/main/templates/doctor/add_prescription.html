@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <title>Mediwise | Add Prescription</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #60a5fa;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f0f4f8;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(96, 165, 250, 0.1) 0px, transparent 50%);
+            -webkit-font-smoothing: antialiased;
+            color: #1e293b;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 20px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-hover:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        .gradient-card {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+        }
+
+        .nav-item {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: #2563eb;
+            transition: width 0.3s ease;
+            border-radius: 99px;
+        }
+
+        .nav-item:hover::after,
+        .nav-item.active::after {
+            width: 80%;
+        }
+
+        .health-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-ring circle {
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-help {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-top: 0.125rem;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen pb-20">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 px-4 py-4 md:px-8">
+        <div class="glass max-w-7xl mx-auto rounded-2xl px-6 py-4 flex justify-between items-center bg-white/80">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-stethoscope text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 text-lg leading-tight">Mediwise</h1>
+                    <p class="text-xs text-slate-500 font-medium tracking-wide uppercase">Doctor Portal</p>
+                </div>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div
+                class="hidden md:flex items-center gap-8 bg-slate-100/50 px-6 py-2 rounded-full border border-slate-200/50">
+                <a href="{% url 'doctor_dashboard' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Dashboard</a>
+                <a href="{% url 'doctor_patients' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Patients</a>
+                <a href="{% url 'doctor_appointments' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Appointments</a>
+                <a href="{% url 'doctor_ratings_feedback' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Ratings & Feedback</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                </button>
+
+                <div class="relative group">
+                    <button
+                        class="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-bold text-slate-700 leading-none">Dr. {{ user.last_name }}</p>
+                            <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-0.5">
+                               {{ user.speciality|default:"General" }}</p>
+                        </div>
+                        <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-sm bg-blue-50">
+                            {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <div
+                                class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-xs">
+                                {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <i class="fas fa-chevron-down text-slate-400 text-xs mr-2"></i>
+                    </button>
+
+                    <!-- Dropdown -->
+                    <div
+                        class="absolute right-0 top-full mt-2 w-56 glass rounded-2xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right shadow-xl">
+                        <div class="px-4 py-3 border-b border-slate-100 mb-1">
+                            <p class="text-sm font-bold text-slate-800">My Account</p>
+                            <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                        </div>
+                        <a href="{% url 'doctor_profile' %}"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
+                            <i class="fas fa-user-cog w-4"></i> Profile Settings
+                        </a>
+                        <a href="#"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
+                            <i class="fas fa-history w-4"></i> Activity Log
+                        </a>
+                        <div class="h-px bg-slate-100 my-1"></div>
+                        <a href="{% url 'logout' %}"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                            <i class="fas fa-sign-out-alt w-4"></i> Sign Out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-6 p-4 rounded-xl {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-200{% else %}bg-green-100 text-green-700 border border-green-200{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Add Prescription</h2>
+            <p class="text-slate-500 text-base font-medium">Create prescription with multiple medicines</p>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-white/60">
+            <div class="mb-6">
+                <h3 class="text-lg font-extrabold text-slate-800 mb-2">Patient Information</h3>
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <p class="font-bold text-slate-700">{{ appointment.patient.first_name }} {{ appointment.patient.last_name }}</p>
+                    <p class="text-sm text-slate-600">Date: {{ appointment.appointment_date|date:"M d, Y" }} at {{ appointment.appointment_time|time:"H:i" }}</p>
+                    <p class="text-sm text-slate-600">Reason: {{ appointment.reason_for_visit|default:"N/A" }}</p>
+                </div>
+            </div>
+
+            <form method="post" id="prescription-form">
+                {% csrf_token %}
+                
+                <!-- Hidden input to track number of medicine rows -->
+                <input type="hidden" id="medicine_count" name="medicine_count" value="0">
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-extrabold text-slate-800 mb-3">Medicines</h3>
+                    <div id="medicines-container">
+                        <!-- Medicine rows will be added here dynamically -->
+                    </div>
+                    <button type="button" id="add-medicine-btn" class="mt-3 px-3 py-2 bg-blue-100 text-blue-700 rounded-md font-medium hover:bg-blue-200 transition-colors flex items-center gap-2 text-sm">
+                        <i class="fas fa-plus text-xs"></i> Add Medicine
+                    </button>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <a href="{% url 'doctor_patients' %}" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-all text-sm">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow-md shadow-blue-500/20 hover:bg-blue-700 hover:shadow-blue-600/30 transition-all text-sm">
+                        Save Prescription
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Nav -->
+    <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%]">
+        <div class="glass rounded-3xl p-2 flex justify-between items-center shadow-2xl bg-white/90 backdrop-blur-xl">
+            <a href="{% url 'doctor_dashboard' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'doctor_patients' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-user-injured"></i>
+            </a>
+            <a href="{% url 'doctor_appointments' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-calendar-alt"></i>
+            </a>
+            <a href="{% url 'doctor_ratings_feedback' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-star"></i>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let medicineCounter = 0;
+        
+        // Function to create a new medicine row
+        function createMedicineRow(index) {
+            const medicineRow = document.createElement('div');
+            medicineRow.className = 'medicine-row glass rounded-xl p-4 mb-3 border border-blue-100';
+            medicineRow.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-base font-bold text-slate-800">Medicine ${index + 1}</h4>
+                    ${index > 0 ? `<button type="button" class="remove-medicine-btn text-red-500 hover:text-red-700 text-sm" data-index="${index}">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>` : ''}
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Drug Name Generic (mandatory) -->
+                    <div class="form-group sm:col-span-2">
+                        <label for="medicine_${index}_drug_name_generic" class="form-label">Drug Name *</label>
+                        <input type="text" id="medicine_${index}_drug_name_generic" name="medicine_${index}_drug_name_generic" required class="form-input" placeholder="e.g., Paracetamol, Amoxicillin">
+                    </div>
+
+                    <!-- Strength/Potency -->
+                    <div class="form-group">
+                        <label for="medicine_${index}_strength" class="form-label">Strength *</label>
+                        <input type="text" id="medicine_${index}_strength" name="medicine_${index}_strength" required placeholder="e.g., 500mg" class="form-input">
+                    </div>
+
+                    <!-- Dosage & Frequency -->
+                    <div class="form-group">
+                        <label for="medicine_${index}_dosage_frequency" class="form-label">Dosage & Frequency *</label>
+                        <input type="text" id="medicine_${index}_dosage_frequency" name="medicine_${index}_dosage_frequency" required placeholder="e.g., 1 tablet twice daily" class="form-input">
+                    </div>
+
+                    <!-- Route of Administration -->
+                    <div class="form-group">
+                        <label for="medicine_${index}_route_administration" class="form-label">Route *</label>
+                        <input type="text" id="medicine_${index}_route_administration" name="medicine_${index}_route_administration" required placeholder="e.g., Oral, IV" class="form-input">
+                    </div>
+
+                    <!-- Total Quantity -->
+                    <div class="form-group">
+                        <label for="medicine_${index}_total_quantity" class="form-label">Quantity *</label>
+                        <input type="text" id="medicine_${index}_total_quantity" name="medicine_${index}_total_quantity" required placeholder="e.g., 10 tablets" class="form-input">
+                    </div>
+
+                    <!-- Duration of Course -->
+                    <div class="form-group">
+                        <label for="medicine_${index}_duration_course" class="form-label">Duration *</label>
+                        <input type="text" id="medicine_${index}_duration_course" name="medicine_${index}_duration_course" required placeholder="e.g., 90 days" class="form-input">
+                    </div>
+
+                    <!-- Instructions (The "Sig") -->
+                    <div class="form-group sm:col-span-2">
+                        <label for="medicine_${index}_instructions" class="form-label">Instructions *</label>
+                        <textarea id="medicine_${index}_instructions" name="medicine_${index}_instructions" required rows="2" placeholder="e.g., Before breakfast, twice daily" class="form-textarea"></textarea>
+                    </div>
+                </div>
+            `;
+            
+            return medicineRow;
+        }
+        
+        // Add medicine button handler
+        document.getElementById('add-medicine-btn').addEventListener('click', function() {
+            const container = document.getElementById('medicines-container');
+            const newRow = createMedicineRow(medicineCounter);
+            container.appendChild(newRow);
+            medicineCounter++;
+            document.getElementById('medicine_count').value = medicineCounter;
+        });
+        
+        // Remove medicine button handler (using event delegation)
+        document.getElementById('medicines-container').addEventListener('click', function(e) {
+            if (e.target.closest('.remove-medicine-btn')) {
+                const button = e.target.closest('.remove-medicine-btn');
+                const row = button.closest('.medicine-row');
+                row.remove();
+                medicineCounter--;
+                document.getElementById('medicine_count').value = medicineCounter;
+                
+                // Update numbering
+                const rows = document.querySelectorAll('.medicine-row');
+                rows.forEach((row, index) => {
+                    const header = row.querySelector('h4');
+                    header.textContent = `Medicine #${index + 1}`;
+                });
+            }
+        });
+        
+        // Form validation
+        document.getElementById('prescription-form').addEventListener('submit', function(e) {
+            const medicineRows = document.querySelectorAll('.medicine-row');
+            let hasValidMedicine = false;
+            
+            medicineRows.forEach(row => {
+                const genericName = row.querySelector('[id$="_drug_name_generic"]').value.trim();
+                if (genericName) {
+                    hasValidMedicine = true;
+                }
+            });
+            
+            if (!hasValidMedicine) {
+                e.preventDefault();
+                alert('Please add at least one medicine with a generic name.');
+                return;
+            }
+        });
+        
+        // Pre-fill with original medicines if copying
+        // The following template logic will be processed by Django before JavaScript execution
+        /*
+        {% if original_medicines %}
+            {% for medicine in original_medicines %}
+                const row = createMedicineRow(medicineCounter);
+                document.getElementById('medicines-container').appendChild(row);
+                
+                // Pre-fill the fields
+                document.getElementById(`medicine_${medicineCounter}_drug_name_generic`).value = "{{ medicine.drug_name_generic|escapejs }}";
+                document.getElementById(`medicine_${medicineCounter}_strength`).value = "{{ medicine.strength|escapejs }}";
+                document.getElementById(`medicine_${medicineCounter}_dosage_frequency`).value = "{{ medicine.dosage_frequency|escapejs }}";
+                document.getElementById(`medicine_${medicineCounter}_route_administration`).value = "{{ medicine.route_administration|escapejs }}";
+                document.getElementById(`medicine_${medicineCounter}_total_quantity`).value = "{{ medicine.total_quantity|escapejs }}";
+                document.getElementById(`medicine_${medicineCounter}_duration_course`).value = "{{ medicine.duration_course|escapejs }}";
+                document.getElementById(`medicine_${medicineCounter}_instructions`).value = "{{ medicine.instructions|escapejs }}";
+                
+                medicineCounter++;
+            {% endfor %}
+            document.getElementById('medicine_count').value = medicineCounter;
+        {% else %}
+        */
+            // Add first medicine row by default
+            document.getElementById('add-medicine-btn').click();
+        /*
+        {% endif %}
+        */
+    </script>
+</body>
+
+</html>

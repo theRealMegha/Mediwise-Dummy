@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <title>Mediwise | Admin - Ratings & Feedback</title>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fcfcfd;
+            background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #fda4af;
+            border-radius: 10px;
+        }
+
+        .sidebar-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Fixed Sidebar Logic */
+        #sidebar {
+            width: 280px;
+        }
+
+        .sidebar-collapsed {
+            width: 88px !important;
+        }
+
+        .main-collapsed {
+            margin-left: 88px !important;
+        }
+
+        /* Floating Nav Item Core */
+        .nav-item {
+            margin: 4px 12px;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 12px;
+        }
+
+        /* Active Link Styling - Expanded */
+        .active-link {
+            background-color: #ffffff;
+            color: #be123c;
+            box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.1);
+            border: 1px solid rgba(225, 29, 72, 0.1);
+        }
+
+        /* Logic to fix the "Out of Div" icon when collapsed */
+        .collapsed-active-fix {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            border-radius: 0 !important;
+            border-left: 4px solid #be123c;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(244, 63, 94, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-up {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .sidebar-text {
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .star-rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .star-rating i {
+            color: #fbbf24; /* yellow-400 */
+        }
+    </style>
+</head>
+
+<body class="text-slate-900 overflow-x-hidden">
+
+    <aside id="sidebar"
+        class="sidebar-transition fixed top-0 left-0 h-screen bg-slate-50/80 backdrop-blur-xl border-r border-slate-200 z-50 flex flex-col">
+        <div class="p-6 mb-4">
+            <div class="flex items-center">
+                <div
+                    class="min-w-[40px] h-10 bg-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                    <i class="fas fa-heart-pulse text-white text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-4 font-extrabold text-xl tracking-tight text-slate-800">Mediwise</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 space-y-1 overflow-y-auto">
+            <a href="{% url 'admin_dashboard' %}"
+                class="nav-item group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-pie text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
+            </a>
+
+            <a href="{% url 'manage_patients' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-address-card text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Patient Registry</span>
+            </a>
+
+            <a href="{% url 'manage_doctors' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <div class="relative">
+                        <i class="fas fa-user-md text-lg"></i>
+                        <i class="fas fa-plus-circle absolute -top-1 -right-1 text-[10px] text-rose-600"></i>
+                    </div>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
+            </a>
+
+            <a href="{% url 'medication_management' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-pills text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+            </a>
+
+            <a href="{% url 'generate_report' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Reports</span>
+            </a>
+
+            <a href="{% url 'admin_ratings_feedback' %}"
+                class="nav-item active-link group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-star text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Ratings & Feedback</span>
+            </a>
+
+            <a href="{% url 'financial_oversight' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-file-invoice-dollar text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
+            </a>
+
+            <a href="{% url 'admin_profile' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-gear text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Settings</span>
+            </a>
+        </nav>
+
+        <div class="p-3 border-t border-slate-200 bg-slate-100/50 space-y-1">
+            <button id="toggle-btn"
+                class="w-full flex items-center p-3 rounded-xl text-slate-400 hover:text-slate-900 transition-all">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chevron-left sidebar-transition" id="toggle-icon"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-bold text-xs uppercase tracking-widest">Collapse</span>
+            </button>
+
+            <a href="{% url 'logout' %}"
+                class="flex items-center p-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-all">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-right-from-bracket text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Sign Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main id="main-content" class="sidebar-transition ml-[280px] p-8 lg:p-12 min-h-screen">
+
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 animate-up">
+            <div>
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Ratings & <span
+                        class="text-rose-600">Feedback</span></h1>
+                <p class="text-slate-500 font-medium mt-1">Monitor and manage user feedback across the platform</p>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <div class="glass-card p-8 rounded-[2.5rem] shadow-sm animate-up" style="animation-delay: 0.1s">
+                <div class="w-12 h-12 bg-rose-600 text-white rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fas fa-user-md text-xl"></i>
+                </div>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Doctor Reviews</p>
+                <h2 class="text-4xl font-black text-slate-900">{{ total_doctor_reviews }}</h2>
+                <div class="mt-4 star-rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                    <span class="ml-2 font-bold text-slate-700">{{ avg_doctor_rating }}/5</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-8 rounded-[2.5rem] shadow-sm animate-up" style="animation-delay: 0.2s">
+                <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fas fa-prescription-bottle text-xl"></i>
+                </div>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Order Reviews</p>
+                <h2 class="text-4xl font-black text-slate-900">{{ total_order_reviews }}</h2>
+                <div class="mt-4 star-rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                    <span class="ml-2 font-bold text-slate-700">{{ avg_order_rating }}/5</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-8 rounded-[2.5rem] shadow-sm animate-up" style="animation-delay: 0.3s">
+                <div class="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fas fa-thumbs-up text-xl"></i>
+                </div>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Positive Feedback</p>
+                <h2 class="text-4xl font-black text-slate-900">{{ positive_doctor_reviews|add:positive_order_reviews }}</h2>
+                <p class="text-slate-400 text-xs font-bold mt-4">({{ positive_doctor_reviews }} doctor reviews, {{ positive_order_reviews }} order reviews)</p>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm animate-up"
+            style="animation-delay: 0.4s">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-xl font-extrabold text-slate-800">All Feedback</h3>
+                <div class="flex space-x-2">
+                    <button onclick="filterReviews('all')" class="px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-sm font-bold hover:bg-rose-200 transition-colors" id="filter-all">All</button>
+                    <button onclick="filterReviews('doctor')" class="px-4 py-2 text-slate-500 rounded-xl text-sm font-bold hover:bg-slate-100 transition-colors" id="filter-doctor">Doctor</button>
+                    <button onclick="filterReviews('order')" class="px-4 py-2 text-slate-500 rounded-xl text-sm font-bold hover:bg-slate-100 transition-colors" id="filter-order">Order</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-widest border-b border-slate-50">
+                            <th class="pb-4 font-bold">Patient</th>
+                            <th class="pb-4 font-bold">Type</th>
+                            <th class="pb-4 font-bold">Rated Entity</th>
+                            <th class="pb-4 font-bold">Rating</th>
+                            <th class="pb-4 font-bold">Feedback</th>
+                            <th class="pb-4 font-bold">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm font-medium text-slate-700" id="reviews-table-body">
+                        {% for review in all_reviews %}
+                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors review-row" data-type="{{ review.review_type }}">
+                            <td class="py-5 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-xs font-bold">
+                                    {{ review.patient.first_name|slice:":1" }}{{ review.patient.last_name|slice:":1" }}
+                                </div>
+                                {{ review.patient.first_name }} {{ review.patient.last_name }}
+                            </td>
+                            <td class="py-5">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-[10px] font-bold uppercase">
+                                    {{ review.review_type }}
+                                </span>
+                            </td>
+                            <td class="py-5">
+                                {% if review.review_type == 'doctor' %}
+                                    Dr. {{ review.doctor.first_name }} {{ review.doctor.last_name }}
+                                {% else %}
+                                    {% for pharmacist in review.unique_pharmacists %}
+                                        {{ pharmacist.pharmacy_name }}
+                                        {% if not forloop.last %}, {% endif %}
+                                    {% empty %}
+                                        Order #{{ review.order.id }}
+                                    {% endfor %}
+                                {% endif %}
+                            </td>
+                            <td class="py-5">
+                                <div class="star-rating">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star"></i>
+                                        {% else %}
+                                        <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ml-2 font-bold text-slate-700">{{ review.rating }}/5</span>
+                                </div>
+                            </td>
+                            <td class="py-5 max-w-xs">
+                                {% if review.review_text %}
+                                    "{{ review.review_text }}"
+                                {% else %}
+                                    <span class="text-slate-400">No detailed feedback</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-5 text-slate-400">{{ review.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr id="no-results-row-original">
+                            <td colspan="6" class="py-10 text-center text-slate-400">No feedback records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const navItems = document.querySelectorAll('.nav-item');
+
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isExpanded = true;
+
+        // TOGGLE SIDEBAR
+        toggleBtn.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                sidebar.classList.remove('sidebar-collapsed');
+                mainContent.classList.remove('main-collapsed');
+                toggleIcon.style.transform = 'rotate(0deg)';
+
+                setTimeout(() => {
+                    sidebarTexts.forEach(t => {
+                        t.style.opacity = '1';
+                        t.style.display = 'inline';
+                    });
+                }, 150);
+            } else {
+                sidebar.classList.add('sidebar-collapsed');
+                mainContent.classList.add('main-collapsed');
+                toggleIcon.style.transform = 'rotate(180deg)';
+
+                sidebarTexts.forEach(t => {
+                    t.style.opacity = '0';
+                    setTimeout(() => t.style.display = 'none', 200);
+                });
+            }
+        });
+        
+        // Filter reviews by type
+        function filterReviews(type) {
+            // Update active filter button
+            document.getElementById('filter-all').className = 'px-4 py-2 text-slate-500 rounded-xl text-sm font-bold hover:bg-slate-100 transition-colors';
+            document.getElementById('filter-doctor').className = 'px-4 py-2 text-slate-500 rounded-xl text-sm font-bold hover:bg-slate-100 transition-colors';
+            document.getElementById('filter-order').className = 'px-4 py-2 text-slate-500 rounded-xl text-sm font-bold hover:bg-slate-100 transition-colors';
+            
+            if (type === 'all') {
+                document.getElementById('filter-all').className = 'px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-sm font-bold hover:bg-rose-200 transition-colors';
+            } else if (type === 'doctor') {
+                document.getElementById('filter-doctor').className = 'px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-sm font-bold hover:bg-rose-200 transition-colors';
+            } else if (type === 'order') {
+                document.getElementById('filter-order').className = 'px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-sm font-bold hover:bg-rose-200 transition-colors';
+            }
+            
+            const rows = document.querySelectorAll('.review-row');
+            
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                if (type === 'all' || row.dataset.type === type) {
+                    row.style.display = 'table-row';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show/hide the no results row based on whether any rows are visible
+            const originalNoResults = document.getElementById('no-results-row-original');
+            const filteredNoResults = document.getElementById('no-results-row');
+            
+            if (rows.length === 0) {
+                // If there are no reviews at all, show the original no results message
+                if (originalNoResults) {
+                    originalNoResults.style.display = 'table-row';
+                }
+            } else {
+                // Hide the original no results row
+                if (originalNoResults) {
+                    originalNoResults.style.display = 'none';
+                }
+                
+                // Show filtered no results if no rows match the filter
+                if (visibleCount === 0) {
+                    if (!filteredNoResults) {
+                        // Create no results row if it doesn't exist
+                        const tbody = document.getElementById('reviews-table-body');
+                        const newRow = document.createElement('tr');
+                        newRow.id = 'no-results-row';
+                        newRow.innerHTML = '<td colspan="6" class="py-10 text-center text-slate-400">No feedback records found for the selected filter.</td>';
+                        tbody.appendChild(newRow);
+                    } else {
+                        document.getElementById('no-results-row').style.display = 'table-row';
+                    }
+                } else {
+                    // Hide filtered no results row
+                    if (filteredNoResults) {
+                        document.getElementById('no-results-row').style.display = 'none';
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

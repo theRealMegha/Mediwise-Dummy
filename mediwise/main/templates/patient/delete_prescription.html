@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Prescription - Mediwise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-prescription-bottle-alt text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-bold text-gray-900">Mediwise</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="{% url 'patient_dashboard' %}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-home mr-1"></i> Dashboard
+                    </a>
+                    <a href="{% url 'view_my_prescriptions' %}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-prescription mr-1"></i> My Prescriptions
+                    </a>
+                    <a href="{% url 'patient_notifications' %}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium relative">
+                        <i class="fas fa-bell mr-1"></i> Notifications
+                        {% if cart_count > 0 %}
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                            {{ cart_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-700 text-sm">Welcome, {{ user.name }}</span>
+                    <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-red-50 border-b border-red-200 px-6 py-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3"></i>
+                    <h2 class="text-xl font-bold text-red-800">Delete Prescription</h2>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-circle text-red-600 text-lg mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="font-bold text-red-800 mb-2">Warning: This action cannot be undone</h3>
+                            <p class="text-red-700">
+                                You are about to permanently delete this prescription. This will remove all associated data including:
+                            </p>
+                            <ul class="list-disc list-inside text-red-700 mt-2 ml-4">
+                                <li>The prescription image</li>
+                                <li>Extracted medicine information</li>
+                                <li>Availability check results</li>
+                                <li>Any related processing data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prescription Details -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-gray-800 mb-3">Prescription Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <span class="font-semibold text-gray-700">Uploaded to:</span>
+                            <p class="text-gray-900">
+                                {% if prescription.pharmacist %}
+                                    {{ prescription.pharmacist.pharmacy_name }}
+                                {% else %}
+                                    All Pharmacies
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-700">Upload Date:</span>
+                            <p class="text-gray-900">{{ prescription.created_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-700">Status:</span>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold
+                                {% if prescription.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif prescription.status == 'processed' %}bg-green-100 text-green-800
+                                {% elif prescription.status == 'partially_available' %}bg-orange-100 text-orange-800
+                                {% elif prescription.status == 'not_available' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ prescription.get_status_display }}
+                            </span>
+                        </div>
+                        {% if prescription.notes %}
+                        <div>
+                            <span class="font-semibold text-gray-700">Notes:</span>
+                            <p class="text-gray-900">{{ prescription.notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Extracted Medicines Preview -->
+                {% if prescription.extracted_medicines %}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-blue-800 mb-3">
+                        <i class="fas fa-prescription mr-2"></i>Extracted Medicines ({{ prescription.extracted_medicines|length }})
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {% for medicine in prescription.extracted_medicines %}
+                        <div class="bg-white rounded border border-blue-100 p-3">
+                            <div class="font-bold text-blue-900">{{ medicine.name }}</div>
+                            <div class="text-sm text-blue-700">{{ medicine.strength }}</div>
+                            <div class="text-xs text-blue-600">{{ medicine.quantity }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Confirmation Form -->
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    <div class="flex items-center">
+                        <input type="checkbox" id="confirm-delete" name="confirm_delete" required class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                        <label for="confirm-delete" class="ml-2 block text-sm text-gray-900">
+                            I understand that this action is permanent and cannot be undone
+                        </label>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <button type="submit" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors">
+                            <i class="fas fa-trash-alt mr-2"></i> Delete Prescription
+                        </button>
+                        <a href="{% url 'view_my_prescriptions' %}" 
+                           class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors">
+                            <i class="fas fa-times mr-2"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-500 text-sm">
+                <p>&copy; 2024 Mediwise. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

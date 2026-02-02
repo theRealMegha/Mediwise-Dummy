@@ -96,6 +96,14 @@
             transition: opacity 0.2s ease;
             white-space: nowrap;
         }
+        
+        .high-percentage-shadow {
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+        
+        .low-percentage-shadow {
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+        }
     </style>
 </head>
 
@@ -121,9 +129,10 @@
                 <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
             </a>
 
-            <a href="#" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+            <a href="{% url 'manage_patients' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
-                    <i class="fas fa-id-card-clip text-lg"></i>
+                    <i class="fas fa-address-card text-lg"></i>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Patient Registry</span>
             </a>
@@ -137,6 +146,38 @@
                     </div>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
+            </a>
+
+            <a href="{% url 'medication_management' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-pills text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+            </a>
+
+            <a href="{% url 'generate_report' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Reports</span>
+            </a>
+
+            <a href="{% url 'admin_ratings_feedback' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-star text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Ratings & Feedback</span>
+            </a>
+
+            <a href="{% url 'financial_oversight' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-file-invoice-dollar text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
             </a>
 
             <a href="{% url 'admin_profile' %}"
@@ -175,94 +216,174 @@
                         class="text-rose-600">Core</span></h1>
                 <p class="text-slate-500 font-medium mt-1">Hospital metrics and administrative controls</p>
             </div>
-
-            <div class="flex items-center gap-6">
-                <div class="relative hidden lg:block">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                    <input type="text" placeholder="Search database..."
-                        class="bg-white border border-slate-100 pl-12 pr-4 py-3 rounded-2xl w-64 focus:outline-none focus:ring-2 focus:ring-rose-500/20 transition-all shadow-sm">
-                </div>
-                <div
-                    class="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-xl shadow-slate-200 cursor-pointer hover:scale-105 transition-transform">
-                    <i class="fas fa-bell"></i>
-                </div>
-            </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div class="glass-card p-8 rounded-[2.5rem] shadow-sm animate-up" style="animation-delay: 0.1s">
-                <div class="w-12 h-12 bg-rose-600 text-white rounded-2xl flex items-center justify-center mb-6">
-                    <i class="fas fa-hospital-user text-xl"></i>
-                </div>
-                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Admissions</p>
-                <h2 class="text-4xl font-black text-slate-900">12,840</h2>
+        <!-- System Health Status -->
+        <div class="glass-card p-6 rounded-2xl shadow-sm animate-up mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-extrabold text-slate-800">System Health Status</h2>
             </div>
-
-            <div class="glass-card p-8 rounded-[2.5rem] shadow-sm animate-up" style="animation-delay: 0.2s">
-                <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6">
-                    <i class="fas fa-clock-rotate-left text-xl"></i>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="font-bold text-slate-700 text-sm">Pharmacy Inventory Sync</span>
+                    </div>
+                    <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Operational</span>
                 </div>
-                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Pending Invoices</p>
-                <h2 class="text-4xl font-black text-slate-900">42</h2>
+                <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="font-bold text-slate-700 text-sm">Doctor Booking Server</span>
+                    </div>
+                    <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Operational</span>
+                </div>
             </div>
-
-            <a href="#"
-                class="bg-gradient-to-br from-rose-500 to-pink-600 p-8 rounded-[2.5rem] shadow-xl shadow-rose-200 flex flex-col items-center justify-center text-center text-white hover:scale-[1.02] transition-all group animate-up"
-                style="animation-delay: 0.3s">
-                <div
-                    class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-4 group-hover:rotate-90 transition-transform">
-                    <i class="fas fa-plus text-xl"></i>
-                </div>
-                <span class="font-bold text-lg">Add New Record</span>
-            </a>
         </div>
 
-        <div class="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm animate-up"
-            style="animation-delay: 0.4s">
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="text-xl font-extrabold text-slate-800">Recent Appointments</h3>
-                <button class="text-rose-600 font-bold text-sm hover:underline">View All Registry</button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Top Performing Doctors/Pharmacists -->
+            <div class="lg:col-span-2 glass-card p-6 rounded-2xl shadow-sm animate-up">
+                <h3 class="text-lg font-extrabold text-slate-800 mb-4">Top Performing Professionals</h3>
+                <div class="space-y-3">
+                    {% for doc in top_doctors %}
+                    <div class="flex items-center justify-between p-2 bg-white rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs">
+                                {{ doc.doctor.first_name|slice:":1" }}{{ doc.doctor.last_name|slice:":1" }}
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-900 text-sm">Dr. {{ doc.doctor.first_name }} {{ doc.doctor.last_name }}</p>
+                                <p class="text-xs text-slate-500">{{ doc.doctor.speciality }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-star text-amber-400 text-sm"></i>
+                            <span class="font-bold text-slate-700 text-sm">{{ doc.avg_rating|floatformat:1 }}</span>
+                            <span class="text-xs text-slate-400">({{ doc.review_count }})</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% for pharm in top_pharmacists %}
+                    <div class="flex items-center justify-between p-2 bg-white rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                                {{ pharm.pharmacist.first_name|slice:":1" }}{{ pharm.pharmacist.last_name|slice:":1" }}
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-900 text-sm">{{ pharm.pharmacist.first_name }} {{ pharm.pharmacist.last_name }}</p>
+                                <p class="text-xs text-slate-500">{{ pharm.pharmacist.pharmacy_name }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-star text-amber-400 text-sm"></i>
+                            <span class="font-bold text-slate-700 text-sm">{{ pharm.avg_rating|floatformat:1 }}</span>
+                            <span class="text-xs text-slate-400">({{ pharm.review_count }})</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Revenue Overview -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm animate-up">
+                <h3 class="text-lg font-extrabold text-slate-800 mb-4">Revenue Overview</h3>
+                <div class="space-y-4">
+                    <div class="p-3 bg-white rounded-xl">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-slate-600 font-medium text-sm">Appointments Commission</span>
+                            <span class="font-bold text-slate-900 text-sm">₹{{ appointment_revenue }}</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2">
+                           <div class="h-2.5 rounded-full transition-all duration-500 appointment-progress" data-percentage="{{ appointment_percentage|floatformat:0 }}" style="width: 0;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3 bg-white rounded-xl">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-slate-600 font-medium text-sm">Medicine Bookings</span>
+                            <span class="font-bold text-slate-900 text-sm">₹{{ medicine_revenue }}</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all duration-700 medicine-progress" data-percentage="{{ medicine_percentage|default:0 }}" style="width: 0;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3 bg-rose-50 rounded-xl border border-rose-100">
+                        <div class="flex justify-between">
+                            <span class="text-rose-700 font-bold text-sm">Total Earnings</span>
+                            <span class="text-rose-700 font-black">₹{{ total_revenue }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <!-- Refill Analytics -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm animate-up">
+                <h3 class="text-lg font-extrabold text-slate-800 mb-4">Refill Analytics</h3>
+                <div class="flex items-center justify-center p-4 bg-white rounded-xl">
+                    <div class="text-center">
+                        <div class="relative w-36 h-36 mx-auto mb-4">
+                            <canvas id="refillChart" width="144" height="144"></canvas>
+                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                                <span class="text-xl font-black text-slate-900">{{ refill_percentage }}%</span>
+                                <p class="text-xs text-slate-500 mt-1">of patients</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-600 text-sm">Patients on long-term medication who have reordered</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity Feed -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm animate-up">
+                <h3 class="text-lg font-extrabold text-slate-800 mb-4">Recent Activity Feed</h3>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for activity in recent_activities %}
+                    <div class="p-2 bg-white rounded-lg flex items-start gap-2">
+                        <div class="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0"></div>
+                        <div class="flex-1">
+                            <p class="text-slate-700 text-sm">{{ activity.message }}</p>
+                            <p class="text-xs text-slate-400 mt-1">{{ activity.timestamp|date:"M d, Y g:i A" }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-6 text-slate-400">
+                        <i class="fas fa-history text-xl mb-2"></i>
+                        <p class="text-sm">No recent activities</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Basic Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="glass-card p-6 rounded-2xl shadow-sm animate-up" style="animation-delay: 0.1s">
+                <div class="w-10 h-10 bg-rose-600 text-white rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-hospital-user text-lg"></i>
+                </div>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Patients</p>
+                <h2 class="text-3xl font-black text-slate-900">{{ total_patients }}</h2>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="text-slate-400 text-xs uppercase tracking-widest border-b border-slate-50">
-                            <th class="pb-4 font-bold">Patient Name</th>
-                            <th class="pb-4 font-bold">Assigned Doctor</th>
-                            <th class="pb-4 font-bold">Date</th>
-                            <th class="pb-4 font-bold">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm font-medium text-slate-700">
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                            <td class="py-5 flex items-center gap-3">
-                                <div
-                                    class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-xs font-bold">
-                                    JD</div>
-                                Jane Doe
-                            </td>
-                            <td class="py-5">Dr. Sarah Smith</td>
-                            <td class="py-5 text-slate-400">Oct 24, 2026</td>
-                            <td class="py-5"><span
-                                    class="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold uppercase">Confirmed</span>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                            <td class="py-5 flex items-center gap-3">
-                                <div
-                                    class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
-                                    MK</div>
-                                Mark Kelvin
-                            </td>
-                            <td class="py-5">Dr. James Bond</td>
-                            <td class="py-5 text-slate-400">Oct 25, 2026</td>
-                            <td class="py-5"><span
-                                    class="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[10px] font-bold uppercase">Pending</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="glass-card p-6 rounded-2xl shadow-sm animate-up" style="animation-delay: 0.2s">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-user-md text-lg"></i>
+                </div>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Active Doctors</p>
+                <h2 class="text-3xl font-black text-slate-900">{{ total_doctors }}</h2>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl shadow-sm animate-up" style="animation-delay: 0.3s">
+                <div class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-pills text-lg"></i>
+                </div>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Global Inventory</p>
+                <h2 class="text-3xl font-black text-slate-900">{{ total_meds }}</h2>
             </div>
         </div>
     </main>
@@ -301,6 +422,67 @@
                     t.style.opacity = '0';
                     setTimeout(() => t.style.display = 'none', 200);
                 });
+            }
+        });
+        
+        // Apply dynamic styling to progress bars after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const appointmentProgressBars = document.querySelectorAll('.appointment-progress');
+            appointmentProgressBars.forEach(bar => {
+                const percentage = parseFloat(bar.dataset.percentage);
+                // Set the width from the data attribute
+                bar.style.width = percentage + '%';
+                if (percentage > 90) {
+                    bar.style.backgroundColor = 'rgb(239, 68, 68)'; // red-500
+                    bar.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.4)';
+                } else {
+                    bar.style.backgroundColor = 'rgb(59, 130, 246)'; // blue-500
+                    bar.style.boxShadow = '0 0 8px rgba(37, 99, 235, 0.3)';
+                }
+            });
+            
+            const medicineProgressBars = document.querySelectorAll('.medicine-progress');
+            medicineProgressBars.forEach(bar => {
+                const percentage = parseFloat(bar.dataset.percentage);
+                // Set the width from the data attribute
+                bar.style.width = percentage + '%';
+                if (percentage < 20) {
+                    bar.style.backgroundColor = 'rgb(244, 63, 94)'; // rose-500
+                    bar.classList.add('animate-pulse');
+                } else {
+                    bar.style.backgroundColor = 'rgb(16, 185, 129)'; // emerald-500
+                    bar.classList.remove('animate-pulse');
+                }
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Create refill analytics chart
+        const ctx = document.getElementById('refillChart').getContext('2d');
+        const refillPercentage = parseFloat('{{ refill_percentage|floatformat:0 }}');
+        
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [refillPercentage, 100 - refillPercentage],
+                    backgroundColor: [
+                        '#ef4444',  // red for filled portion
+                        '#f3f4f6'   // light gray for unfilled portion
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
             }
         });
     </script>

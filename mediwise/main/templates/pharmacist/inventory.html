@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Mediwise | Inventory Management</title>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 50%, #fef3f2 100%);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { display: none; }
+
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+        }
+
+        .active-link {
+            background: linear-gradient(90deg, #fee2e2 0%, #fef2f2 100%);
+            color: #be123c;
+            border-left: 3px solid #be123c;
+        }
+
+        .sidebar-transition { 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .expanded-sidebar { width: 280px; }
+        .collapsed-sidebar { width: 100px; }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-entrance {
+            animation: fadeInScale 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #be123c 0%, #ea4335 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block; 
+        }
+
+        .shine-effect {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shine-effect:hover::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -60%; width: 20%; height: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(25deg);
+            transition: all 0.6s;
+            left: 120%;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes fade-out {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+        
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+        
+        .animate-fade-out {
+            animation: fade-out 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    {% if messages %}
+    <div id="success-toast" class="fixed top-6 right-6 z-[100] bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-fade-in">
+        <i class="fas fa-check-circle text-xl"></i>
+        <div>
+            {% for message in messages %}
+            <p class="font-bold">{{ message }}</p>
+            {% endfor %}
+        </div>
+        <button id="close-toast" class="ml-4 text-white hover:text-emerald-100 transition-colors">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    {% endif %}
+
+    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 h-screen sidebar-gradient border-r border-rose-100 z-50 flex flex-col">
+        <div class="p-8">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                    <i class="fas fa-prescription-bottle text-white text-lg"></i>
+                </div>
+                <span class="sidebar-text font-black text-2xl tracking-tighter text-slate-800">Mediwise</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="{% url 'pharmacist_dashboard' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-chart-line text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Dashboard</span>
+            </a>
+            <a href="{% url 'pharmacist_profile' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-shield-halved text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
+            </a>
+            <a href="{% url 'pharmacist_inventory' %}" class="active-link flex items-center p-4 rounded-2xl">
+                <i class="fas fa-pills text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
+            </a>
+            <a href="{% url 'pharmacist_orders' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-box-open text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
+            </a>
+            <a href="{% url 'pharmacist_customers' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-users text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
+            </a>
+            <a href="{% url 'pharmacist_ratings_feedback' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-star text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-rose-50 space-y-2">
+            <button id="toggle-btn" class="w-full flex items-center p-4 rounded-2xl text-slate-400 hover:text-rose-600 transition-all">
+                <i class="fas fa-indent text-lg w-6" id="toggle-icon"></i>
+                <span class="sidebar-text ml-4 font-bold text-xs uppercase tracking-widest">Collapse</span>
+            </button>
+            <a href="{% url 'logout' %}" class="flex items-center p-4 rounded-2xl text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                <i class="fas fa-sign-out-alt text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <main id="main-content" class="sidebar-transition ml-[280px] p-8 lg:p-12">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+            <div>
+                <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight">Pharmacy <span class="gradient-text">Inventory</span></h1>
+                <p class="text-slate-500 font-medium mt-2 text-lg">Manage medicines and stock levels</p>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <button id="add-medicine-btn" class="flex items-center gap-3 px-6 py-4 bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:bg-emerald-700 transition-all shine-effect">
+                    <i class="fas fa-plus-circle"></i>
+                    Add Medicine
+                </button>
+
+                <div class="flex items-center gap-4 bg-white/80 backdrop-blur-lg p-2 rounded-2xl shadow-sm border border-white">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-200">
+                        PH
+                    </div>
+                    <div class="pr-4">
+                        <p class="text-xs font-bold text-slate-800 leading-tight">{{ pharmacist.first_name|default:"Pharmacist" }}</p>
+                        <p class="text-[10px] text-slate-500">{{ pharmacist.email|default:"pharmacist@mediwise.com" }}</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- The static Add Medicine form has been removed and replaced by the button above -->
+
+        <!-- Inventory List -->
+        <div class="glass-card rounded-[2rem] p-8 animate-entrance">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
+                        <i class="fas fa-boxes-stacked text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-900">Current Inventory</h3>
+                        <p class="text-slate-500 text-sm">List of medicines available in stock</p>
+                    </div>
+                </div>
+                {% if hidden_count > 0 %}
+                <div class="bg-amber-50 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-amber-100">
+                    <i class="fas fa-eye-slash"></i>
+                    {{ hidden_count }} items hidden (expiring soon)
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-widest border-b border-slate-100">
+                            <th class="pb-4 font-bold">Medicine Details</th>
+                            <th class="pb-4 font-bold text-center">Batch</th>
+                            <th class="pb-4 font-bold text-center">Stock</th>
+                            <th class="pb-4 font-bold text-center">Expiry</th>
+                            <th class="pb-4 font-bold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        {% for medicine in medicines %}
+                        <tr class="group hover:bg-slate-50/50 transition-colors">
+                            <td class="py-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                                        <i class="fas fa-pills"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-900">{{ medicine.generic_name }}</p>
+                                        <p class="text-xs text-slate-500">{{ medicine.brand_name }} | {{ medicine.strength }} | {{ medicine.formulation }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-6 text-center">
+                                <span class="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
+                                    #{{ medicine.batch_number }}
+                                </span>
+                            </td>
+                            <td class="py-6 text-center">
+                                <div class="inline-flex flex-col items-center">
+                                    <span class="text-lg font-bold text-slate-900">{{ medicine.quantity }}</span>
+                                    <span class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Units</span>
+                                </div>
+                            </td>
+                            <td class="py-6 text-center">
+                                <span class="text-sm font-bold {% if medicine.expiry_date <= soon %}text-amber-600{% else %}text-slate-600{% endif %}">
+                                    {{ medicine.expiry_date|date:"M d, Y" }}
+                                </span>
+                            </td>
+                            <td class="py-6 text-right">
+                                <button class="p-2 text-slate-400 hover:text-emerald-600 transition-colors edit-btn"
+                                        data-id="{{ medicine.id }}"
+                                        data-brand="{{ medicine.brand_name }}"
+                                        data-generic="{{ medicine.generic_name }}"
+                                        data-strength="{{ medicine.strength }}"
+                                        data-formulation="{{ medicine.formulation }}"
+                                        data-batch="{{ medicine.batch_number }}"
+                                        data-quantity="{{ medicine.quantity }}"
+                                        data-price="{{ medicine.price }}"
+                                        data-manufacture="{{ medicine.manufacture_date|date:'Y-m-d' }}"
+                                        data-expiry="{{ medicine.expiry_date|date:'Y-m-d' }}"
+                                        data-indications="{{ medicine.indications }}"
+                                        data-medicine-type="{{ medicine.medicine_type }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="p-2 text-slate-400 hover:text-rose-600 transition-colors ml-2">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-12 text-center">
+                                <div class="flex flex-col items-center opacity-40">
+                                    <i class="fas fa-box-open text-5xl mb-4"></i>
+                                    <p class="text-lg font-bold">No medicines in inventory</p>
+                                    <p class="text-sm">Start by adding your first medicine above.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Medicine Modal -->
+    <div id="edit-modal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-[2.5rem] p-10 lg:p-12 w-full max-w-4xl relative animate-entrance overflow-y-auto max-h-[90vh]">
+                <button id="close-modal" class="absolute top-8 right-8 text-slate-400 hover:text-rose-600 transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
+                        <i class="fas fa-edit text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold text-slate-900">Edit Medicine</h3>
+                        <p class="text-slate-500 text-sm">Update stock details for this medication</p>
+                    </div>
+                </div>
+
+                <form id="edit-form" method="POST" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% csrf_token %}
+                    <div class="space-y-2 lg:col-span-1">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Brand Name</label>
+                        <input type="text" name="brand_name" id="edit-brand" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2 lg:col-span-1">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Generic Name (INN)</label>
+                        <input type="text" name="generic_name" id="edit-generic" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Strength/Dosage</label>
+                        <input type="text" name="strength" id="edit-strength" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Formulation</label>
+                        <input type="text" name="formulation" id="edit-formulation" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Batch/Lot Number</label>
+                        <input type="text" name="batch_number" id="edit-batch" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Quantity in Stock</label>
+                        <input type="number" name="quantity" id="edit-quantity" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Price per Unit ($)</label>
+                        <input type="number" name="price" id="edit-price" step="0.01" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Manufacture Date</label>
+                        <input type="date" name="manufacture_date" id="edit-manufacture" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Expiry Date</label>
+                        <input type="date" name="expiry_date" id="edit-expiry" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2 lg:col-span-3">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Indications</label>
+                        <textarea name="indications" id="edit-indications" rows="2" class="w-full p-4 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Medicine Type</label>
+                        <select name="medicine_type" id="edit-medicine-type" class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                            <option value="OTC">Over-the-Counter</option>
+                            <option value="Rx">Prescription Required</option>
+                        </select>
+                    </div>
+                    
+                    <div class="lg:col-span-3 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
+                        <button type="submit" class="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:bg-rose-700 transition-all shine-effect">
+                            Save Changes
+                        </button>
+                        <button type="button" id="cancel-modal" class="px-8 py-4 bg-white text-slate-500 rounded-2xl font-bold border border-slate-200 hover:bg-slate-50 transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Medicine Modal -->
+    <div id="add-modal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-[2.5rem] p-10 lg:p-12 w-full max-w-4xl relative animate-entrance overflow-y-auto max-h-[90vh]">
+                <button id="close-add-modal" class="absolute top-8 right-8 text-slate-400 hover:text-rose-600 transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <i class="fas fa-plus-circle text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold text-slate-900">Add New Medicine</h3>
+                        <p class="text-slate-500 text-sm">Add new stock to your pharmacy inventory</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% url 'pharmacist_inventory' %}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% csrf_token %}
+                    <div class="space-y-2 lg:col-span-1">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Brand Name</label>
+                        {{ form.brand_name }}
+                    </div>
+                    <div class="space-y-2 lg:col-span-1">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Generic Name (INN)</label>
+                        {{ form.generic_name }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Strength/Dosage</label>
+                        {{ form.strength }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Formulation</label>
+                        {{ form.formulation }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Batch/Lot Number</label>
+                        {{ form.batch_number }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Quantity in Stock</label>
+                        {{ form.quantity }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Price per Unit ($)</label>
+                        {{ form.price }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Manufacture Date</label>
+                        {{ form.manufacture_date }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Expiry Date</label>
+                        {{ form.expiry_date }}
+                    </div>
+                    <div class="space-y-2 lg:col-span-3">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Indications</label>
+                        {{ form.indications }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-slate-700 ml-1">Medicine Type</label>
+                        {{ form.medicine_type }}
+                    </div>
+                    
+                    <div class="lg:col-span-3 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
+                        <button type="submit" class="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:bg-emerald-700 transition-all shine-effect">
+                            Add Medicine
+                        </button>
+                        <button type="button" id="cancel-add-modal" class="px-8 py-4 bg-white text-slate-500 rounded-2xl font-bold border border-slate-200 hover:bg-slate-50 transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Logic
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+        let isExpanded = true;
+
+        toggleBtn.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                sidebar.classList.replace('collapsed-sidebar', 'expanded-sidebar');
+                mainContent.style.marginLeft = '280px';
+                toggleIcon.style.transform = 'rotate(0deg)';
+                sidebarTexts.forEach(el => el.style.display = 'inline');
+            } else {
+                sidebar.classList.replace('expanded-sidebar', 'collapsed-sidebar');
+                mainContent.style.marginLeft = '100px';
+                toggleIcon.style.transform = 'rotate(180deg)';
+                sidebarTexts.forEach(el => el.style.display = 'none');
+            }
+        });
+
+        // Add Medicine Modal Logic
+        const addModal = document.getElementById('add-modal');
+        const addBtn = document.getElementById('add-medicine-btn');
+        const closeAddModal = document.getElementById('close-add-modal');
+        const cancelAddModal = document.getElementById('cancel-add-modal');
+
+        addBtn.addEventListener('click', () => {
+            addModal.classList.remove('hidden');
+        });
+
+        const hideAddModal = () => {
+            addModal.classList.add('hidden');
+        };
+
+        closeAddModal.addEventListener('click', hideAddModal);
+        cancelAddModal.addEventListener('click', hideAddModal);
+        addModal.addEventListener('click', (e) => {
+            if (e.target === addModal.querySelector('.absolute.inset-0')) {
+                hideAddModal();
+            }
+        });
+
+        // Edit Modal Logic
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-form');
+        const closeModal = document.getElementById('close-modal');
+        const cancelModal = document.getElementById('cancel-modal');
+        const editBtns = document.querySelectorAll('.edit-btn');
+
+        // Form Fields
+        const editBrand = document.getElementById('edit-brand');
+        const editGeneric = document.getElementById('edit-generic');
+        const editStrength = document.getElementById('edit-strength');
+        const editFormulation = document.getElementById('edit-formulation');
+        const editBatch = document.getElementById('edit-batch');
+        const editQuantity = document.getElementById('edit-quantity');
+        const editPrice = document.getElementById('edit-price');
+        const editManufacture = document.getElementById('edit-manufacture');
+        const editExpiry = document.getElementById('edit-expiry');
+        const editIndications = document.getElementById('edit-indications');
+
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                
+                // Populate fields
+                editBrand.value = btn.dataset.brand;
+                editGeneric.value = btn.dataset.generic;
+                editStrength.value = btn.dataset.strength;
+                editFormulation.value = btn.dataset.formulation;
+                editBatch.value = btn.dataset.batch;
+                editQuantity.value = btn.dataset.quantity;
+                editPrice.value = btn.dataset.price;
+                editManufacture.value = btn.dataset.manufacture;
+                editExpiry.value = btn.dataset.expiry;
+                editIndications.value = btn.dataset.indications;
+                document.getElementById('edit-medicine-type').value = btn.dataset.medicineType || 'OTC';
+
+                // Update Form Action
+                editForm.action = `/pharmacist/medicine/edit/${id}/`;
+
+                // Show Modal
+                editModal.classList.remove('hidden');
+            });
+        });
+
+        const hideModal = () => {
+            editModal.classList.add('hidden');
+        };
+
+        closeModal.addEventListener('click', hideModal);
+        cancelModal.addEventListener('click', hideModal);
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal.querySelector('.absolute.inset-0')) {
+                hideModal();
+            }
+        });
+
+        // Auto-dismiss Success Message
+        document.addEventListener('DOMContentLoaded', () => {
+            const toast = document.getElementById('success-toast');
+            const closeToast = document.getElementById('close-toast');
+            
+            if (toast) {
+                setTimeout(() => {
+                    if (toast) {
+                        toast.classList.remove('animate-fade-in');
+                        toast.classList.add('animate-fade-out');
+                        setTimeout(() => {
+                            toast.remove();
+                        }, 300);
+                    }
+                }, 3000);
+                
+                if (closeToast) {
+                    closeToast.addEventListener('click', () => {
+                        toast.classList.remove('animate-fade-in');
+                        toast.classList.add('animate-fade-out');
+                        setTimeout(() => {
+                            toast.remove();
+                        }, 300);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

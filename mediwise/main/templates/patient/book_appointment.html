@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Mediwise | Book Appointment</title>
+    <style>
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; overflow-x: hidden; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .cherry-gradient {
+            background: linear-gradient(135deg, #be123c 0%, #fb7185 100%);
+        }
+
+        .bg-mesh {
+            background-color: #fff1f2;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(251, 113, 133, 0.15) 0, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(190, 18, 60, 0.1) 0, transparent 50%);
+        }
+
+        .nav-link {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-link:hover {
+            background: white;
+            color: #be123c;
+            transform: translateY(-2px);
+        }
+        
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(251, 68, 108, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-mesh min-h-screen text-slate-900 pb-20">
+
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-5xl">
+        <div class="glass rounded-[2rem] px-6 py-3 flex justify-between items-center shadow-2xl shadow-rose-900/5">
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 cherry-gradient rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                    <i class="fas fa-heart-pulse text-white text-lg"></i>
+                </div>
+                <div class="block">
+                    <p class="text-[8px] md:text-[10px] font-black text-rose-400 uppercase tracking-widest leading-none mb-1">Patient Portal</p>
+                    <p class="font-black text-rose-950 tracking-tighter text-sm md:text-base">
+                        Hi, {{ user.first_name|default:"Alex" }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="hidden lg:flex items-center space-x-1 bg-rose-50/50 p-1 rounded-2xl border border-rose-100/50">
+                <a href="{% url 'patient_dashboard' %}" class="nav-link px-6 py-2 rounded-xl text-slate-500 text-xs font-black uppercase tracking-widest">Overview</a>
+                <a href="{% url 'patient_records' %}" class="nav-link px-6 py-2 rounded-xl text-slate-500 text-xs font-black uppercase tracking-widest">Records</a>
+                <a href="{% url 'registered_pharmacies' %}" class="nav-link px-6 py-2 rounded-xl text-slate-500 text-xs font-black uppercase tracking-widest">Pharmacy</a>
+                <a href="{% url 'view_doctors' %}" class="nav-link px-6 py-2 rounded-xl text-slate-500 text-xs font-black uppercase tracking-widest">Doctors</a>
+                <a href="{% url 'patient_orders' %}" class="nav-link px-6 py-2 rounded-xl text-slate-500 text-xs font-black uppercase tracking-widest">Orders</a>
+                <a href="{% url 'view_cart' %}" class="nav-link px-6 py-2 rounded-xl text-slate-500 text-xs font-black uppercase tracking-widest flex items-center space-x-2">
+                    <span>Cart</span>
+                    {% if cart_count > 0 %}
+                    <span class="w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px]">{{ cart_count }}</span>
+                    {% endif %}
+                </a>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <a href="{% url 'view_doctors' %}" class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-400 hover:text-rose-600 transition-colors border border-rose-100">
+                    <i class="fas fa-arrow-left text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto pt-32 px-6">
+        <div class="mb-12 text-center">
+            <h2 class="text-4xl md:text-5xl font-black text-rose-950 tracking-tighter mb-2">Book Appointment</h2>
+            <p class="text-slate-500 font-medium">Schedule your consultation with Dr. {{ doctor.first_name }} {{ doctor.last_name }}.</p>
+        </div>
+
+        {% if messages %}
+        <div class="mb-8 space-y-4">
+            {% for message in messages %}
+            <div class="p-4 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% else %}bg-rose-50 text-rose-600 border border-rose-100{% endif %} flex items-center justify-between shadow-sm animate-fade-in">
+                <div class="flex items-center space-x-3">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                    <p class="text-xs font-black uppercase tracking-widest">{{ message }}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-current opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="glass rounded-[2rem] p-8 border border-white/50">
+            <div class="flex items-center mb-8">
+                {% if doctor.profile_picture %}
+                <img src="{{ doctor.profile_picture.url }}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-sm">
+                {% else %}
+                <div class="w-20 h-20 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-2xl shadow-sm">
+                    {{ doctor.first_name|slice:":1" }}{{ doctor.last_name|slice:":1" }}
+                </div>
+                {% endif %}
+                <div class="ml-4">
+                    <h3 class="font-black text-rose-950 text-xl">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h3>
+                    <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">{{ doctor.speciality }}</p>
+                    <p class="text-sm text-slate-600">{{ doctor.cureentHospital|default:"Hospital not specified" }}</p>
+                </div>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Appointment Date</label>
+                    <input type="date" name="appointment_date" required 
+                           min="{% now "Y-m-d" %}" 
+                           class="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-300 input-field bg-white/50">
+                    <p class="mt-1 text-xs text-slate-500">Select a date for your appointment</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Appointment Time</label>
+                    <input type="time" name="appointment_time" required 
+                           min="{{ doctor.consulting_time_from|time:"H:i"|default:"09:00" }}"
+                           max="{{ doctor.consulting_time_to|time:"H:i"|default:"18:00" }}"
+                           class="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-300 input-field bg-white/50">
+                    <p class="mt-1 text-xs text-slate-500">
+                        {% if doctor.consulting_time_from and doctor.consulting_time_to %}
+                            Select a time between {{ doctor.consulting_time_from|time:"H:i" }} - {{ doctor.consulting_time_to|time:"H:i" }}
+                        {% else %}
+                            Select a time for your appointment
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Reason for Visit</label>
+                    <textarea name="reason" rows="4" placeholder="Describe the reason for your visit..." 
+                              class="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-300 input-field bg-white/50 resize-none"></textarea>
+                    <p class="mt-1 text-xs text-slate-500">Briefly describe why you're seeking consultation</p>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full px-6 py-4 cherry-gradient text-white rounded-2xl font-bold text-sm uppercase tracking-widest hover:shadow-lg transition-all">
+                        Confirm Appointment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <div class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] glass rounded-3xl p-2 flex justify-around items-center shadow-2xl border border-rose-100">
+        <a href="{% url 'patient_dashboard' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-home"></i></a>
+        <a href="{% url 'patient_records' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-file-waveform"></i></a>
+        <a href="{% url 'patient_orders' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-box"></i></a>
+        <a href="{% url 'registered_pharmacies' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-pills"></i></a>
+        <a href="{% url 'view_cart' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center relative">
+            <i class="fas fa-shopping-cart"></i>
+            {% if cart_count > 0 %}
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px] border-2 border-white">{{ cart_count }}</span>
+            {% endif %}
+        </a>
+    </div>
+</body>
+</html>

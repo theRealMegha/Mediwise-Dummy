@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <title>Mediwise | Patient Registry</title>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fcfcfd;
+            background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #fda4af;
+            border-radius: 10px;
+        }
+
+        .sidebar-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #sidebar {
+            width: 280px;
+        }
+
+        .sidebar-collapsed {
+            width: 88px !important;
+        }
+
+        .main-collapsed {
+            margin-left: 88px !important;
+        }
+
+        .nav-item {
+            margin: 4px 12px;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 12px;
+        }
+
+        .active-link {
+            background-color: #ffffff;
+            color: #be123c;
+            box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.1);
+            border: 1px solid rgba(225, 29, 72, 0.1);
+        }
+
+        .sidebar-text {
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(244, 63, 94, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-up {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-animate {
+            animation: scaleIn 0.2s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="text-slate-900 overflow-x-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+        class="sidebar-transition fixed top-0 left-0 h-screen bg-slate-50/80 backdrop-blur-xl border-r border-slate-200 z-50 flex flex-col">
+        <div class="p-6 mb-4">
+            <div class="flex items-center">
+                <div
+                    class="min-w-[40px] h-10 bg-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                    <i class="fas fa-heart-pulse text-white text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-4 font-extrabold text-xl tracking-tight text-slate-800">Mediwise</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 space-y-1 overflow-y-auto">
+            <a href="{% url 'admin_dashboard' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-pie text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
+            </a>
+
+            <a href="{% url 'manage_patients' %}" class="nav-item active-link group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-id-card-clip text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Patient Registry</span>
+            </a>
+
+            <a href="{% url 'manage_doctors' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <div class="relative">
+                        <i class="fas fa-user-md text-lg"></i>
+                        <i class="fas fa-plus-circle absolute -top-1 -right-1 text-[10px] text-rose-600"></i>
+                    </div>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
+            </a>
+
+            <a href="{% url 'medication_management' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-pills text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+            </a>
+
+            <a href="{% url 'generate_report' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Reports</span>
+            </a>
+
+            <a href="{% url 'admin_ratings_feedback' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-star text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Ratings & Feedback</span>
+            </a>
+
+            <a href="{% url 'financial_oversight' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-file-invoice-dollar text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
+            </a>
+
+            <a href="{% url 'admin_profile' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-gear text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Settings</span>
+            </a>
+        </nav>
+
+        <div class="p-3 border-t border-slate-200 bg-slate-100/50 space-y-1">
+            <button id="toggle-btn"
+                class="w-full flex items-center p-3 rounded-xl text-slate-400 hover:text-slate-900 transition-all">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chevron-left sidebar-transition" id="toggle-icon"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-bold text-xs uppercase tracking-widest">Collapse</span>
+            </button>
+            <a href="{% url 'logout' %}"
+                class="flex items-center p-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-all">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-right-from-bracket text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Sign Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="sidebar-transition ml-[280px] p-8 lg:p-12 min-h-screen">
+
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-10 animate-up">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Patient <span
+                        class="text-rose-600">Registry</span></h1>
+                <p class="text-slate-500 font-medium mt-1">Total registered patients: {{ patients.count }}</p>
+            </div>
+        </header>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-8 animate-up">
+            {% for message in messages %}
+            <div class="p-4 rounded-xl flex items-center gap-3 text-sm font-bold
+                {% if message.tags == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100
+                {% else %}bg-rose-50 text-rose-600 border border-rose-100{% endif %}">
+                <i
+                    class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Patients Table -->
+        <div class="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm animate-up">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-widest border-b border-slate-50">
+                            <th class="pb-4 font-bold px-4">Patient Name</th>
+                            <th class="pb-4 font-bold px-4">Contact Info</th>
+                            <th class="pb-4 font-bold px-4">Medical Stats</th>
+                            <th class="pb-4 font-bold px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm font-medium text-slate-700">
+                        {% for patient in patients %}
+                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                            <td class="py-5 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
+                                        {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-900">{{ patient.first_name }} {{ patient.last_name }}</div>
+                                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">{{ patient.gender|default:"Not Set" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-5 px-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2 text-slate-500">
+                                        <i class="fas fa-envelope text-[10px] text-slate-300"></i>
+                                        {{ patient.email|default:"No Email" }}
+                                    </div>
+                                    <div class="flex items-center gap-2 text-slate-500">
+                                        <i class="fas fa-phone text-[10px] text-slate-300"></i>
+                                        {{ patient.phone_number|default:"No Phone" }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-5 px-4">
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold uppercase">Blood: {{ patient.blood_group|default:"?"|upper }}</span>
+                                    <span class="px-2 py-1 bg-slate-50 text-slate-600 rounded-lg text-[10px] font-bold uppercase">Height: {{ patient.height|default:"-" }}cm</span>
+                                    <span class="px-2 py-1 bg-slate-50 text-slate-600 rounded-lg text-[10px] font-bold uppercase">Weight: {{ patient.weight|default:"-" }}kg</span>
+                                </div>
+                            </td>
+                            <td class="py-5 px-4 text-right">
+                                <button onclick="confirmDelete('{{ patient.id }}', '{{ patient.first_name }} {{ patient.last_name }}')"
+                                    class="w-8 h-8 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center transition-all">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="py-20 text-center text-slate-400">
+                                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-users text-2xl"></i>
+                                </div>
+                                <p>No registered patients found.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full relative z-10 modal-animate text-center shadow-2xl">
+            <div class="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">
+                <i class="fas fa-trash-can"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 mb-2">Delete Patient?</h3>
+            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Are you sure you want to remove <span id="delete_name" class="font-bold text-slate-900"></span>? This action is permanent and will delete their entire medical history.</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="patient_id" id="delete_patient_id">
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function confirmDelete(id, name) {
+            document.getElementById('delete_patient_id').value = id;
+            document.getElementById('delete_name').innerText = name;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isExpanded = true;
+
+        toggleBtn.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                sidebar.classList.remove('sidebar-collapsed');
+                mainContent.classList.remove('main-collapsed');
+                toggleIcon.style.transform = 'rotate(0deg)';
+                setTimeout(() => sidebarTexts.forEach(t => { t.style.opacity = '1'; t.style.display = 'inline'; }), 150);
+            } else {
+                sidebar.classList.add('sidebar-collapsed');
+                mainContent.classList.add('main-collapsed');
+                toggleIcon.style.transform = 'rotate(180deg)';
+                sidebarTexts.forEach(t => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 200); });
+            }
+        });
+    </script>
+</body>
+
+</html>

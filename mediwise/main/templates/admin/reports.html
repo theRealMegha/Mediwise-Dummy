@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Mediwise | System Reports</title>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfd; background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px); background-size: 24px 24px; }
+        .sidebar-transition { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sidebar { width: 280px; }
+        .sidebar-collapsed { width: 88px !important; }
+        .main-collapsed { margin-left: 88px !important; }
+        .nav-item { margin: 4px 12px; border-radius: 14px; transition: all 0.3s ease; display: flex; align-items: center; padding: 12px; }
+        .active-link { background-color: #ffffff; color: #be123c; box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.1); }
+        .sidebar-text { transition: opacity 0.2s ease; white-space: nowrap; }
+    </style>
+</head>
+<body class="text-slate-900 overflow-x-hidden">
+    <aside id="sidebar" class="sidebar-transition fixed top-0 left-0 h-screen bg-slate-50/80 backdrop-blur-xl border-r border-slate-200 z-50 flex flex-col">
+        <div class="p-6 mb-4">
+            <div class="flex items-center">
+                <div class="min-w-[40px] h-10 bg-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                    <i class="fas fa-heart-pulse text-white text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-4 font-extrabold text-xl tracking-tight text-slate-800">Mediwise</span>
+            </div>
+        </div>
+        <nav class="flex-1 space-y-1 overflow-y-auto">
+            <a href="{% url 'admin_dashboard' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-chart-pie text-lg"></i></div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
+            </a>
+            <a href="{% url 'manage_patients' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-id-card-clip text-lg"></i></div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Patient Registry</span>
+            </a>
+            <a href="{% url 'manage_doctors' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <div class="relative">
+                        <i class="fas fa-user-md text-lg"></i>
+                        <i class="fas fa-plus-circle absolute -top-1 -right-1 text-[10px] text-rose-600"></i>
+                    </div>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
+            </a>
+            <a href="{% url 'medication_management' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-pills text-lg"></i></div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+            </a>
+            <a href="{% url 'generate_report' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Reports</span>
+            </a>
+            <a href="{% url 'admin_ratings_feedback' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-star text-lg"></i></div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Ratings & Feedback</span>
+            </a>
+            <a href="{% url 'financial_oversight' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-file-invoice-dollar text-lg"></i></div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
+            </a>
+            <a href="{% url 'admin_profile' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-gear text-lg"></i></div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Settings</span>
+            </a>
+        </nav>
+        <div class="p-3 border-t border-slate-200 bg-slate-100/50 space-y-1">
+            <button id="toggle-btn" class="w-full flex items-center p-3 rounded-xl text-slate-400 hover:text-slate-900 transition-all">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-chevron-left sidebar-transition" id="toggle-icon"></i></div>
+                <span class="sidebar-text ml-3 font-bold text-xs uppercase tracking-widest">Collapse</span>
+            </button>
+            <a href="{% url 'logout' %}" class="flex items-center p-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-all">
+                <div class="min-w-[40px] flex justify-center"><i class="fas fa-right-from-bracket text-lg"></i></div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Sign Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main id="main-content" class="sidebar-transition ml-[280px] p-8 lg:p-12 min-h-screen">
+        <header class="mb-10">
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">System <span class="text-rose-600">Reports</span></h1>
+            <p class="text-slate-500 font-medium mt-1">Generate and download comprehensive hospital data</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center group hover:border-rose-200 transition-all">
+                <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-rose-600 group-hover:text-white transition-all">
+                    <i class="fas fa-file-medical"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Patient Registry Report</h3>
+                <p class="text-slate-400 text-sm mb-6">Complete demographic and medical history summary.</p>
+                <a href="{% url 'export_patient_registry_pdf' %}" class="w-full py-4 bg-slate-50 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center">Generate PDF</a>
+            </div>
+
+            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center group hover:border-rose-200 transition-all">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Inventory Audit</h3>
+                <p class="text-slate-400 text-sm mb-6">Stock levels and expiry analysis across all branches.</p>
+                <a href="{% url 'export_medications_csv' %}" class="w-full py-4 bg-slate-50 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center">Generate CSV</a>
+            </div>
+
+            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center group hover:border-rose-200 transition-all">
+                <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Financial Summary</h3>
+                <p class="text-slate-400 text-sm mb-6">Revenue and transaction oversight report.</p>
+                <a href="{% url 'export_financial_summary_xlsx' %}" class="w-full py-4 bg-slate-50 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center">Generate XLSX</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isExpanded = true;
+        toggleBtn.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                sidebar.classList.remove('sidebar-collapsed'); mainContent.classList.remove('main-collapsed');
+                toggleIcon.style.transform = 'rotate(0deg)';
+                setTimeout(() => sidebarTexts.forEach(t => { t.style.opacity = '1'; t.style.display = 'inline'; }), 150);
+            } else {
+                sidebar.classList.add('sidebar-collapsed'); mainContent.classList.add('main-collapsed');
+                toggleIcon.style.transform = 'rotate(180deg)';
+                sidebarTexts.forEach(t => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 200); });
+            }
+        });
+    </script>
+</body>
+</html>

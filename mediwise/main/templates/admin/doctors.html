@@ -130,7 +130,7 @@
                 <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
             </a>
 
-            <a href="#" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+            <a href="{% url 'manage_patients' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-id-card-clip text-lg"></i>
                 </div>
@@ -145,6 +145,38 @@
                     </div>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
+            </a>
+
+            <a href="{% url 'medication_management' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-pills text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+            </a>
+
+            <a href="{% url 'generate_report' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Reports</span>
+            </a>
+
+            <a href="{% url 'admin_ratings_feedback' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-star text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Ratings & Feedback</span>
+            </a>
+
+            <a href="{% url 'financial_oversight' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-file-invoice-dollar text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
             </a>
 
             <a href="{% url 'admin_profile' %}"
@@ -208,9 +240,9 @@
 
         <!-- Doctors List -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {% for doctor in doctors %}
-            <div class="glass-card p-6 rounded-3xl hover:shadow-lg transition-all animate-up group relative overflow-hidden"
-                style="animation-delay: 0.{{ forloop.counter }}s">
+            {% for item in doctors_with_appointments %}
+            {% with doctor=item.doctor appointment_count=item.appointment_count %}
+            <div class="glass-card p-6 rounded-3xl hover:shadow-lg transition-all animate-up group relative overflow-hidden doctor-card-staggered">
 
                 <!-- Quick Actions -->
                 <div
@@ -254,8 +286,13 @@
                         <i class="fas fa-graduation-cap w-4 text-center text-slate-300"></i>
                         <span>{{ doctor.qualification }}</span>
                     </div>
+                    <div class="flex items-center gap-3 mt-2 pt-2 border-t border-slate-100">
+                        <i class="fas fa-calendar-check w-4 text-center text-slate-300"></i>
+                        <span class="font-bold text-rose-600">{{ appointment_count }} Appointments</span>
+                    </div>
                 </div>
             </div>
+            {% endwith %}
             {% empty %}
             <div class="col-span-full py-12 text-center text-slate-400">
                 <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -560,6 +597,11 @@
                 toggleIcon.style.transform = 'rotate(180deg)';
                 sidebarTexts.forEach(t => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 200); });
             }
+        });
+
+        // Staggered Animation for Doctor Cards
+        document.querySelectorAll('.doctor-card-staggered').forEach((card, index) => {
+            card.style.animationDelay = `${(index + 1) * 100}ms`;
         });
 
         // Styling injection for form widgets (Adding padding for icons)

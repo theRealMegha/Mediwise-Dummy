@@ -388,6 +388,16 @@
 
                     <!-- Left Page: Personal & Professional -->
                     <div class="space-y-3">
+                        <div class="input-group">
+                            <label>Pharmacy Name</label>
+                            <div class="input-wrapper">
+                                <span class="field-icon"><i class="fas fa-store"></i></span>
+                                {{ pharmacist_form.pharmacy_name }}
+                            </div>
+                            {% if pharmacist_form.pharmacy_name.errors %}<span class="error-text">
+                               {{ pharmacist_form.pharmacy_name.errors.0 }}</span>{% endif %}
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
                             <div class="input-group">
                                 <label>First Name</label>
