@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Mediwise | Pharmacist Restock</title>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 50%, #fef3f2 100%);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { display: none; }
+
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+        }
+
+        .active-link {
+            background: linear-gradient(90deg, #fee2e2 0%, #fef2f2 100%);
+            color: #be123c;
+            border-left: 3px solid #be123c;
+        }
+
+        .sidebar-transition { 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .expanded-sidebar { width: 280px; }
+        .collapsed-sidebar { width: 100px; }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-entrance {
+            animation: fadeInScale 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+        }
+        
+        .gradient-text {
+    background: linear-gradient(135deg, #be123c 0%, #ea4335 100%);
+    -webkit-background-clip: text;
+    background-clip: text; /* Standard property for better browser support */
+    -webkit-text-fill-color: transparent;
+    
+    /* The Fix: Ensures the background has dimensions to clip to */
+    display: inline-block; 
+}
+
+        .shine-effect {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shine-effect:hover::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -60%; width: 20%; height: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(25deg);
+            transition: all 0.6s;
+            left: 120%;
+        }
+        
+        .status-low-stock { background-color: #fef3c7; color: #d97706; }
+        .status-near-expiry { background-color: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 h-screen sidebar-gradient border-r border-rose-100 z-50 flex flex-col">
+        <div class="p-8">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                    <i class="fas fa-prescription-bottle text-white text-lg"></i>
+                </div>
+                <span class="sidebar-text font-black text-2xl tracking-tighter text-slate-800">Mediwise</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="{% url 'pharmacist_dashboard' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-chart-line text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Dashboard</span>
+            </a>
+            <a href="{% url 'pharmacist_profile' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-shield-halved text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
+            </a>
+            <a href="{% url 'pharmacist_inventory' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-pills text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
+            </a>
+            <a href="{% url 'pharmacist_restock' %}" class="active-link flex items-center p-4 rounded-2xl">
+                <i class="fas fa-sync text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Restock</span>
+            </a>
+            <a href="{% url 'pharmacist_orders' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-box-open text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
+            </a>
+            <a href="{% url 'pharmacist_customers' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-users text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
+            </a>
+            <a href="{% url 'pharmacist_ratings_feedback' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-star text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-rose-50 space-y-2">
+            <button id="toggle-btn" class="w-full flex items-center p-4 rounded-2xl text-slate-400 hover:text-rose-600 transition-all">
+                <i class="fas fa-indent text-lg w-6" id="toggle-icon"></i>
+                <span class="sidebar-text ml-4 font-bold text-xs uppercase tracking-widest">Collapse</span>
+            </button>
+            <a href="{% url 'logout' %}" class="flex items-center p-4 rounded-2xl text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                <i class="fas fa-sign-out-alt text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <main id="main-content" class="sidebar-transition ml-[280px] p-8 lg:p-12">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Restock Management</h1>
+                <p class="text-slate-500 font-medium mt-2 text-base">Track low stock items and near-expiry medicines</p>
+            </div>
+            
+            <div class="flex items-center gap-3 bg-white/80 backdrop-blur-lg p-2 rounded-xl shadow-sm border border-white">
+                <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-200">
+                    PH
+                </div>
+                <div class="pr-3">
+                    <p class="text-xs font-bold text-slate-800 leading-tight">{{ user.first_name|default:"Pharmacist" }}</p>
+                    <p class="text-[8px] text-slate-500">{{ user.email|default:"pharmacist@mediwise.com" }}</p>
+                </div>
+            </div>
+        </header>
+
+        {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+            <div class="p-3 rounded-xl {% if message.tags == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% else %}bg-rose-50 text-rose-600 border border-rose-100{% endif %} flex items-center justify-between shadow-sm animate-fade-in">
+                <div class="flex items-center space-x-2">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} text-sm"></i>
+                    <p class="text-[10px] font-black uppercase tracking-widest">{{ message }}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-current opacity-50 hover:opacity-100 text-sm"><i class="fas fa-times"></i></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="glass-card rounded-[1.5rem] p-6 animate-entrance mb-8">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                    <i class="fas fa-pills text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900">Low Stock Medicines</h3>
+                    <p class="text-slate-500 text-xs">Medicines with quantity less than 20 units</p>
+                </div>
+            </div>
+
+            {% if low_stock_medicines %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="border-b border-slate-100">
+                        <tr>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Medicine Name</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Brand Name</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Quantity</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Category</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for medicine in low_stock_medicines %}
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-3 px-3 font-bold text-slate-800 text-sm">{{ medicine.generic_name }}</td>
+                            <td class="py-3 px-3 text-slate-600 text-sm">{{ medicine.brand_name|default:"-" }}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                                    {{ medicine.quantity }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-3 text-slate-600 text-sm">{{ medicine.medicine_type|default:"OTC" }}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-bold status-low-stock">
+                                    Low Stock
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-check-circle text-2xl text-emerald-300 mb-3"></i>
+                <h4 class="text-lg font-bold text-slate-500 mb-1">All medicines in good stock!</h4>
+                <p class="text-slate-400 max-w-md mx-auto text-sm">No medicines currently have a quantity less than 20 units.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="glass-card rounded-[1.5rem] p-6 animate-entrance">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+                    <i class="fas fa-clock text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900">Near Expiry Medicines</h3>
+                    <p class="text-slate-500 text-xs">Medicines expiring within 10 days</p>
+                </div>
+            </div>
+
+            {% if expiry_alert_medicines %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="border-b border-slate-100">
+                        <tr>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Medicine Name</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Brand Name</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Expiry Date</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Days Remaining</th>
+                            <th class="text-left py-2 px-3 font-bold text-slate-700 text-sm">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for medicine in expiry_alert_medicines %}
+                        {% with days_remaining=medicine.expiry_date|timeuntil:None %}
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-3 px-3 font-bold text-slate-800 text-sm">{{ medicine.generic_name }}</td>
+                            <td class="py-3 px-3 text-slate-600 text-sm">{{ medicine.brand_name|default:"-" }}</td>
+                            <td class="py-3 px-3">
+                                <span class="font-bold text-slate-700 text-sm">{{ medicine.expiry_date|date:"M d, Y" }}</span>
+                            </td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
+                                    {{ days_remaining }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-bold status-near-expiry">
+                                    Near Expiry
+                                </span>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-check-circle text-2xl text-emerald-300 mb-3"></i>
+                <h4 class="text-lg font-bold text-slate-500 mb-1">No medicines near expiry!</h4>
+                <p class="text-slate-400 max-w-md mx-auto text-sm">No medicines are currently expiring within the next 10 days.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        // Sidebar Logic
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+        let isExpanded = true;
+
+        toggleBtn.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                sidebar.classList.replace('collapsed-sidebar', 'expanded-sidebar');
+                mainContent.style.marginLeft = '280px';
+                toggleIcon.style.transform = 'rotate(0deg)';
+                sidebarTexts.forEach(el => el.style.display = 'inline');
+            } else {
+                sidebar.classList.replace('expanded-sidebar', 'collapsed-sidebar');
+                mainContent.style.marginLeft = '100px';
+                toggleIcon.style.transform = 'rotate(180deg)';
+                sidebarTexts.forEach(el => el.style.display = 'none');
+            }
+        });
+    </script>
+</body>
+</html>

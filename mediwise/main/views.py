@@ -1,13 +1,72 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import MediAdmin, Patient, Users, Doctor, Pharmacist, Medicine, Cart,Transaction,OrderItem,Order, Appointment, Prescription, PrescriptionMedicine, Notification, Review, PrescriptionUpload
-from .forms import PatientRegistrationForm, PharmacistRegistrationForm, PatientProfileUpdateForm, DoctorRegistrationForm, PharmacistProfileUpdateForm, MedicineForm
+from .models import MediAdmin, Patient, Users, Doctor, Pharmacist, Medicine, Cart,Transaction,OrderItem,Order, Appointment, Prescription, PrescriptionMedicine, Notification, Review, PrescriptionUpload, Leave, AuditLog
+from .forms import PatientRegistrationForm, PharmacistRegistrationForm, PatientProfileUpdateForm, DoctorRegistrationForm, PharmacistProfileUpdateForm, MedicineForm, LeaveForm
 from django.contrib import messages
 from django.db.models import Q
 
 
 
 # Create your views here.
+
+
+def log_user_action(user, action, details=None, related_object=None, request=None):
+    """Log a user action in the audit log
+    
+    Args:
+        user: Users object
+        action: Action type from AuditLog.ACTION_CHOICES
+        details: Additional details about the action
+        related_object: The related model object (e.g., Prescription, Appointment)
+        request: HttpRequest object for IP and user agent
+    """
+    try:
+        ip_address = None
+        user_agent = None
+        
+        if request:
+            ip_address = get_client_ip(request)
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        related_object_id = None
+        related_object_type = None
+        
+        if related_object:
+            related_object_id = related_object.id
+            related_object_type = related_object.__class__.__name__
+        
+        AuditLog.objects.create(
+            user=user,
+            action=action,
+            details=details,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            related_object_id=related_object_id,
+            related_object_type=related_object_type
+        )
+    except Exception as e:
+        # Don't let logging errors break the application
+        print(f"Error logging action: {e}")
+
+
+def get_client_ip(request):
+    """Get client IP address from request"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+def update_user_last_login(user):
+    """Update the last_login timestamp for a user"""
+    try:
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
+    except Exception as e:
+        print(f"Error updating last login: {e}")
+
 
 def index(request):
     return render(request, 'index.html')
@@ -23,6 +82,7 @@ def getUser(email, password): # Import here to avoid circular import
     for role, model in mapping.items():
         user = model.objects.filter(email=email, password=password).first()
         if user:
+            print(f"Checking {role} with user {user}")
             return role, user # Return the object too so you can use it
     return None, None
 
@@ -35,22 +95,90 @@ def login(request):
         
         if role == 'admin':
             request.session['admin_id'] = user_obj.id
+            # Create user object for audit logging
+            try:
+                user_model = Users.objects.get(id=user_obj.id, role='admin')
+                update_user_last_login(user_model)
+                log_user_action(user_model, 'login', 'Admin logged in', request=request)
+            except Users.DoesNotExist:
+                # Admin user doesn't have a corresponding Users record, create one if needed
+                pass
             return redirect('admin_dashboard')
         elif role == 'patient':
             request.session['patient_id'] = user_obj.id
+            try:
+                user_model = user_obj.user  # Get the Users object from the patient model
+                update_user_last_login(user_model)
+                log_user_action(user_model, 'login', 'Patient logged in', request=request)
+            except AttributeError:
+                # Patient doesn't have a corresponding Users record
+                pass
             return redirect('patient_dashboard')
         elif role == 'pharmacist':
             request.session['pharmacist_id'] = user_obj.id
+            # Create user object for audit logging
+            try:
+                user_model = user_obj.user  # Get the Users object from the pharmacist model
+                update_user_last_login(user_model)
+                log_user_action(user_model, 'login', 'Pharmacist logged in', request=request)
+            except AttributeError:
+                # Pharmacist doesn't have a corresponding Users record
+                pass
             return redirect('pharmacist_dashboard')
         elif role == 'doctor':
             request.session['doctor_id'] = user_obj.id
+            # Create user object for audit logging
+            try:
+                user_model = user_obj.user  # Get the Users object from the doctor model
+                update_user_last_login(user_model)
+                log_user_action(user_model, 'login', 'Doctor logged in', request=request)
+            except AttributeError:
+                # Doctor doesn't have a corresponding Users record
+                pass
             return redirect('doctor_dashboard')
         
         return render(request, 'login.html', {'error': 'Invalid credentials'})
-        
+         
     return render(request, 'login.html')
 
+
+
 def logout(request):
+    # Log logout action before flushing session
+    user_id = None
+    user_role = None
+    
+    # Determine which user is logging out
+    if request.session.get('admin_id'):
+        user_id = request.session.get('admin_id')
+        user_role = 'admin'
+    elif request.session.get('doctor_id'):
+        user_id = request.session.get('doctor_id')
+        user_role = 'doctor'
+    elif request.session.get('pharmacist_id'):
+        user_id = request.session.get('pharmacist_id')
+        user_role = 'pharmacist'
+    elif request.session.get('patient_id'):
+        user_id = request.session.get('patient_id')
+        user_role = 'patient'
+    
+    if user_id and user_role:
+        try:
+            if user_role == 'admin':
+                user_model = Users.objects.get(id=user_id, role=user_role)
+            elif user_role == 'patient':
+                patient = Patient.objects.get(id=user_id)
+                user_model = patient.user
+            elif user_role == 'pharmacist':
+                pharmacist = Pharmacist.objects.get(id=user_id)
+                user_model = pharmacist.user
+            elif user_role == 'doctor':
+                doctor = Doctor.objects.get(id=user_id)
+                user_model = doctor.user
+            log_user_action(user_model, 'logout', f'{user_role.capitalize()} logged out', request=request)
+        except (Users.DoesNotExist, Patient.DoesNotExist, Pharmacist.DoesNotExist, Doctor.DoesNotExist):
+            pass  # User not found, proceed with logout
+    
     request.session.flush()
     return redirect('index')
 
@@ -1816,6 +1944,22 @@ def book_appointment(request, doctor_id):
         appointment_time = request.POST.get('appointment_time')
         reason = request.POST.get('reason')
         
+        # Convert appointment_date to datetime.date object
+        from datetime import datetime
+        appointment_date_obj = datetime.strptime(appointment_date, '%Y-%m-%d').date()
+        
+        # Check if doctor is on leave on this date
+        from .models import Leave
+        leave_exists = Leave.objects.filter(
+            doctor=doctor,
+            leave_from__lte=appointment_date_obj,
+            leave_to__gte=appointment_date_obj
+        ).exists()
+        
+        if leave_exists:
+            messages.error(request, f'Sorry, Dr. {doctor.first_name} {doctor.last_name} is on leave on {appointment_date}. Please choose another date.')
+            return redirect('book_appointment', doctor_id=doctor_id)
+        
         Appointment.objects.create(
             patient=patient,
             doctor=doctor,
@@ -1825,11 +1969,16 @@ def book_appointment(request, doctor_id):
         )
         messages.success(request, f'Appointment booked successfully with Dr. {doctor.first_name} {doctor.last_name} on {appointment_date} at {appointment_time}')
         return redirect('view_doctors')
+
+    # Get preferred date from query parameters
+    preferred_date = request.GET.get('preferred_date')
+
     
     context = {
         'user': patient,
         'doctor': doctor,
-        'cart_count': cart_count
+        'cart_count': cart_count,
+        'preferred_date': preferred_date
     }
     return render(request, 'patient/book_appointment.html', context)
 
@@ -2483,6 +2632,55 @@ def pharmacist_ratings_feedback(request):
     }
     return render(request, 'pharmacist/ratings_feedback.html', context)
 
+def pharmacist_restock(request):
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+    
+    pharmacist_id = request.session.get('pharmacist_id')
+    if not pharmacist_id:
+        return redirect('login')
+    
+    try:
+        pharmacist = Pharmacist.objects.get(id=pharmacist_id)
+    except Pharmacist.DoesNotExist:
+        return redirect('login')
+    
+    # Get medicines with low stock (less than 20)
+    low_stock_medicines = Medicine.objects.filter(
+        pharmacist=pharmacist,
+        quantity__lt=20
+    ).order_by('quantity')
+    
+    # Get medicines near expiry (within 10 days)
+    ten_days_from_now = timezone.now().date() + timedelta(days=10)
+    expiry_alert_medicines = Medicine.objects.filter(
+        pharmacist=pharmacist,
+        expiry_date__lte=ten_days_from_now,
+        expiry_date__gte=timezone.now().date()
+    ).order_by('expiry_date')
+    
+    # Get cart count for the cart icon
+    # Get patient_id from session to check if there's a patient logged in
+    patient_id = request.session.get('patient_id')
+    if patient_id:
+        try:
+            patient = Patient.objects.get(id=patient_id)
+            cart_count = Cart.objects.filter(patient=patient).count()
+        except Patient.DoesNotExist:
+            cart_count = 0
+    else:
+        cart_count = 0
+    
+    context = {
+        'user': pharmacist,
+        'low_stock_medicines': low_stock_medicines,
+        'expiry_alert_medicines': expiry_alert_medicines,
+        'cart_count': cart_count
+    }
+    return render(request, 'pharmacist/restock.html', context)
+
+
+
 def doctor_dashboard(request):
     user_id = request.session.get('doctor_id')
     if not user_id:
@@ -2498,7 +2696,7 @@ def doctor_dashboard(request):
     profile_incomplete = any(field in [None, '', 'None'] for field in required_fields)
     
     # Calculate real data for dashboard
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, date
     from django.utils import timezone
     from django.db.models import Count, Avg
     
@@ -2553,6 +2751,14 @@ def doctor_dashboard(request):
         appointment_date__year=current_year
     ).values_list('appointment_date', flat=True)
     
+    # Get all leave dates for current month
+    from datetime import date
+    current_month_leaves = Leave.objects.filter(
+        doctor=doctor,
+        leave_from__month=current_month,
+        leave_from__year=current_year
+    ).values('leave_from', 'leave_to')
+    
     # Create calendar data
     cal = calendar.monthcalendar(current_year, current_month)
     month_name = calendar.month_name[current_month]
@@ -2561,6 +2767,22 @@ def doctor_dashboard(request):
     appointment_days = set()
     for appt_date in monthly_appointments:
         appointment_days.add(appt_date.day)
+    
+    # Prepare leave days
+    leave_days = set()
+    for leave in current_month_leaves:
+        leave_from = leave['leave_from']
+        leave_to = leave['leave_to']
+        
+        # Add all days in the leave period
+        current_date = leave_from
+        while current_date <= leave_to:
+            if current_date.month == current_month and current_date.year == current_year:
+                leave_days.add(current_date.day)
+            current_date = date(current_date.year, current_date.month, current_date.day) + timedelta(days=1)
+    
+    # Initialize leave form
+    leave_form = LeaveForm()
     
     context = {
         'user': doctor,
@@ -2576,7 +2798,9 @@ def doctor_dashboard(request):
         'current_month': month_name,
         'current_year': current_year,
         'appointment_days': appointment_days,
+        'leave_days': leave_days,
         'today': today,
+        'leave_form': leave_form,
     }
     return render(request, 'doctor/dashboard.html', context)
 
@@ -2785,12 +3009,44 @@ def add_prescription(request, appointment_id):
             original_prescription_obj = None
     
     if request.method == 'POST':
+        # Get next appointment date from form
+        next_appointment_date_str = request.POST.get('next_appointment_date', '').strip()
+        next_appointment_date = None
+        if next_appointment_date_str:
+            from datetime import datetime
+            try:
+                next_appointment_date = datetime.strptime(next_appointment_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                messages.error(request, "Invalid date format for next appointment. Please use YYYY-MM-DD format.")
+                return redirect('add_prescription', appointment_id=appointment_id)
+
         # Create a new prescription
         prescription = Prescription.objects.create(
             appointment=appointment,
             doctor=doctor,
             patient=appointment.patient,
+            next_appointment_date=next_appointment_date,
         )
+        
+        # Log prescription creation
+        try:
+            if doctor.user:
+                user_model = Users.objects.get(id=doctor.user.id, role='doctor')
+                log_user_action(
+                    user_model, 
+                    'prescription_created', 
+                    f'Created prescription for patient {appointment.patient.first_name} {appointment.patient.last_name}', 
+                    related_object=prescription,
+                    request=request
+                )
+            else:
+                # Doctor doesn't have a corresponding Users record, skip logging
+                pass
+        except Users.DoesNotExist:
+            # Doctor doesn't have a corresponding Users record, skip logging
+            pass
+        except Exception as e:
+            print(f"Error logging prescription creation: {e}")
         
         # Process multiple medicines
         medicine_count = int(request.POST.get('medicine_count', 0))
@@ -2828,6 +3084,189 @@ def add_prescription(request, appointment_id):
         'original_medicines': original_medicines,
     }
     return render(request, 'doctor/add_prescription.html', context)
+
+
+def check_medicine_stock(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            medicine_name = data.get('medicine_name', '').lower().strip()
+            
+            if not medicine_name:
+                return JsonResponse({'error': 'Medicine name is required'}, status=400)
+            
+            # Check if any medicine with this generic name exists in the database
+            # and has quantity greater than 0
+            
+            # Check if any medicine matches the generic name and is in stock
+            medicine_exists = Medicine.objects.filter(
+                generic_name__icontains=medicine_name,
+                quantity__gt=0  # quantity greater than 0 means in stock
+            ).exists()
+            
+            # Also check for medicines with matching brand name and in stock
+            brand_exists = Medicine.objects.filter(
+                brand_name__icontains=medicine_name,
+                quantity__gt=0
+            ).exists()
+            
+            # If neither exists or both have zero quantity, consider it out of stock
+            out_of_stock = not (medicine_exists or brand_exists)
+            
+            return JsonResponse({
+                'medicine_name': medicine_name,
+                'out_of_stock': out_of_stock,
+                'in_stock': not out_of_stock
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def update_doctor_status(request):
+    if request.method == 'POST':
+        import json
+        try:
+            # Get doctor from session
+            user_id = request.session.get('doctor_id')
+            if not user_id:
+                return JsonResponse({'error': 'Not authenticated'}, status=401)
+            
+            try:
+                doctor = Doctor.objects.get(id=user_id)
+            except Doctor.DoesNotExist:
+                return JsonResponse({'error': 'Doctor not found'}, status=404)
+            
+            # Parse JSON data
+            data = json.loads(request.body)
+            new_status = data.get('status', '').lower()
+            
+            # Validate status
+            valid_statuses = ['active', 'inactive', 'leave']
+            if new_status not in valid_statuses:
+                return JsonResponse({'error': 'Invalid status'}, status=400)
+            
+            # Update doctor status
+            doctor.availability_status = new_status
+            doctor.save()
+            
+            return JsonResponse({
+                'success': True,
+                'status': new_status,
+                'message': f'Status updated to {new_status.capitalize()}'
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def set_doctor_leave(request):
+    if request.method == 'POST':
+        user_id = request.session.get('doctor_id')
+        if not user_id:
+            messages.error(request, 'You must be logged in as a doctor to set leave.')
+            return redirect('login')
+        
+        try:
+            doctor = Doctor.objects.get(id=user_id)
+        except Doctor.DoesNotExist:
+            messages.error(request, 'Doctor not found.')
+            return redirect('login')
+        
+        form = LeaveForm(request.POST)
+        if form.is_valid():
+            leave = form.save(commit=False)
+            leave.doctor = doctor
+            leave.save()
+            
+            # Update doctor's availability status to 'leave' for the leave period
+            # This will be handled by the automatic status management
+            messages.success(request, 'Leave has been set successfully!')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+            
+        return redirect('doctor_dashboard')
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def test_doctor_status(request):
+    """Test view to verify doctor availability status functionality"""
+    doctors = Doctor.objects.all()[:3]  # Get first 3 doctors for testing
+    
+    test_data = []
+    for doctor in doctors:
+        test_data.append({
+            'id': doctor.id,
+            'name': f"Dr. {doctor.first_name} {doctor.last_name}",
+            'availability_status': doctor.availability_status,
+            'get_availability_status_display': doctor.get_availability_status_display(),
+            'consulting_time_from': doctor.consulting_time_from,
+            'consulting_time_to': doctor.consulting_time_to,
+        })
+    
+    return JsonResponse({'doctors': test_data})
+
+
+def admin_audit_logs(request):
+    """Admin view to see system audit logs"""
+    # Ensure admin authentication
+    if not request.session.get('admin_id'):
+        return redirect('login')
+    
+    # Get filter parameters
+    action_filter = request.GET.get('action', '')
+    user_filter = request.GET.get('user', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    # Get all audit logs with related user information
+    logs = AuditLog.objects.select_related('user').all()
+    
+    # Apply filters
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+    
+    if user_filter:
+        logs = logs.filter(user__id=user_filter)
+    
+    if date_from:
+        logs = logs.filter(timestamp__gte=date_from)
+    
+    if date_to:
+        logs = logs.filter(timestamp__lte=date_to)
+    
+    # Get all users for filter dropdown
+    all_users = Users.objects.all().order_by('role', 'id')
+    
+    # Pre-process all users for filter dropdown
+    processed_all_users = []
+    for user in all_users:
+        user_data = {
+            'user': user,
+            'display_name': user.get_user_display_name()
+        }
+        processed_all_users.append(user_data)
+    
+    context = {
+        'logs': logs,
+        'all_users': processed_all_users,
+        'action_filter': action_filter,
+        'user_filter': user_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    
+    return render(request, 'admin/audit_logs.html', context)
 
 
 def patient_prescriptions_by_doctor(request, patient_id):
@@ -2885,6 +3324,26 @@ def delete_prescription(request, prescription_id):
     try:
         doctor = Doctor.objects.get(id=user_id)
         prescription = Prescription.objects.get(id=prescription_id, doctor=doctor)
+        
+        # Log prescription deletion
+        try:
+            if doctor.user:
+                user_model = Users.objects.get(id=doctor.user.id, role='doctor')
+                log_user_action(
+                    user_model,
+                    'prescription_deleted',
+                    f'Deleted prescription for patient {prescription.patient.first_name} {prescription.patient.last_name}',
+                    related_object=prescription,
+                    request=request
+                )
+            else:
+                # Doctor doesn't have a corresponding Users record, skip logging
+                pass
+        except Users.DoesNotExist:
+            # Doctor doesn't have a corresponding Users record, skip logging
+            pass
+        except Exception as e:
+            print(f"Error logging prescription deletion: {e}")
         
         # Delete the prescription (this will cascade delete related PrescriptionMedicine objects)
         prescription.delete()

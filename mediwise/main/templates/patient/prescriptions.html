@@ -233,6 +233,14 @@
                             <div class="text-center">
                                 <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date</p>
                                 <p class="font-black text-slate-800">{{ prescription.created_at|date:"M d, Y" }}</p>
+                                {% if prescription.next_appointment_date %}
+                                <div class="mt-2 p-2 bg-blue-50 rounded-lg">
+                                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Next Appointment</p>
+                                    <a href="{% url 'book_appointment' prescription.doctor.id %}?preferred_date={{ prescription.next_appointment_date|date:'Y-m-d' }}" class="font-black text-blue-700 hover:text-blue-800 hover:underline cursor-pointer">
+                                        {{ prescription.next_appointment_date|date:"M d, Y" }}
+                                    </a>
+                                </div>
+                                {% endif %}
                             </div>
                             <div class="mt-2 flex flex-col gap-2">
                                 <a href="{% url 'download_prescription_pdf' prescription.id %}" 

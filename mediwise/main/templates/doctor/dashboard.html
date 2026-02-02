@@ -98,6 +98,7 @@
 </head>
 
 <body class="min-h-screen pb-20">
+    {% csrf_token %}
 
     <!-- Navbar -->
     <nav class="sticky top-0 z-50 px-4 py-4 md:px-8">
@@ -216,6 +217,25 @@
                         appointments</span> scheduled for today.</p>
             </div>
             <div class="flex gap-3">
+                <!-- Availability Status Dropdown -->
+                <div class="relative">
+                    <select id="availability-status" onchange="updateAvailabilityStatus(this.value)"
+                            class="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 cursor-pointer">
+                        <option value="active" {% if user.availability_status == 'active' %}selected{% endif %} class="text-green-600">Active</option>
+                        <option value="inactive" {% if user.availability_status == 'inactive' %}selected{% endif %} class="text-slate-600">Inactive</option>
+                        <option value="leave" {% if user.availability_status == 'leave' %}selected{% endif %} class="text-amber-600">Leave</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+                
+                <!-- Set Leave Button -->
+                <button onclick="openLeaveModal()" 
+                        class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all flex items-center gap-2">
+                    <i class="fas fa-calendar-plus"></i>
+                    Set Leave
+                </button>
             </div>
         </div>
 
@@ -371,11 +391,13 @@
                                             <div class="text-center p-1"></div>
                                         {% else %}
                                             <div class="text-center relative">
-                                                <div class="{% if day in appointment_days %}bg-blue-100 text-blue-700 border border-blue-200{% else %}text-slate-400{% endif %} {% if day == today.day and current_month == today|date:'F' %}ring-1 ring-blue-500{% endif %} rounded-full w-7 h-7 flex items-center justify-center mx-auto text-xs font-medium hover:bg-blue-50 cursor-pointer">
+                                                <div class="{% if day in appointment_days %}bg-blue-100 text-blue-700 border border-blue-200{% elif day in leave_days %}bg-amber-100 text-amber-700 border border-amber-200{% else %}text-slate-400{% endif %} {% if day == today.day and current_month == today|date:'F' %}ring-1 ring-blue-500{% endif %} rounded-full w-7 h-7 flex items-center justify-center mx-auto text-xs font-medium hover:bg-blue-50 cursor-pointer">
                                                     {{ day }}
                                                 </div>
                                                 {% if day in appointment_days %}
                                                 <div class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full"></div>
+                                                {% elif day in leave_days %}
+                                                <div class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full"></div>
                                                 {% endif %}
                                             </div>
                                         {% endif %}
@@ -540,6 +562,56 @@
         </div>
     </div>
 
+    <!-- Leave Modal -->
+    <div id="leaveModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeLeaveModal()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl p-6 overflow-y-auto modal-animate">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-extrabold text-slate-800">Set Leave</h2>
+                <button onclick="closeLeaveModal()" class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="leaveForm" method="post" action="{% url 'set_doctor_leave' %}">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Leave Start Date *</label>
+                        {{ leave_form.leave_from }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Leave End Date *</label>
+                        {{ leave_form.leave_to }}
+                        <p class="text-xs text-slate-500 mt-1">For single day leave, set same date as start date</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Leave Type *</label>
+                        {{ leave_form.leave_type }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Reason for Leave *</label>
+                        {{ leave_form.reason }}
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex gap-3">
+                    <button type="submit" 
+                            class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all">
+                        <i class="fas fa-save mr-2"></i>Save Leave
+                    </button>
+                    <button type="button" onclick="closeLeaveModal()" 
+                            class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script>
         function toggleCalendar() {
             const calendarContainer = document.getElementById('calendar-container');
@@ -549,6 +621,106 @@
                 calendarContainer.classList.add('hidden');
             }
         }
+        
+        // Function to update doctor availability status
+        async function updateAvailabilityStatus(status) {
+            try {
+                const response = await fetch('/api/update_doctor_status/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        status: status
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update UI based on status
+                    const statusSelect = document.getElementById('availability-status');
+                    statusSelect.className = statusSelect.className.replace(/border-\w+-\d+/, '');
+                    
+                    if (status === 'active') {
+                        statusSelect.classList.add('border-green-500');
+                    } else if (status === 'inactive') {
+                        statusSelect.classList.add('border-slate-300');
+                    } else if (status === 'leave') {
+                        statusSelect.classList.add('border-amber-500');
+                    }
+                } else {
+                    console.error('Failed to update status:', data.error);
+                    // Revert the selection
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                // Revert the selection
+                location.reload();
+            }
+        }
+        
+        // Function to automatically manage status based on consultation times
+        function autoManageStatus() {
+            const consultingFrom = '{{ user.consulting_time_from|time:"H:i" }}';
+            const consultingTo = '{{ user.consulting_time_to|time:"H:i" }}';
+            
+            if (consultingFrom && consultingTo) {
+                const now = new Date();
+                const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
+                
+                const [fromHours, fromMinutes] = consultingFrom.split(':').map(Number);
+                const [toHours, toMinutes] = consultingTo.split(':').map(Number);
+                
+                const consultingStart = fromHours * 100 + fromMinutes;
+                const consultingEnd = toHours * 100 + toMinutes;
+                
+                const currentStatus = document.getElementById('availability-status').value;
+                
+                // If current status is not 'leave' and we're within consulting hours
+                if (currentStatus !== 'leave' && currentTime >= consultingStart && currentTime <= consultingEnd) {
+                    if (currentStatus !== 'active') {
+                        document.getElementById('availability-status').value = 'active';
+                        updateAvailabilityStatus('active');
+                    }
+                } 
+                // If we're outside consulting hours and status is 'active'
+                else if (currentStatus === 'active' && (currentTime < consultingStart || currentTime > consultingEnd)) {
+                    document.getElementById('availability-status').value = 'inactive';
+                    updateAvailabilityStatus('inactive');
+                }
+            }
+        }
+        
+        // Run auto management on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            autoManageStatus();
+            // Check every 5 minutes
+            setInterval(autoManageStatus, 5 * 60 * 1000);
+        });
+        
+        // Leave Modal Functions
+        function openLeaveModal() {
+            document.getElementById('leaveModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeLeaveModal() {
+            document.getElementById('leaveModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            // Reset form
+            document.getElementById('leaveForm').reset();
+        }
+        
+        // Auto-set leave_to date to match leave_from for single day leave
+        document.getElementById('leave_from').addEventListener('change', function() {
+            const leaveTo = document.getElementById('leave_to');
+            if (!leaveTo.value || leaveTo.value < this.value) {
+                leaveTo.value = this.value;
+            }
+        });
     </script>
 </body>
 

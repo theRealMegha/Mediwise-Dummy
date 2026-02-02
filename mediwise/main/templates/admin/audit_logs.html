@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Mediwise | Audit Logs</title>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fcfcfd;
+            background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+
+        /* Sidebar Transition Logic */
+        .sidebar-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #sidebar { width: 280px; }
+        #main-content { margin-left: 280px; transition: margin-left 0.4s ease; }
+
+        /* Collapsed States */
+        .sidebar-collapsed { width: 88px !important; }
+        .sidebar-collapsed .sidebar-text { display: none; }
+        .main-collapsed { margin-left: 88px !important; }
+        .rotate-180 { transform: rotate(180deg); }
+
+        /* Nav Item Styling */
+        .nav-item {
+            margin: 4px 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            text-decoration: none;
+        }
+
+        .active-link {
+            background: linear-gradient(135deg, #fb7185 0%, #be123c 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(190, 18, 60, 0.2);
+        }
+
+        /* Custom Scrollbar for Sidebar */
+        #sidebar-nav::-webkit-scrollbar { width: 4px; }
+        #sidebar-nav::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        /* Action Badge Colors */
+        .action-login { color: #22c55e; }
+        .action-logout { color: #ef4444; }
+        .action-prescription_created { color: #3b82f6; }
+        .action-prescription_edited { color: #f59e0b; }
+        .action-appointment_created { color: #8b5cf6; }
+        .action-other { color: #64748b; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <aside id="sidebar" class="sidebar-transition fixed top-0 left-0 h-screen bg-slate-50/80 backdrop-blur-xl border-r border-slate-200 z-50 flex flex-col">
+        <div class="p-6 mb-4">
+            <div class="flex items-center">
+                <div class="min-w-[40px] h-10 bg-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                    <i class="fas fa-heart-pulse text-white text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-4 font-extrabold text-xl tracking-tight text-slate-800">Mediwise</span>
+            </div>
+        </div>
+
+        <nav id="sidebar-nav" class="flex-1 space-y-1 overflow-y-auto">
+            <a href="{% url 'admin_dashboard' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-pie text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
+            </a>
+
+            <a href="{% url 'manage_patients' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-address-card text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Patient Registry</span>
+            </a>
+
+            <a href="{% url 'manage_doctors' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <div class="relative">
+                        <i class="fas fa-user-md text-lg"></i>
+                        <i class="fas fa-plus-circle absolute -top-1 -right-1 text-[10px] text-rose-600"></i>
+                    </div>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
+            </a>
+
+            <a href="{% url 'medication_management' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-pills text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+            </a>
+
+            <a href="{% url 'admin_audit_logs' %}" class="nav-item active-link transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-clipboard-list text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Audit Logs</span>
+            </a>
+
+            <a href="{% url 'financial_oversight' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-file-invoice-dollar text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
+            </a>
+        </nav>
+
+        <div class="p-3 border-t border-slate-200 bg-slate-100/50 space-y-1">
+            <button id="toggle-btn" class="w-full flex items-center p-3 rounded-xl text-slate-400 hover:text-slate-900 transition-all">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chevron-left sidebar-transition" id="toggle-icon"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-bold text-xs uppercase tracking-widest">Collapse</span>
+            </button>
+
+            <a href="{% url 'logout' %}" class="flex items-center p-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-all">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-right-from-bracket text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Sign Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main id="main-content" class="p-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-800 mb-2">System Audit Logs</h1>
+                <p class="text-slate-600">Monitor system activity and security events</p>
+            </div>
+
+
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+                <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Action Type</label>
+                        <select name="action" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none">
+                            <option value="">All Actions</option>
+                            <option value="login" {% if action_filter == 'login' %}selected{% endif %}>Login</option>
+                            <option value="prescription_created" {% if action_filter == 'prescription_created' %}selected{% endif %}>Prescription</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">User</label>
+                        <select name="user" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none">
+                            <option value="">All Staff</option>
+                            {% for user_data in all_users %}
+                            <option value="{{ user_data.user.id }}">{{ user_data.display_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 flex items-end gap-3">
+                        <button type="submit" class="flex-1 bg-slate-900 text-white py-2 rounded-xl font-semibold hover:bg-slate-800 transition-all">
+                            Apply Filters
+                        </button>
+                        <a href="{% url 'admin_audit_logs' %}" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+                                <th class="text-left py-4 px-4 font-bold">Timestamp</th>
+                                <th class="text-left py-4 px-4 font-bold">User</th>
+                                <th class="text-left py-4 px-4 font-bold">Action</th>
+                                <th class="text-left py-4 px-4 font-bold">Details</th>
+                                <th class="text-left py-4 px-4 font-bold">IP</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            {% for log in logs %}
+                            <tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                                <td class="py-4 px-4 text-slate-500" data-timestamp="{{ log.timestamp|date:'c' }}">{{ log.timestamp|date:"M d, H:i:s" }}</td>
+                                <td class="py-4 px-4">
+                                    <div class="font-bold text-slate-700">{{ log.get_user_display_name }}</div>
+                                    <div class="text-[10px] text-slate-400">{{ log.user.get_role_display }}</div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="action-{{ log.action }} font-bold text-xs uppercase tracking-tighter">
+                                        {{ log.get_action_display }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4 text-slate-600 italic">"{{ log.details|default:'System automated task' }}"</td>
+                                <td class="py-4 px-4 text-slate-400 font-mono text-[10px]">{{ log.ip_address }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="py-20 text-center">
+                                    <div class="text-slate-300 mb-2"><i class="fas fa-folder-open text-4xl"></i></div>
+                                    <p class="text-slate-500">No logs found matching those criteria.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleIcon = document.getElementById('toggle-icon');
+
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+            mainContent.classList.toggle('main-collapsed');
+            toggleIcon.classList.toggle('rotate-180');
+            
+            // Optional: Save state to localStorage
+            const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        });
+
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('sidebar-collapsed');
+                mainContent.classList.add('main-collapsed');
+                toggleIcon.classList.add('rotate-180');
+            }
+        });
+        
+        // Convert UTC timestamps to local time
+        document.addEventListener('DOMContentLoaded', function() {
+            // Convert all elements with data-timestamp attribute
+            const timestampElements = document.querySelectorAll('[data-timestamp]');
+            timestampElements.forEach(function(element) {
+                const utcTimeString = element.getAttribute('data-timestamp');
+                if (utcTimeString) {
+                    try {
+                        // Parse the ISO format timestamp
+                        const utcDate = new Date(utcTimeString);
+                        // Convert to local time and format as "MMM dd, yyyy HH:mm:ss"
+                        const options = { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            second: '2-digit',
+                            hour12: false
+                        };
+                        const localDateString = utcDate.toLocaleString(undefined, options);
+                        element.textContent = localDateString;
+                    } catch (e) {
+                        console.error('Error converting timestamp:', e);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

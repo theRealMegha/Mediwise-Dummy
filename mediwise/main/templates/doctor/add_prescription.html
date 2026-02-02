@@ -128,6 +128,19 @@
             margin-top: 0.125rem;
             line-height: 1.3;
         }
+        
+        .stock-status-indicator {
+            display: inline-block;
+        }
+        
+        .stock-warning-message {
+            display: block;
+        }
+        
+        .out-of-stock {
+            border-color: #f59e0b;
+            background-color: #fefce8;
+        }
     </style>
 </head>
 
@@ -251,6 +264,16 @@
                     </button>
                 </div>
 
+                <!-- Next Appointment Date Field -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-extrabold text-slate-800 mb-3">Follow-up Appointment</h3>
+                    <div class="form-group">
+                        <label for="next_appointment_date" class="form-label">Next Appointment Date</label>
+                        <input type="date" id="next_appointment_date" name="next_appointment_date" class="form-input" min="" placeholder="Select date for next appointment">
+                        <p class="form-help text-slate-500">Leave blank if no follow-up is needed</p>
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 mt-6">
                     <a href="{% url 'doctor_patients' %}" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-all text-sm">
                         Cancel
@@ -304,7 +327,15 @@
                     <!-- Drug Name Generic (mandatory) -->
                     <div class="form-group sm:col-span-2">
                         <label for="medicine_${index}_drug_name_generic" class="form-label">Drug Name *</label>
-                        <input type="text" id="medicine_${index}_drug_name_generic" name="medicine_${index}_drug_name_generic" required class="form-input" placeholder="e.g., Paracetamol, Amoxicillin">
+                        <div class="relative">
+                            <input type="text" id="medicine_${index}_drug_name_generic" name="medicine_${index}_drug_name_generic" required class="form-input" placeholder="e.g., Paracetamol, Amoxicillin" oninput="checkStockAvailability(this)">
+                            <div id="stock-status-${index}" class="stock-status-indicator absolute right-3 top-1/2 transform -translate-y-1/2 hidden">
+                                <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                            </div>
+                        </div>
+                        <div id="stock-warning-${index}" class="stock-warning-message mt-1 text-sm text-yellow-600 hidden">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> Medicine is out of stock in pharmacy
+                        </div>
                     </div>
 
                     <!-- Strength/Potency -->
@@ -421,6 +452,58 @@
         /*
         {% endif %}
         */
+        
+        // Set minimum date for next appointment to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('next_appointment_date').setAttribute('min', today);
+        
+        // Function to check stock availability
+        async function checkStockAvailability(inputElement) {
+            const medicineName = inputElement.value.trim();
+            const rowIndex = inputElement.id.match(/medicine_(\d+)_drug_name_generic/)[1];
+            
+            if (medicineName.length < 2) {
+                // Hide indicators if input is too short
+                document.getElementById(`stock-status-${rowIndex}`).classList.add('hidden');
+                document.getElementById(`stock-warning-${rowIndex}`).classList.add('hidden');
+                inputElement.classList.remove('out-of-stock');
+                return;
+            }
+            
+            try {
+                // Make an AJAX request to check stock availability
+                const response = await fetch('/api/check_medicine_stock/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        medicine_name: medicineName
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.out_of_stock) {
+                    // Show warning indicators
+                    document.getElementById(`stock-status-${rowIndex}`).classList.remove('hidden');
+                    document.getElementById(`stock-warning-${rowIndex}`).classList.remove('hidden');
+                    inputElement.classList.add('out-of-stock');
+                } else {
+                    // Hide indicators if medicine is in stock
+                    document.getElementById(`stock-status-${rowIndex}`).classList.add('hidden');
+                    document.getElementById(`stock-warning-${rowIndex}`).classList.add('hidden');
+                    inputElement.classList.remove('out-of-stock');
+                }
+            } catch (error) {
+                console.error('Error checking stock:', error);
+                // In case of error, hide indicators
+                document.getElementById(`stock-status-${rowIndex}`).classList.add('hidden');
+                document.getElementById(`stock-warning-${rowIndex}`).classList.add('hidden');
+                inputElement.classList.remove('out-of-stock');
+            }
+        }
     </script>
 </body>
 

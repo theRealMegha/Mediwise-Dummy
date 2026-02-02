@@ -1,5 +1,5 @@
 from django import forms
-from . models import Patient, Pharmacist, Doctor, Medicine
+from . models import Patient, Pharmacist, Doctor, Medicine, Leave
 
 class PatientRegistrationForm(forms.ModelForm):
     """
@@ -417,4 +417,41 @@ class DoctorProfileUpdateForm(forms.ModelForm):
             print("=== END PROFILE PICTURE DELETION DEBUG ===")
                 
         return doctor
+
+
+class LeaveForm(forms.ModelForm):
+    class Meta:
+        model = Leave
+        fields = ['leave_from', 'leave_to', 'leave_type', 'reason']
+        widgets = {
+            'leave_from': forms.DateInput(attrs={
+                'class': 'form-input w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'type': 'date',
+                'id': 'leave_from'
+            }),
+            'leave_to': forms.DateInput(attrs={
+                'class': 'form-input w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'type': 'date',
+                'id': 'leave_to'
+            }),
+            'leave_type': forms.Select(attrs={
+                'class': 'form-input w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            }),
+            'reason': forms.Textarea(attrs={
+                'class': 'form-input w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'rows': 4,
+                'placeholder': 'Please provide reason for leave...'
+            }),
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        leave_from = cleaned_data.get('leave_from')
+        leave_to = cleaned_data.get('leave_to')
+        
+        if leave_from and leave_to:
+            if leave_to < leave_from:
+                raise forms.ValidationError("Leave end date cannot be before start date.")
+        
+        return cleaned_data
 

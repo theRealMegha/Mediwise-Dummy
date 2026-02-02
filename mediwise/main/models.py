@@ -7,12 +7,50 @@ class Users(models.Model):
         ('doctor', 'Doctor'),
         ('patient', 'Patient'),
         ('pharmacist', 'Pharmacist'),
+        ('admin', 'Admin'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     id = models.AutoField(primary_key=True)
+    last_login = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.role} {self.id}"
+    
+    def get_user_display_name(self):
+        """Get display name for the user based on their role"""
+        try:
+            if self.role == 'doctor':
+                # Try to get the doctor object
+                try:
+                    doctor = Doctor.objects.get(user=self)
+                    return f"Dr. {doctor.first_name} {doctor.last_name}"
+                except Doctor.DoesNotExist:
+                    return f"Doctor (User ID: {self.id})"
+            elif self.role == 'pharmacist':
+                # Try to get the pharmacist object
+                try:
+                    pharmacist = Pharmacist.objects.get(user=self)
+                    return f"{pharmacist.first_name} {pharmacist.last_name} (Pharmacist)"
+                except Pharmacist.DoesNotExist:
+                    return f"Pharmacist (User ID: {self.id})"
+            elif self.role == 'admin':
+                # Try to get the admin object
+                try:
+                    admin = MediAdmin.objects.get(id=self.id)
+                    return f"Admin ({admin.email})"
+                except MediAdmin.DoesNotExist:
+                    return f"Admin (User ID: {self.id})"
+            elif self.role == 'patient':
+                # Try to get the patient object
+                try:
+                    patient = Patient.objects.get(user=self)
+                    return f"{patient.first_name} {patient.last_name} (Patient)"
+                except Patient.DoesNotExist:
+                    return f"Patient (User ID: {self.id})"
+            else:
+                return str(self)
+        except Exception:
+            return str(self)
 
 class MediAdmin(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -177,9 +215,120 @@ class Doctor(models.Model):
     consulting_time_from = models.TimeField(null=True, blank=True, help_text="Consulting hours start time")
     consulting_time_to = models.TimeField(null=True, blank=True, help_text="Consulting hours end time")
     location = models.CharField(max_length=200, null=True, blank=True, help_text="Doctor's clinic location")
+    
+    AVAILABILITY_STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('leave', 'Leave'),
+    ]
+    availability_status = models.CharField(max_length=10, choices=AVAILABILITY_STATUS_CHOICES, default='inactive', help_text="Doctor's current availability status")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+
+
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ('login', 'User Login'),
+        ('logout', 'User Logout'),
+        ('prescription_created', 'Prescription Created'),
+        ('prescription_edited', 'Prescription Edited'),
+        ('prescription_deleted', 'Prescription Deleted'),
+        ('appointment_created', 'Appointment Created'),
+        ('appointment_updated', 'Appointment Updated'),
+        ('appointment_deleted', 'Appointment Deleted'),
+        ('medicine_added', 'Medicine Added'),
+        ('medicine_updated', 'Medicine Updated'),
+        ('medicine_deleted', 'Medicine Deleted'),
+        ('order_created', 'Order Created'),
+        ('order_updated', 'Order Updated'),
+        ('order_deleted', 'Order Deleted'),
+        ('profile_updated', 'Profile Updated'),
+        ('leave_set', 'Leave Set'),
+        ('availability_updated', 'Availability Status Updated'),
+        ('other', 'Other Action'),
+    ]
+    
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='audit_logs')
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, null=True, help_text="Additional details about the action")
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+    related_object_id = models.PositiveIntegerField(blank=True, null=True, help_text="ID of related object (e.g., prescription ID)")
+    related_object_type = models.CharField(max_length=50, blank=True, null=True, help_text="Type of related object (e.g., Prescription, Appointment)")
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['user', '-timestamp']),
+            models.Index(fields=['action', '-timestamp']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user} - {self.get_action_display()} at {self.timestamp}"
+    
+    def get_user_display_name(self):
+        """Get display name for the user based on their role"""
+        try:
+            if self.user.role == 'doctor':
+                # Try to get the doctor object
+                try:
+                    doctor = Doctor.objects.get(user=self.user)
+                    return f"Dr. {doctor.first_name} {doctor.last_name}"
+                except Doctor.DoesNotExist:
+                    return f"Doctor (User ID: {self.user.id})"
+            elif self.user.role == 'pharmacist':
+                # Try to get the pharmacist object
+                try:
+                    pharmacist = Pharmacist.objects.get(user=self.user)
+                    return f"{pharmacist.first_name} {pharmacist.last_name} (Pharmacist)"
+                except Pharmacist.DoesNotExist:
+                    return f"Pharmacist (User ID: {self.user.id})"
+            elif self.user.role == 'admin':
+                # Try to get the admin object
+                try:
+                    admin = MediAdmin.objects.get(id=self.user.id)
+                    return f"Admin ({admin.email})"
+                except MediAdmin.DoesNotExist:
+                    return f"Admin (User ID: {self.user.id})"
+            elif self.user.role == 'patient':
+                # Try to get the patient object
+                try:
+                    patient = Patient.objects.get(user=self.user)
+                    return f"{patient.first_name} {patient.last_name} (Patient)"
+                except Patient.DoesNotExist:
+                    return f"Patient (User ID: {self.user.id})"
+            else:
+                return str(self.user)
+        except Exception:
+            return str(self.user)
+
+
+class Leave(models.Model):
+    LEAVE_TYPE_CHOICES = [
+        ('annual', 'Annual Leave'),
+        ('sick', 'Sick Leave'),
+        ('personal', 'Personal Leave'),
+        ('emergency', 'Emergency Leave'),
+        ('other', 'Other'),
+    ]
+    
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='leaves')
+    leave_from = models.DateField(help_text="Start date of leave")
+    leave_to = models.DateField(help_text="End date of leave (same as start date for single day leave)")
+    leave_type = models.CharField(max_length=20, choices=LEAVE_TYPE_CHOICES, default='other')
+    reason = models.TextField(help_text="Reason for leave")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Leave: Dr. {self.doctor.last_name} from {self.leave_from} to {self.leave_to}"
+    
+    class Meta:
+        ordering = ['-leave_from']
+        verbose_name = "Doctor Leave"
+        verbose_name_plural = "Doctor Leaves"
 
 
 class Appointment(models.Model):
@@ -208,6 +357,7 @@ class Prescription(models.Model):
     appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='prescriptions')
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    next_appointment_date = models.DateField(null=True, blank=True, help_text="Date for the next appointment")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
