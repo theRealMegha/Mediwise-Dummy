@@ -83,6 +83,38 @@
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+        
+        .customer-card {
+            transition: all 0.3s ease;
+        }
+        
+        .customer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .order-item-card {
+            transition: all 0.3s ease;
+        }
+        
+        .order-item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .order-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .order-details.expanded {
+            max-height: 1000px;
+        }
     </style>
 </head>
 <body class="text-slate-900">
@@ -168,147 +200,176 @@
         {% endif %}
 
         {% if patient_data %}
-            <div class="grid grid-cols-1 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for pdata in patient_data %}
-                <div class="glass-card rounded-[2rem] p-8 animate-entrance">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-6">
-                            <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
-                                <i class="fas fa-user text-xl"></i>
+                <div class="glass-card rounded-[2rem] p-6 animate-entrance customer-card cursor-pointer" onclick="toggleCustomerDetails(this)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                <i class="fas fa-user text-lg"></i>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-bold text-slate-900">{{ pdata.patient.first_name }} {{ pdata.patient.last_name }}</h3>
-                                <p class="text-sm text-slate-500">{{ pdata.patient.email }}</p>
-                                <p class="text-sm text-rose-600 font-bold mt-1">{{ pdata.patient.phone_number }}</p>
+                                <h3 class="text-lg font-bold text-slate-900">{{ pdata.patient.first_name }} {{ pdata.patient.last_name }}</h3>
+                                <p class="text-xs text-slate-500 truncate max-w-[180px]">{{ pdata.patient.email }}</p>
+                                <p class="text-xs text-rose-600 font-bold">{{ pdata.patient.phone_number }}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <span class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-widest">Customer</span>
+                            <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-widest">Customer</span>
                         </div>
                     </div>
 
-                    <!-- Customer Details -->
-                    <div class="p-6 bg-white/50 rounded-2xl mb-6">
-                        <h4 class="text-lg font-bold text-slate-900 mb-4 flex items-center">
-                            <i class="fas fa-info-circle mr-2"></i> Personal Details
-                        </h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><span class="font-bold text-slate-700">Address:</span> {{ pdata.patient.address|default:'N/A' }}</div>
-                            <div><span class="font-bold text-slate-700">Blood Group:</span> {{ pdata.patient.blood_group|default:'N/A' }}</div>
-                            <div><span class="font-bold text-slate-700">Height:</span> {{ pdata.patient.height|default:'N/A' }} cm</div>
-                            <div><span class="font-bold text-slate-700">Weight:</span> {{ pdata.patient.weight|default:'N/A' }} kg</div>
+                    <!-- Customer Info Summary -->
+                    <div class="text-xs text-slate-600 mb-4">
+                        <div class="flex justify-between">
+                            <span>Orders:</span>
+                            <span class="font-semibold">{{ pdata.order_items|length }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Last Order:</span>
+                            <span class="font-semibold">
+                                {% if pdata.order_items %}
+                                    {{ pdata.order_items.0.order.created_at|date:"M d, Y" }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Prescriptions:</span>
+                            <span class="font-semibold">{{ pdata.prescriptions|length }}</span>
                         </div>
                     </div>
 
-                    <!-- Order Items Section with Refill Reminders -->
-                    <div class="mb-6">
-                        <h4 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
-                            <i class="fas fa-file-prescription mr-3"></i> Order History with Refill Options
-                        </h4>
-                        
-                        {% if pdata.order_items %}
-                            <div class="space-y-6">
-                                {% for order_item in pdata.order_items %}
-                                <div class="glass-card rounded-2xl p-6 shine-effect">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-                                                <i class="fas fa-pills text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <h5 class="font-bold text-slate-900">{{ order_item.medicine.brand_name }}</h5>
-                                                <p class="text-sm text-slate-500">Ordered on {{ order_item.order.created_at|date:"M d, Y" }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            {% if order_item.reminder_sent_at %}
-                                            <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Reminder Sent</span>
-                                            <span class="text-xs text-slate-400">{{ order_item.reminder_sent_at|date:"M d" }}</span>
-                                            {% else %}
-                                            <a href="{% url 'send_refill_reminder' order_item.id %}" class="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition-colors">
-                                                Send Refill Reminder
-                                            </a>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                        <div><span class="font-semibold text-slate-600">Drug:</span> {{ order_item.medicine.generic_name }} {% if order_item.medicine.brand_name %}({{ order_item.medicine.brand_name }}){% endif %}</div>
-                                        <div><span class="font-semibold text-slate-600">Strength:</span> {{ order_item.medicine.strength }}</div>
-                                        <div><span class="font-semibold text-slate-600">Quantity:</span> {{ order_item.quantity }}</div>
-                                        <div><span class="font-semibold text-slate-600">Course Duration:</span> {{ order_item.course_duration }}</div>
-                                        <div class="md:col-span-2"><span class="font-semibold text-slate-600">Prescribed by:</span> {{ pdata.patient_prescriptions|get_prescribing_doctor:order_item.medicine.generic_name }}</div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-12 bg-white/30 rounded-2xl">
-                                <i class="fas fa-file-prescription text-4xl text-slate-300 mb-4"></i>
-                                <h5 class="text-lg font-bold text-slate-500">No Orders Found</h5>
-                                <p class="text-slate-400 mt-2">No order history available for this customer.</p>
-                            </div>
-                        {% endif %}
+                    <!-- Toggle Button -->
+                    <div class="flex justify-center mt-2">
+                        <button class="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition-colors flex items-center gap-1">
+                            <span>View Details</span>
+                            <i class="fas fa-chevron-down text-xs ml-1"></i>
+                        </button>
                     </div>
-                    
-                    <!-- Prescription History Section -->
-                    <div class="mb-6">
-                        <h4 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
-                            <i class="fas fa-stethoscope mr-3"></i> Prescription History
-                        </h4>
-                        
-                        {% if pdata.prescriptions %}
-                            <div class="space-y-6">
-                                {% for prescription in pdata.prescriptions %}
-                                <div class="glass-card rounded-2xl p-6 shine-effect">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-                                                <i class="fas fa-user-md text-lg"></i>
+
+                    <!-- Detailed Customer Information (Initially Hidden) -->
+                    <div class="customer-details mt-6 hidden">
+                        <!-- Customer Details -->
+                        <div class="p-4 bg-white/50 rounded-2xl mb-4">
+                            <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center">
+                                <i class="fas fa-info-circle mr-2 text-sm"></i> Personal Details
+                            </h4>
+                            <div class="grid grid-cols-1 gap-2 text-xs">
+                                <div class="flex justify-between"><span class="font-bold text-slate-700">Address:</span> <span class="text-slate-600">{{ pdata.patient.address|default:'N/A' }}</span></div>
+                                <div class="flex justify-between"><span class="font-bold text-slate-700">Blood Group:</span> <span class="text-slate-600">{{ pdata.patient.blood_group|default:'N/A' }}</span></div>
+                                <div class="flex justify-between"><span class="font-bold text-slate-700">Height:</span> <span class="text-slate-600">{{ pdata.patient.height|default:'N/A' }} cm</span></div>
+                                <div class="flex justify-between"><span class="font-bold text-slate-700">Weight:</span> <span class="text-slate-600">{{ pdata.patient.weight|default:'N/A' }} kg</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Order Items Section with Refill Reminders -->
+                        <div class="mb-4">
+                            <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center">
+                                <i class="fas fa-file-prescription mr-2 text-sm"></i> Order History
+                            </h4>
+                            
+                            {% if pdata.order_items %}
+                                <div class="space-y-3">
+                                    {% for order_item in pdata.order_items %}
+                                    <div class="order-item-card glass-card rounded-xl p-4 shine-effect">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+                                                    <i class="fas fa-pills text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="font-bold text-slate-900 text-sm">{{ order_item.medicine.brand_name }}</h5>
+                                                    <p class="text-xs text-slate-500">Ordered: {{ order_item.order.created_at|date:"M d, Y" }}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h5 class="font-bold text-slate-900">Dr. {{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</h5>
-                                                <p class="text-sm text-slate-500">{{ prescription.doctor.speciality }}</p>
+                                            <div class="flex items-center gap-2">
+                                                {% if order_item.reminder_sent_at %}
+                                                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[0.6rem] font-bold">Sent</span>
+                                                <span class="text-[0.6rem] text-slate-400">{{ order_item.reminder_sent_at|date:"M d" }}</span>
+                                                {% else %}
+                                                <a href="{% url 'send_refill_reminder' order_item.id %}" class="px-3 py-1 bg-rose-600 text-white rounded-lg text-[0.6rem] font-bold hover:bg-rose-700 transition-colors">
+                                                    Send Reminder
+                                                </a>
+                                                {% endif %}
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-3">
-                                            <a href="{% url 'download_prescription_pdf' prescription.id %}" 
-                                               class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1"
-                                               title="Download Prescription PDF">
-                                                <i class="fas fa-download text-xs"></i> PDF
-                                            </a>
-                                            <span class="text-sm text-slate-400">{{ prescription.created_at|date:"M d, Y" }}</span>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mt-2">
+                                            <div><span class="font-semibold text-slate-600">Drug:</span> {{ order_item.medicine.generic_name }} {% if order_item.medicine.brand_name %}({{ order_item.medicine.brand_name }}){% endif %}</div>
+                                            <div><span class="font-semibold text-slate-600">Strength:</span> {{ order_item.medicine.strength }}</div>
+                                            <div><span class="font-semibold text-slate-600">Qty:</span> {{ order_item.quantity }}</div>
+                                            <div><span class="font-semibold text-slate-600">Duration:</span> {{ order_item.course_duration }}</div>
                                         </div>
-                                    </div>
-                                    
-                                    <!-- Display all medicines for this prescription -->
-                                    {% for medicine in prescription.medicines.all %}
-                                    <div class="mb-4 {% if not forloop.first %}pt-4 mt-4 border-t border-slate-200{% endif %}">
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                            <div><span class="font-semibold text-slate-600">Drug:</span> {{ medicine.drug_name_generic }} {% if medicine.drug_name_brand %}({{ medicine.drug_name_brand }}){% endif %}</div>
-                                            <div><span class="font-semibold text-slate-600">Strength:</span> {{ medicine.strength }}</div>
-                                            <div><span class="font-semibold text-slate-600">Dosage:</span> {{ medicine.dosage_frequency }}</div>
-                                            <div><span class="font-semibold text-slate-600">Duration:</span> {{ medicine.duration_course }}</div>
-                                            <div class="md:col-span-2"><span class="font-semibold text-slate-600">Instructions:</span> {{ medicine.instructions }}</div>
-                                            <div><span class="font-semibold text-slate-600">Route:</span> {{ medicine.route_administration }}</div>
-                                            <div><span class="font-semibold text-slate-600">Quantity:</span> {{ medicine.total_quantity }}</div>
-                                        </div>
-                                    </div>
-                                    {% empty %}
-                                    <div class="text-center py-4 text-slate-500">
-                                        <p>No medicines recorded for this prescription</p>
                                     </div>
                                     {% endfor %}
                                 </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-12 bg-white/30 rounded-2xl">
-                                <i class="fas fa-stethoscope text-4xl text-slate-300 mb-4"></i>
-                                <h5 class="text-lg font-bold text-slate-500">No Prescriptions Found</h5>
-                                <p class="text-slate-400 mt-2">No prescription history available for this customer.</p>
-                            </div>
-                        {% endif %}
+                            {% else %}
+                                <div class="text-center py-4 bg-white/30 rounded-xl text-xs">
+                                    <i class="fas fa-file-prescription text-xl text-slate-300 mb-2"></i>
+                                    <h5 class="text-sm font-bold text-slate-500">No Orders</h5>
+                                    <p class="text-slate-400 mt-1">No order history available.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Prescription History Section -->
+                        <div class="mb-4">
+                            <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center">
+                                <i class="fas fa-stethoscope mr-2 text-sm"></i> Prescriptions
+                            </h4>
+                            
+                            {% if pdata.prescriptions %}
+                                <div class="space-y-3">
+                                    {% for prescription in pdata.prescriptions %}
+                                    <div class="order-item-card glass-card rounded-xl p-4 shine-effect">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+                                                    <i class="fas fa-user-md text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="font-bold text-slate-900 text-sm">Dr. {{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</h5>
+                                                    <p class="text-xs text-slate-500">{{ prescription.doctor.speciality }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <a href="{% url 'download_prescription_pdf' prescription.id %}" 
+                                                   class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[0.6rem] font-bold rounded transition-all flex items-center gap-1"
+                                                   title="Download Prescription PDF">
+                                                    <i class="fas fa-download text-xs"></i> PDF
+                                                </a>
+                                                <span class="text-[0.6rem] text-slate-400">{{ prescription.created_at|date:"M d, Y" }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Display all medicines for this prescription -->
+                                        {% for medicine in prescription.medicines.all %}
+                                        <div class="mb-2 {% if not forloop.first %}pt-2 mt-2 border-t border-slate-200{% endif %}">
+                                            <div class="grid grid-cols-1 gap-1 text-xs">
+                                                <div><span class="font-semibold text-slate-600">Drug:</span> {{ medicine.drug_name_generic }} {% if medicine.drug_name_brand %}({{ medicine.drug_name_brand }}){% endif %}</div>
+                                                <div><span class="font-semibold text-slate-600">Strength:</span> {{ medicine.strength }}</div>
+                                                <div><span class="font-semibold text-slate-600">Dosage:</span> {{ medicine.dosage_frequency }}</div>
+                                                <div><span class="font-semibold text-slate-600">Duration:</span> {{ medicine.duration_course }}</div>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="text-center py-2 text-slate-500 text-xs">
+                                            <p>No medicines recorded</p>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4 bg-white/30 rounded-xl text-xs">
+                                    <i class="fas fa-stethoscope text-xl text-slate-300 mb-2"></i>
+                                    <h5 class="text-sm font-bold text-slate-500">No Prescriptions</h5>
+                                    <p class="text-slate-400 mt-1">No prescription history available.</p>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -348,6 +409,22 @@
                 sidebarTexts.forEach(el => el.style.display = 'none');
             }
         });
+        
+        // Function to toggle customer details
+        function toggleCustomerDetails(cardElement) {
+            const details = cardElement.querySelector('.customer-details');
+            const chevron = cardElement.querySelector('i.fa-chevron-down');
+            
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                details.classList.add('hidden');
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
     </script>
 </body>
 </html>

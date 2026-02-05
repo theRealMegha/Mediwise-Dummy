@@ -800,16 +800,35 @@ def add_to_cart(request, medicine_id):
     
     # Check if medicine is Rx (requires prescription)
     if medicine.medicine_type == 'Rx':
-        # Add medicine to cart but mark as requiring prescription
-        cart_item, created = Cart.objects.get_or_create(patient=patient, medicine=medicine)
+        # Check if the medicine is already in the cart
+        existing_cart_item = Cart.objects.filter(patient=patient, medicine=medicine).first()
+        
+        if existing_cart_item:
+            # If item already exists, update its quantity based on the same rules
+            cart_item = existing_cart_item
+            if prescribed_quantity != 1:  # If prescription specifies a quantity, use it
+                cart_item.quantity = prescribed_quantity
+            else:
+                # Default quantity to 5, but enforce minimum of 5 for medicines under 20
+                cart_item.quantity = 5
+                if float(medicine.price) < 20:
+                    cart_item.quantity = max(cart_item.quantity, 5)
+        else:
+            # If new item, create it with appropriate quantity
+            if prescribed_quantity != 1:  # If prescription specifies a quantity, use it
+                cart_item = Cart.objects.create(patient=patient, medicine=medicine, quantity=prescribed_quantity, requires_prescription=True)
+            else:
+                # Default quantity to 5, but enforce minimum of 5 for medicines under 20
+                quantity_to_set = 5
+                if float(medicine.price) < 20:
+                    quantity_to_set = max(quantity_to_set, 5)
+                cart_item = Cart.objects.create(patient=patient, medicine=medicine, quantity=quantity_to_set, requires_prescription=True)
+        
         cart_item.requires_prescription = True
         
         # If medicine is being added from a prescription context, mark it as such
         if is_from_prescription:
             cart_item.added_from_prescription = True
-        
-        # Set quantity from prescription if available, otherwise default to 1
-        cart_item.quantity = prescribed_quantity
         
         # Set course duration if provided
         if course_duration:
@@ -826,15 +845,29 @@ def add_to_cart(request, medicine_id):
     
     # For OTC medicines, proceed normally
     if medicine.quantity > 0:
-        cart_item, created = Cart.objects.get_or_create(patient=patient, medicine=medicine)
+        # Check if the medicine is already in the cart
+        existing_cart_item = Cart.objects.filter(patient=patient, medicine=medicine).first()
         
-        # Set quantity from prescription if available and we're not incrementing an existing item
-        if not created:
-            # If item already exists, increment by 1 (normal behavior)
-            cart_item.quantity += 1
+        if existing_cart_item:
+            # If item already exists, update its quantity based on the same rules
+            cart_item = existing_cart_item
+            if prescribed_quantity != 1:  # If prescription specifies a quantity, use it
+                cart_item.quantity = prescribed_quantity
+            else:
+                # Default quantity to 5, but enforce minimum of 5 for medicines under 20
+                cart_item.quantity = 5
+                if float(medicine.price) < 20:
+                    cart_item.quantity = max(cart_item.quantity, 5)
         else:
-            # If new item, try to set quantity from prescription
-            cart_item.quantity = prescribed_quantity
+            # If new item, create it with appropriate quantity
+            if prescribed_quantity != 1:  # If prescription specifies a quantity, use it
+                cart_item = Cart.objects.create(patient=patient, medicine=medicine, quantity=prescribed_quantity)
+            else:
+                # Default quantity to 5, but enforce minimum of 5 for medicines under 20
+                quantity_to_set = 5
+                if float(medicine.price) < 20:
+                    quantity_to_set = max(quantity_to_set, 5)
+                cart_item = Cart.objects.create(patient=patient, medicine=medicine, quantity=quantity_to_set)
         
         # Set course duration if provided
         if course_duration:
@@ -891,7 +924,7 @@ def view_cart(request):
     total_amount = subtotal + gst_amount
     
     # Get cart count for the cart icon
-    cart_count = cart_items.count() if patient else 0
+    cart_count = len(cart_items) if patient else 0
     
     return render(request, 'patient/cart.html', {
         'user': patient,
@@ -911,6 +944,9 @@ def update_cart_quantity(request, item_id, action):
     if not cart_item:
         return redirect('view_cart')
     
+    # Determine if this medicine should have a minimum quantity of 5
+    min_quantity = 5 if float(cart_item.medicine.price) < 20 else 1
+    
     if action == 'increase':
         if cart_item.quantity < cart_item.medicine.quantity:
             cart_item.quantity += 1
@@ -918,9 +954,11 @@ def update_cart_quantity(request, item_id, action):
         else:
             messages.warning(request, "Cannot exceed available stock.")
     elif action == 'decrease':
-        if cart_item.quantity > 1:
+        if cart_item.quantity > min_quantity:
             cart_item.quantity -= 1
             cart_item.save()
+        elif cart_item.quantity == min_quantity:
+            messages.warning(request, f"Minimum quantity for this medicine is {min_quantity}.")
         else:
             cart_item.delete()
             messages.info(request, "Item removed from cart.")
@@ -2022,7 +2060,7 @@ def book_appointment(request, doctor_id):
             reason_for_visit=reason
         )
         messages.success(request, f'Appointment booked successfully with Dr. {doctor.first_name} {doctor.last_name} on {appointment_date} at {appointment_time}')
-        return redirect('view_doctors')
+        return redirect('patient_appointments')
 
     # Get preferred date from query parameters
     preferred_date = request.GET.get('preferred_date')

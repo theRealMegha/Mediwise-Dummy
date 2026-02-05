@@ -123,6 +123,12 @@
                Doctors
             </a>
 
+            <a href="{% url 'patient_appointments' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_appointments' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               My Appointments
+            </a>
+
             <a href="{% url 'patient_orders' %}" 
                class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
                {% if request.resolver_match.url_name == 'patient_orders' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
