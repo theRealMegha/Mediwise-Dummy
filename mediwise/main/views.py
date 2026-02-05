@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .models import MediAdmin, Patient, Users, Doctor, Pharmacist, Medicine, Cart,Transaction,OrderItem,Order, Appointment, Prescription, PrescriptionMedicine, Notification, Review, PrescriptionUpload, Leave, AuditLog
 from .forms import PatientRegistrationForm, PharmacistRegistrationForm, PatientProfileUpdateForm, DoctorRegistrationForm, PharmacistProfileUpdateForm, MedicineForm, LeaveForm
 from django.contrib import messages
@@ -509,6 +509,9 @@ def patient_dashboard(request):
         Q(is_read=False) | Q(read_at__gte=two_days_ago)
     ).order_by('-created_at')[:5]
     
+    # Get recent orders for the dashboard
+    recent_orders = Order.objects.filter(patient=user).order_by('-created_at')[:5]
+    
     # Get cart count for the cart icon
     cart_count = Cart.objects.filter(patient=user).count() if user else 0
     
@@ -518,6 +521,7 @@ def patient_dashboard(request):
         'pharmacists': pharmacists,
         'appointments': appointments,
         'active_prescriptions': active_prescriptions,
+        'recent_orders': recent_orders,
         'notifications': notifications,
         'cart_count': cart_count,
     }
@@ -590,8 +594,12 @@ def pharmacy_medicines(request, pk):
         messages.error(request, "Pharmacy not found.")
         return redirect('registered_pharmacies')
     
-    # Get medicines for this pharmacist
-    medicines = Medicine.objects.filter(pharmacist=pharmacist)
+    # Get medicines for this pharmacist, excluding expired ones
+    from django.utils import timezone
+    medicines = Medicine.objects.filter(
+        pharmacist=pharmacist,
+        expiry_date__gt=timezone.now().date()  # Only medicines with future expiry dates
+    )
     
     # Check if user wants to see medicines from their prescriptions
     show_prescription_meds = request.GET.get('show_prescription_meds', False)
@@ -709,6 +717,12 @@ def add_to_cart(request, medicine_id):
     patient = Patient.objects.get(id=patient_id)
     medicine = Medicine.objects.get(id=medicine_id)
     
+    # Check if medicine is expired
+    from django.utils import timezone
+    if medicine.expiry_date <= timezone.now().date():
+        messages.error(request, f"Cannot add {medicine.brand_name} to cart - medicine has expired.")
+        return redirect('pharmacy_medicines', pk=medicine.pharmacist.id)
+    
     # Handle course duration - prioritize any duration passed in request
     course_duration = request.POST.get('course_duration', '')
     # Also check for course duration in GET parameters (for direct links from prescriptions)
@@ -717,7 +731,6 @@ def add_to_cart(request, medicine_id):
     
     # If no course duration was provided in the request, try to get it from patient's prescriptions
     if not course_duration:
-        from .models import PrescriptionUpload
         # Look for uploaded prescriptions that contain this medicine
         # Since JSONField lookup is tricky, we'll filter in Python
         all_prescriptions = PrescriptionUpload.objects.filter(patient=patient)
@@ -840,12 +853,32 @@ def add_to_cart(request, medicine_id):
 
 def view_cart(request):
     from decimal import Decimal
+    from django.utils import timezone
     patient_id = request.session.get('patient_id')
     if not patient_id:
         return redirect('login')
     
     patient = Patient.objects.get(id=patient_id)
-    cart_items = Cart.objects.filter(patient=patient)
+    # Get cart items and filter out any that reference expired medicines
+    cart_items = Cart.objects.filter(patient=patient).select_related('medicine', 'medicine__pharmacist')
+    
+    # Remove cart items that reference expired medicines
+    expired_cart_items = []
+    valid_cart_items = []
+    
+    for item in cart_items:
+        if item.medicine.expiry_date <= timezone.now().date():
+            expired_cart_items.append(item)
+        else:
+            valid_cart_items.append(item)
+    
+    # Remove expired items from cart
+    if expired_cart_items:
+        for item in expired_cart_items:
+            item.delete()
+        messages.warning(request, f"Removed {len(expired_cart_items)} expired medicine(s) from your cart.")
+        
+    cart_items = valid_cart_items
     
     # Calculate subtotal
     subtotal = 0
@@ -951,7 +984,6 @@ def checkout(request):
     rx_items = cart_items.filter(requires_prescription=True)
     if rx_items.exists():
         # Check each Rx medicine individually to see if it's covered by a prescription
-        from .models import PrescriptionUpload
         uploaded_prescriptions = PrescriptionUpload.objects.filter(
             patient=patient,
             status__in=['processed', 'partially_available']
@@ -1000,38 +1032,16 @@ def checkout(request):
     gst_amount = round(subtotal * GST_RATE, 2)
     total_amount = subtotal + gst_amount
     
-    # Create Order
-    order = Order.objects.create(
-        patient=patient,
-        total_amount=total_amount,
-        gst_amount=gst_amount,
-        # Default status is 'pending' as defined in the model
-    )
+    # Store order details in session for payment processing
+    request.session['pending_order'] = {
+        'subtotal': float(subtotal),
+        'gst_amount': float(gst_amount),
+        'total_amount': float(total_amount),
+        'cart_items': [{'id': item.id, 'quantity': item.quantity, 'medicine_id': item.medicine.id, 'price': float(item.medicine.price), 'course_duration': item.course_duration} for item in cart_items]
+    }
     
-    # Create Order Items and Update Stock
-    for item in cart_items:
-        OrderItem.objects.create(
-            order=order,
-            medicine=item.medicine,
-            quantity=item.quantity,
-            price_at_order=item.medicine.price,
-            course_duration=item.course_duration
-        )
-        item.medicine.quantity -= item.quantity
-        item.medicine.save()
-    
-    # Create Transaction
-    Transaction.objects.create(
-        order=order,
-        transaction_id=f"MW-{uuid.uuid4().hex[:8].upper()}",
-        amount=total_amount
-    )
-    
-    # Clear cart
-    cart_items.delete()
-    
-    messages.success(request, "Payment successful! Your order has been placed.")
-    return redirect('patient_dashboard')
+    # Redirect to payment portal
+    return redirect('payment_portal')
 
 def patient_records(request):
     user_id = request.session.get('patient_id')
@@ -1227,17 +1237,23 @@ def extract_medicines_from_prescription(prescription_upload):
     return selected_medicines
 
 def check_medicine_availability(extracted_medicines, pharmacist=None):
-    """Check availability of medicines in specified pharmacy or all pharmacies"""
+    """Check availability of medicines in specified pharmacy or all pharmacies, excluding expired medicines"""
     from .models import Medicine
     from decimal import Decimal
+    from django.utils import timezone
     
     # If specific pharmacy is specified, check only that pharmacy
     if pharmacist:
-        pharmacy_medicines = Medicine.objects.filter(pharmacist=pharmacist)
+        pharmacy_medicines = Medicine.objects.filter(
+            pharmacist=pharmacist,
+            expiry_date__gt=timezone.now().date()  # Only non-expired medicines
+        )
         pharmacy_list = [pharmacist]
     else:
-        # Check all pharmacies
-        pharmacy_medicines = Medicine.objects.all()
+        # Check all pharmacies, excluding expired medicines
+        pharmacy_medicines = Medicine.objects.filter(
+            expiry_date__gt=timezone.now().date()  # Only non-expired medicines
+        )
         pharmacy_list = Pharmacist.objects.all()
     
     # Create medicine dictionary for quick lookup
@@ -1274,7 +1290,7 @@ def check_medicine_availability(extracted_medicines, pharmacist=None):
         else:
             unavailable_medicines.append({
                 'name': medicine['name'],
-                'reason': 'Not available in stock',
+                'reason': 'Not available in stock or expired',
                 'extracted_info': medicine
             })
     
@@ -1582,7 +1598,7 @@ def download_prescription_pdf(request, prescription_id):
     
     try:
         patient = Patient.objects.get(id=user_id)
-        prescription = Prescription.objects.select_related('doctor', 'patient', 'appointment').prefetch_related('medicines').get(
+        prescription = Prescription.objects.select_related('doctor', 'patient', 'appointment').prefetch_related('medicines', 'lab_tests').get(
             id=prescription_id, 
             patient=patient
         )
@@ -1759,6 +1775,44 @@ def download_prescription_pdf(request, prescription_id):
         elements.append(Paragraph("No medications prescribed.", normal_style))
     
     elements.append(Spacer(1, 15))
+    
+    # Lab Tests Section
+    if prescription.lab_tests.exists():
+        elements.append(Paragraph("LABORATORY TESTS REQUIRED", header_style))
+        elements.append(Spacer(1, 10))
+        
+        # Lab tests table header
+        lab_test_header = ['Test Name', 'Category', 'Priority', 'Instructions']
+        lab_test_data = [lab_test_header]
+        
+        # Add lab tests data
+        for lab_test in prescription.lab_tests.all():
+            lab_test_row = [
+                lab_test.test_name,
+                lab_test.get_test_category_display(),
+                lab_test.get_priority_display(),
+                lab_test.instructions or "N/A"
+            ]
+            lab_test_data.append(lab_test_row)
+        
+        # Create lab tests table
+        lab_test_table = Table(lab_test_data, colWidths=[50*mm, 30*mm, 20*mm, 70*mm])
+        lab_test_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3b82f6')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#eff6ff')),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#dbeafe')),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ]))
+        
+        elements.append(lab_test_table)
+        elements.append(Spacer(1, 20))
     
     # Instructions section
     if prescription.medicines.exists():
@@ -2183,6 +2237,121 @@ def pharmacist_dashboard(request):
     }
     return render(request, 'pharmacist/dashboard.html', context)
 
+def pharmacist_earnings(request):
+    from .models import Pharmacist, OrderItem, Order
+    from django.db.models import Sum, Count
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+    
+    pharmacist_id = request.session.get('pharmacist_id')
+    
+    if not pharmacist_id:
+        return redirect('login')
+    
+    try:
+        pharmacist = Pharmacist.objects.get(id=pharmacist_id)
+    except:
+        return redirect('login')
+    
+    # Get filter parameters
+    filter_type = request.GET.get('filter', 'week')  # week, month, year, all
+    
+    # Calculate date ranges based on filter
+    today = timezone.now().date()
+    
+    if filter_type == 'week':
+        start_date = today - timedelta(days=7)
+        period_name = 'This Week'
+    elif filter_type == 'month':
+        start_date = today - timedelta(days=30)
+        period_name = 'This Month'
+    elif filter_type == 'year':
+        start_date = today - timedelta(days=365)
+        period_name = 'This Year'
+    else:  # all time
+        start_date = None
+        period_name = 'All Time'
+    
+    # Build base query for orders (count ALL orders placed)
+    orders_query = Order.objects.filter(
+        items__medicine__pharmacist=pharmacist
+    ).distinct()
+    
+    # Build base query for successful orders (for earnings calculation)
+    successful_orders_query = Order.objects.filter(
+        items__medicine__pharmacist=pharmacist,
+        status='successful'
+    ).distinct()
+    
+    if start_date:
+        orders_query = orders_query.filter(created_at__date__gte=start_date)
+        successful_orders_query = successful_orders_query.filter(created_at__date__gte=start_date)
+    
+    # Calculate total orders (all orders placed)
+    total_orders = orders_query.count()
+    
+    # Calculate successful orders
+    successful_orders = successful_orders_query.count()
+    
+    # Calculate total earnings from successful orders only
+    total_earnings = successful_orders_query.aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
+    
+    # Calculate average order value (based on successful orders)
+    avg_order_value = total_earnings / successful_orders if successful_orders > 0 else 0
+    
+    # Get earnings by day for chart (last 7 days) - only successful orders
+    earnings_by_day = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        day_earnings = Order.objects.filter(
+            items__medicine__pharmacist=pharmacist,
+            status='successful',
+            created_at__date=day
+        ).distinct().aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        earnings_by_day.append({
+            'date': day.strftime('%a'),
+            'earnings': float(day_earnings),
+            'full_date': day.strftime('%Y-%m-%d')
+        })
+    
+    # Get top selling medicines (from successful orders)
+    top_medicines = OrderItem.objects.filter(
+        order__in=successful_orders_query,
+        medicine__pharmacist=pharmacist
+    ).values(
+        'medicine__brand_name',
+        'medicine__generic_name'
+    ).annotate(
+        total_quantity=Sum('quantity'),
+        total_revenue=Sum('price_at_order')
+    ).order_by('-total_revenue')[:5]
+    
+    # Get recent transactions (from successful orders)
+    recent_transactions = OrderItem.objects.filter(
+        order__in=successful_orders_query,
+        medicine__pharmacist=pharmacist
+    ).select_related(
+        'order', 'order__patient', 'medicine'
+    ).order_by('-order__created_at')[:10]
+    
+    context = {
+        'pharmacist': pharmacist,
+        'total_earnings': round(total_earnings, 2),
+        'total_orders': total_orders,
+        'successful_orders': successful_orders,
+        'avg_order_value': round(avg_order_value, 2),
+        'period_name': period_name,
+        'filter_type': filter_type,
+        'earnings_by_day': earnings_by_day,
+        'top_medicines': top_medicines,
+        'recent_transactions': recent_transactions,
+    }
+    
+    return render(request, 'pharmacist/earnings.html', context)
+
 
 def pharmacist_profile(request):
     
@@ -2239,19 +2408,22 @@ def pharmacist_inventory(request):
     else:
         form = MedicineForm()
     
-    # Logic to hide products within 3-6 months of expiry
-    # We'll hide everything expiring within 6 months (180 days)
-    six_months_from_now = timezone.now().date() + timedelta(days=180)
-    
+    # Show all medicines
     all_medicines = Medicine.objects.filter(pharmacist=pharmacist).order_by('-created_at')
-    visible_medicines = all_medicines.exclude(expiry_date__lte=six_months_from_now)
-    hidden_count = all_medicines.filter(expiry_date__lte=six_months_from_now).count()
+    visible_medicines = all_medicines
+    hidden_count = 0
+    
+    # Calculate soon date (10 days from now) for near-expiry highlighting
+    today = timezone.now().date()
+    soon = today + timedelta(days=10)
     
     context = {
         'pharmacist': pharmacist,
         'medicines': visible_medicines,
         'form': form,
-        'hidden_count': hidden_count
+        'hidden_count': hidden_count,
+        'today': today,
+        'soon': soon
     }
     return render(request, 'pharmacist/inventory.html', context)
 
@@ -2581,9 +2753,23 @@ def update_order_status(request, order_id):
             order.status = new_status
             order.save()
             
-
-            
-            messages.success(request, f"Order #{order.id} status updated to {order.get_status_display()}.")
+            # Track earnings when order becomes successful
+            if old_status != 'successful' and new_status == 'successful':
+                # Calculate earnings for this order
+                order_earnings = order.total_amount
+                
+                # Log the successful order for earnings tracking
+                log_user_action(
+                    pharmacist.user if hasattr(pharmacist, 'user') else None,
+                    'order_completed',
+                    f'Order #{order.id} marked as successful. Earnings: ₹{order_earnings}',
+                    related_object=order,
+                    request=request
+                )
+                
+                messages.success(request, f"Order #{order.id} status updated to {order.get_status_display()}. Earnings of ₹{order_earnings} recorded.")
+            else:
+                messages.success(request, f"Order #{order.id} status updated to {order.get_status_display()}.")
         else:
             messages.error(request, "Invalid status selected.")
             
@@ -2969,19 +3155,41 @@ def doctor_patients(request):
     except Doctor.DoesNotExist:
         return redirect('login')
     
-    # Get all completed appointments for this doctor's patients
-    completed_appointments = Appointment.objects.filter(
-        doctor=doctor,
-        status='completed'
-    ).select_related('patient').prefetch_related('reviews')
+    # Get search query if provided
+    search_query = request.GET.get('search', '').strip()
+    
+    # Get all appointments for this doctor (completed and other statuses) to show all patients
+    all_appointments = Appointment.objects.filter(
+        doctor=doctor
+    ).select_related('patient').prefetch_related('reviews').order_by('-appointment_date')
+    
+    # Apply search filter if query exists
+    if search_query:
+        all_appointments = all_appointments.filter(
+            Q(patient__first_name__icontains=search_query) | 
+            Q(patient__last_name__icontains=search_query) |
+            Q(patient__email__icontains=search_query)
+        )
+    
+    # Get unique patients from all appointments
+    patient_ids = all_appointments.values_list('patient_id', flat=True).distinct()
+    unique_patients = []
+    seen_patients = set()
+    
+    # Get the most recent appointment for each patient
+    for appointment in all_appointments:
+        if appointment.patient.id not in seen_patients:
+            unique_patients.append(appointment)
+            seen_patients.add(appointment.patient.id)
     
     # Get all prescriptions for this doctor's patients with their medicines
     prescriptions = Prescription.objects.filter(doctor=doctor).select_related('patient', 'appointment').prefetch_related('medicines')
     
     context = {
         'user': doctor,
-        'completed_appointments': completed_appointments,
+        'completed_appointments': unique_patients,  # Now contains unique patients with their latest appointments
         'prescriptions': prescriptions,
+        'search_query': search_query,
     }
     return render(request, 'doctor/patients.html', context)
 
@@ -3086,6 +3294,290 @@ def add_prescription(request, appointment_id):
     return render(request, 'doctor/add_prescription.html', context)
 
 
+def add_lab_test_direct(request, patient_id):
+    user_id = request.session.get('doctor_id')
+    if not user_id:
+        return redirect('login')
+    
+    try:
+        doctor = Doctor.objects.get(id=user_id)
+        patient = Patient.objects.get(id=patient_id)
+    except (Doctor.DoesNotExist, Patient.DoesNotExist):
+        messages.error(request, "Patient not found.")
+        return redirect('doctor_patients')
+    
+    if request.method == 'POST':
+        # Create a prescription without an appointment for direct lab tests
+        prescription = Prescription.objects.create(
+            doctor=doctor,
+            patient=patient,
+            next_appointment_date=None,
+            appointment=None,  # Direct lab test without appointment
+        )
+        
+        # Log prescription creation
+        try:
+            if doctor.user:
+                user_model = Users.objects.get(id=doctor.user.id, role='doctor')
+                log_user_action(
+                    user_model, 
+                    'prescription_created', 
+                    f'Created direct lab test prescription for patient {patient.first_name} {patient.last_name}', 
+                    related_object=prescription,
+                    request=request
+                )
+        except Users.DoesNotExist:
+            pass
+        except Exception as e:
+            print(f"Error logging prescription creation: {e}")
+        
+        # Process lab tests
+        lab_test_count = int(request.POST.get('lab_test_count', 0))
+        lab_tests_added = 0
+        
+        for i in range(lab_test_count):
+            # Check if this lab test row has data
+            test_name = request.POST.get(f'lab_test_{i}_name', '').strip()
+            if test_name:  # Only create lab test if name is provided
+                from .models import LabTest
+                LabTest.objects.create(
+                    prescription=prescription,
+                    test_name=test_name,
+                    test_category=request.POST.get(f'lab_test_{i}_category', 'other'),
+                    test_description='',  # Removed description as requested
+                    priority=request.POST.get(f'lab_test_{i}_priority', 'routine'),
+                    instructions=request.POST.get(f'lab_test_{i}_instructions', ''),
+                )
+                lab_tests_added += 1
+        
+        if lab_tests_added > 0:
+            messages.success(request, f"Direct lab test prescription with {lab_tests_added} lab test(s) added successfully!")
+            return redirect('doctor_patients')
+        else:
+            messages.error(request, "No lab tests were added. Please add at least one test.")
+            prescription.delete()  # Clean up empty prescription
+    
+    context = {
+        'user': doctor,
+        'patient': patient,
+    }
+    return render(request, 'doctor/add_lab_test.html', context)
+
+
+def get_patient_appointments_api(request, patient_id):
+    """API endpoint to get patient appointment history"""
+    user_id = request.session.get('doctor_id')
+    if not user_id:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        doctor = Doctor.objects.get(id=user_id)
+        patient = Patient.objects.get(id=patient_id)
+    except (Doctor.DoesNotExist, Patient.DoesNotExist):
+        return JsonResponse({'error': 'Patient or doctor not found'}, status=404)
+    
+    # Get all appointments for this patient with this doctor
+    appointments = Appointment.objects.filter(
+        patient=patient,
+        doctor=doctor
+    ).order_by('-appointment_date')
+    
+    appointment_data = []
+    for appointment in appointments:
+        appointment_data.append({
+            'id': appointment.id,
+            'date': appointment.appointment_date.strftime('%B %d, %Y'),
+            'time': appointment.appointment_time.strftime('%I:%M %p'),
+            'reason': appointment.reason_for_visit,
+            'status': appointment.get_status_display(),
+            'status_key': appointment.status
+        })
+    
+    return JsonResponse({
+        'appointments': appointment_data,
+        'count': len(appointment_data)
+    })
+
+
+def get_patient_prescriptions_api(request, patient_id):
+    """API endpoint to get patient prescription history"""
+    user_id = request.session.get('doctor_id')
+    if not user_id:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        doctor = Doctor.objects.get(id=user_id)
+        patient = Patient.objects.get(id=patient_id)
+    except (Doctor.DoesNotExist, Patient.DoesNotExist):
+        return JsonResponse({'error': 'Patient or doctor not found'}, status=404)
+    
+    # Get all prescriptions for this patient from this doctor
+    prescriptions = Prescription.objects.filter(
+        patient=patient,
+        doctor=doctor
+    ).prefetch_related('medicines').order_by('-created_at')
+    
+    prescription_data = []
+    for prescription in prescriptions:
+        medicines = []
+        for medicine in prescription.medicines.all():
+            medicines.append({
+                'name': medicine.drug_name_generic,
+                'strength': medicine.strength,
+                'dosage': medicine.dosage_frequency
+            })
+        
+        prescription_data.append({
+            'id': prescription.id,
+            'date': prescription.created_at.strftime('%B %d, %Y'),
+            'medicines': medicines,
+            'next_appointment': prescription.next_appointment_date.strftime('%B %d, %Y') if prescription.next_appointment_date else None
+        })
+    
+    return JsonResponse({
+        'prescriptions': prescription_data,
+        'count': len(prescription_data)
+    })
+
+
+def get_patient_lab_tests_api(request, patient_id):
+    """API endpoint to get patient lab test history"""
+    user_id = request.session.get('doctor_id')
+    if not user_id:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        doctor = Doctor.objects.get(id=user_id)
+        patient = Patient.objects.get(id=patient_id)
+    except (Doctor.DoesNotExist, Patient.DoesNotExist):
+        return JsonResponse({'error': 'Patient or doctor not found'}, status=404)
+    
+    # Get all prescriptions with lab tests for this patient from this doctor
+    prescriptions_with_tests = Prescription.objects.filter(
+        patient=patient,
+        doctor=doctor,
+        lab_tests__isnull=False
+    ).prefetch_related('lab_tests').order_by('-created_at')
+    
+    lab_test_data = []
+    for prescription in prescriptions_with_tests:
+        for lab_test in prescription.lab_tests.all():
+            lab_test_data.append({
+                'id': lab_test.id,
+                'name': lab_test.test_name,
+                'category': lab_test.get_test_category_display(),
+                'priority': lab_test.get_priority_display(),
+                'instructions': lab_test.instructions,
+                'date': prescription.created_at.strftime('%B %d, %Y')
+            })
+    
+    return JsonResponse({
+        'lab_tests': lab_test_data,
+        'count': len(lab_test_data)
+    })
+
+
+def add_prescription_direct(request, patient_id):
+    user_id = request.session.get('doctor_id')
+    if not user_id:
+        return redirect('login')
+    
+    try:
+        doctor = Doctor.objects.get(id=user_id)
+        patient = Patient.objects.get(id=patient_id)
+    except (Doctor.DoesNotExist, Patient.DoesNotExist):
+        messages.error(request, "Patient not found.")
+        return redirect('doctor_patients')
+    
+    if request.method == 'POST':
+        # Get next appointment date from form
+        next_appointment_date_str = request.POST.get('next_appointment_date', '').strip()
+        next_appointment_date = None
+        if next_appointment_date_str:
+            from datetime import datetime
+            try:
+                next_appointment_date = datetime.strptime(next_appointment_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                messages.error(request, "Invalid date format for next appointment. Please use YYYY-MM-DD format.")
+                return redirect('add_prescription_direct', patient_id=patient_id)
+
+        # Create a new prescription without an appointment
+        prescription = Prescription.objects.create(
+            doctor=doctor,
+            patient=patient,
+            next_appointment_date=next_appointment_date,
+            appointment=None,  # Direct prescription without appointment
+        )
+        
+        # Log prescription creation
+        try:
+            if doctor.user:
+                user_model = Users.objects.get(id=doctor.user.id, role='doctor')
+                log_user_action(
+                    user_model, 
+                    'prescription_created', 
+                    f'Created direct prescription for patient {patient.first_name} {patient.last_name}', 
+                    related_object=prescription,
+                    request=request
+                )
+        except Users.DoesNotExist:
+            pass
+        except Exception as e:
+            print(f"Error logging prescription creation: {e}")
+        
+        # Process multiple medicines
+        medicine_count = int(request.POST.get('medicine_count', 0))
+        medicines_added = 0
+        
+        for i in range(medicine_count):
+            # Check if this medicine row has data
+            drug_name_generic = request.POST.get(f'medicine_{i}_drug_name_generic', '').strip()
+            if drug_name_generic:  # Only create medicine if generic name is provided
+                PrescriptionMedicine.objects.create(
+                    prescription=prescription,
+                    drug_name_generic=drug_name_generic,
+                    strength=request.POST.get(f'medicine_{i}_strength', ''),
+                    dosage_frequency=request.POST.get(f'medicine_{i}_dosage_frequency', ''),
+                    route_administration=request.POST.get(f'medicine_{i}_route_administration', ''),
+                    instructions=request.POST.get(f'medicine_{i}_instructions', ''),
+                    total_quantity=request.POST.get(f'medicine_{i}_total_quantity', ''),
+                    duration_course=request.POST.get(f'medicine_{i}_duration_course', ''),
+                )
+                medicines_added += 1
+        
+        # Process lab tests
+        lab_test_count = int(request.POST.get('lab_test_count', 0))
+        lab_tests_added = 0
+        
+        for i in range(lab_test_count):
+            # Check if this lab test row has data
+            test_name = request.POST.get(f'lab_test_{i}_name', '').strip()
+            if test_name:  # Only create lab test if name is provided
+                from .models import LabTest
+                LabTest.objects.create(
+                    prescription=prescription,
+                    test_name=test_name,
+                    test_category=request.POST.get(f'lab_test_{i}_category', 'other'),
+                    test_description=request.POST.get(f'lab_test_{i}_description', ''),
+                    priority=request.POST.get(f'lab_test_{i}_priority', 'routine'),
+                    instructions=request.POST.get(f'lab_test_{i}_instructions', ''),
+                )
+                lab_tests_added += 1
+        
+        if medicines_added > 0 or lab_tests_added > 0:
+            messages.success(request, f"Prescription with {medicines_added} medicine(s) and {lab_tests_added} lab test(s) added successfully!")
+            return redirect('doctor_patients')
+        else:
+            messages.error(request, "No medicines or lab tests were added. Please add at least one item.")
+            prescription.delete()  # Clean up empty prescription
+    
+    context = {
+        'user': doctor,
+        'patient': patient,
+    }
+    return render(request, 'doctor/add_prescription.html', context)
+
+
 def check_medicine_stock(request):
     if request.method == 'POST':
         import json
@@ -3097,21 +3589,24 @@ def check_medicine_stock(request):
                 return JsonResponse({'error': 'Medicine name is required'}, status=400)
             
             # Check if any medicine with this generic name exists in the database
-            # and has quantity greater than 0
+            # and has quantity greater than 0 and is not expired
+            from django.utils import timezone
             
-            # Check if any medicine matches the generic name and is in stock
+            # Check if any medicine matches the generic name, is in stock, and not expired
             medicine_exists = Medicine.objects.filter(
                 generic_name__icontains=medicine_name,
-                quantity__gt=0  # quantity greater than 0 means in stock
+                quantity__gt=0,  # quantity greater than 0 means in stock
+                expiry_date__gt=timezone.now().date()  # not expired
             ).exists()
             
-            # Also check for medicines with matching brand name and in stock
+            # Also check for medicines with matching brand name, in stock, and not expired
             brand_exists = Medicine.objects.filter(
                 brand_name__icontains=medicine_name,
-                quantity__gt=0
+                quantity__gt=0,
+                expiry_date__gt=timezone.now().date()  # not expired
             ).exists()
             
-            # If neither exists or both have zero quantity, consider it out of stock
+            # If neither exists or both have zero quantity or are expired, consider it out of stock
             out_of_stock = not (medicine_exists or brand_exists)
             
             return JsonResponse({
@@ -3778,3 +4273,321 @@ def export_financial_summary_xlsx(request):
     response = HttpResponse(excel_data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="financial_summary_report.xlsx"'
     return response
+
+
+def payment_portal(request):
+    """Display payment portal for pending orders"""
+    patient_id = request.session.get('patient_id')
+    if not patient_id:
+        return redirect('login')
+    
+    try:
+        patient = Patient.objects.get(id=patient_id)
+    except Patient.DoesNotExist:
+        return redirect('login')
+    
+    # Check if there's a pending order in session
+    pending_order = request.session.get('pending_order')
+    if not pending_order:
+        messages.error(request, "No pending order found.")
+        return redirect('view_cart')
+    
+    context = {
+        'user': patient,
+        'cart_items': pending_order['cart_items'],
+        'subtotal': pending_order['subtotal'],
+        'gst_amount': pending_order['gst_amount'],
+        'total_amount': pending_order['total_amount']
+    }
+    
+    return render(request, 'patient/payment_portal.html', context)
+
+
+def process_payment(request):
+    """Process the payment and create order"""
+    import uuid
+    from decimal import Decimal
+    
+    if request.method != 'POST':
+        return redirect('payment_portal')
+    
+    patient_id = request.session.get('patient_id')
+    if not patient_id:
+        return redirect('login')
+    
+    try:
+        patient = Patient.objects.get(id=patient_id)
+    except Patient.DoesNotExist:
+        return redirect('login')
+    
+    # Get pending order from session
+    pending_order = request.session.get('pending_order')
+    if not pending_order:
+        messages.error(request, "No pending order found.")
+        return redirect('view_cart')
+    
+    # Get payment details
+    card_name = request.POST.get('card_name', '').strip()
+    card_number = request.POST.get('card_number', '').replace(' ', '')
+    card_cvv = request.POST.get('card_cvv', '').strip()
+    
+    # Validate payment details (basic validation)
+    if not card_name or not card_number or not card_cvv:
+        messages.error(request, "Please fill in all payment details.")
+        return redirect('payment_portal')
+    
+    if len(card_number) < 16:
+        messages.error(request, "Invalid card number.")
+        return redirect('payment_portal')
+    
+    if len(card_cvv) < 3:
+        messages.error(request, "Invalid CVV.")
+        return redirect('payment_portal')
+    
+    # Create Order
+    order = Order.objects.create(
+        patient=patient,
+        total_amount=Decimal(str(pending_order['total_amount'])),
+        gst_amount=Decimal(str(pending_order['gst_amount'])),
+        status='successful',  # Set status to successful upon successful payment
+    )
+    
+    # Log the successful order for earnings tracking
+    log_user_action(
+        patient.user if hasattr(patient, 'user') else None,
+        'order_completed',
+        f'Order #{order.id} created and marked as successful. Earnings: ₹{order.total_amount}',
+        related_object=order,
+        request=request
+    )
+    
+    # Create Order Items and Update Stock
+    for item_data in pending_order['cart_items']:
+        try:
+            medicine = Medicine.objects.get(id=item_data['medicine_id'])
+            if medicine.quantity < item_data['quantity']:
+                messages.error(request, f"Not enough stock for {medicine.brand_name}.")
+                order.delete()  # Clean up the order
+                return redirect('view_cart')
+            
+            OrderItem.objects.create(
+                order=order,
+                medicine=medicine,
+                quantity=item_data['quantity'],
+                price_at_order=Decimal(str(item_data['price'])),
+                course_duration=item_data['course_duration']
+            )
+            medicine.quantity -= item_data['quantity']
+            medicine.save()
+        except Medicine.DoesNotExist:
+            messages.error(request, "One or more medicines are no longer available.")
+            order.delete()  # Clean up the order
+            return redirect('view_cart')
+    
+    # Create Transaction with card details
+    transaction = Transaction.objects.create(
+        order=order,
+        transaction_id=f"MW-{uuid.uuid4().hex[:8].upper()}",
+        amount=Decimal(str(pending_order['total_amount'])),
+        card_name=card_name,
+        card_number=card_number[-4:].rjust(len(card_number), '*'),  # Store only last 4 digits
+        card_cvv='***'  # Don't store actual CVV
+    )
+    
+    # Clear cart items
+    cart_item_ids = [item['id'] for item in pending_order['cart_items']]
+    Cart.objects.filter(id__in=cart_item_ids).delete()
+    
+    # Clear session data
+    if 'pending_order' in request.session:
+        del request.session['pending_order']
+    
+    messages.success(request, "Payment successful! Your order has been placed.")
+    return redirect('view_order_receipt', order_id=order.id)
+
+def generate_receipt_pdf(request, order_id):
+    """Generate and return a PDF receipt for an order"""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+    from reportlab.pdfgen import canvas
+    from io import BytesIO
+    import os
+    
+    try:
+        order = Order.objects.get(id=order_id)
+        patient = order.patient
+        
+        # Create a BytesIO buffer to receive PDF data
+        buffer = BytesIO()
+        
+        # Create the PDF object, using the buffer as its "file."
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.75*inch, bottomMargin=0.75*inch)
+        
+        # Container for the 'Flowable' objects
+        elements = []
+        
+        # Get styles
+        styles = getSampleStyleSheet()
+        
+        # Custom header style
+        header_style = ParagraphStyle(
+            'CustomHeader',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            alignment=1,  # Center alignment
+            textColor=colors.Color(0.73, 0.07, 0.24),  # Rose color
+        )
+        
+        # Title
+        title = Paragraph("PAYMENT RECEIPT", header_style)
+        elements.append(title)
+        elements.append(Spacer(1, 12))
+        
+        # Company Info
+        company_info = [
+            ['Mediwise Healthcare', 'Transaction ID:', order.transaction.transaction_id],
+            ['', 'Date:', order.created_at.strftime('%B %d, %Y')],
+            ['', 'Time:', order.created_at.strftime('%I:%M %p')],
+        ]
+        
+        t = Table(company_info, colWidths=[3*inch, 1.5*inch, 1.5*inch])
+        t.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(t)
+        elements.append(Spacer(1, 20))
+        
+        # Customer Info
+        customer_info = [
+            ['Customer Information', 'Payment Details'],
+            [f'{patient.first_name} {patient.last_name}', f'Payment Method: Credit Card'],
+            [f'{patient.email or "N/A"}', f'Last 4 Digits: ****{order.transaction.card_number[-4:]}'],
+            [f'{patient.phone_number or "N/A"}', f'Card Holder: {order.transaction.card_name}'],
+        ]
+        
+        t = Table(customer_info, colWidths=[3*inch, 2.5*inch])
+        t.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+            ('BACKGROUND', (0, 0), (0, 0), colors.Color(0.95, 0.95, 0.98)),
+            ('BACKGROUND', (1, 0), (1, 0), colors.Color(0.95, 0.95, 0.98)),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('SPAN', (0, 0), (0, 0)),
+            ('SPAN', (1, 0), (1, 0)),
+        ]))
+        elements.append(t)
+        elements.append(Spacer(1, 20))
+        
+        # Order Items Header
+        items_header = [['Item', 'Quantity', 'Price', 'Total']]
+        items_header_table = Table(items_header, colWidths=[3*inch, 1*inch, 1*inch, 1*inch])
+        items_header_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.73, 0.07, 0.24)),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('TOPPADDING', (0, 0), (-1, -1), 12),
+        ]))
+        elements.append(items_header_table)
+        
+        # Order Items
+        order_items = []
+        for item in order.items.all():
+            order_items.append([
+                f"{item.medicine.brand_name}<br/>{item.medicine.generic_name}",
+                str(item.quantity),
+                f"${item.price_at_order}",
+                f"${item.get_subtotal()}"
+            ])
+        
+        items_table = Table(order_items, colWidths=[3*inch, 1*inch, 1*inch, 1*inch])
+        items_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+        ]))
+        elements.append(items_table)
+        
+        # Totals
+        totals_data = [
+            ['', '', 'Subtotal:', f'${order.total_amount - order.gst_amount:.2f}'],
+            ['', '', 'GST (18%):', f'${order.gst_amount:.2f}'],
+            ['', '', 'Total:', f'${order.total_amount:.2f}'],
+        ]
+        
+        totals_table = Table(totals_data, colWidths=[3*inch, 1*inch, 1*inch, 1*inch])
+        totals_table.setStyle(TableStyle([
+            ('FONTNAME', (2, 0), (3, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (2, 0), (3, -1), 10),
+            ('ALIGN', (2, 0), (3, -1), 'RIGHT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elements.append(totals_table)
+        
+        # Thank you message
+        elements.append(Spacer(1, 20))
+        thank_you = Paragraph(
+            "Thank you for choosing Mediwise! We appreciate your trust in our healthcare services.", 
+            ParagraphStyle(
+                'ThankYou',
+                parent=styles['Normal'],
+                alignment=1,  # Center alignment
+                fontSize=10,
+                spaceBefore=10,
+                spaceAfter=10,
+                textColor=colors.Color(0.5, 0.5, 0.5)
+            )
+        )
+        elements.append(thank_you)
+        
+        # Build the PDF
+        doc.build(elements)
+        
+        # Get the value of the BytesIO buffer and write it to the response
+        pdf = buffer.getvalue()
+        buffer.close()
+        
+        # Create HTTP response
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="receipt_order_{order.id}.pdf"'
+        
+        return response
+    except Order.DoesNotExist:
+        messages.error(request, "Order not found.")
+        return redirect('patient_dashboard')
+    except Exception as e:
+        messages.error(request, f"Error generating receipt: {str(e)}")
+        return redirect('patient_dashboard')
+
+def view_order_receipt(request, order_id):
+    """Display order receipt page with option to download PDF"""
+    try:
+        order = Order.objects.select_related('patient', 'transaction').prefetch_related('items__medicine').get(id=order_id)
+        
+        context = {
+            'order': order,
+            'transaction': order.transaction,
+            'patient': order.patient,
+        }
+        
+        return render(request, 'patient/order_receipt.html', context)
+    except Order.DoesNotExist:
+        messages.error(request, "Order not found.")
+        return redirect('patient_dashboard')

@@ -1,0 +1,205 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Mediwise | Order Receipt</title>
+    <style>
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; overflow-x: hidden; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .cherry-gradient {
+            background: linear-gradient(135deg, #be123c 0%, #fb7185 100%);
+        }
+
+        .bg-mesh {
+            background-color: #fff1f2;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(251, 113, 133, 0.15) 0, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(190, 18, 60, 0.1) 0, transparent 50%);
+        }
+
+        .receipt-card {
+            transition: all 0.4s ease;
+        }
+        .receipt-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(190, 18, 60, 0.1);
+        }
+        
+        .receipt-table th {
+            background-color: #be123c;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-mesh min-h-screen text-slate-900 pb-20">
+    {% csrf_token %}
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl">
+    <div class="glass rounded-[2rem] px-5 py-3 flex justify-between items-center shadow-2xl shadow-rose-900/5">
+        
+        <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 cherry-gradient rounded-xl flex items-center justify-center shadow-lg shadow-rose-200 flex-shrink-0">
+                <i class="fas fa-heart-pulse text-white text-lg"></i>
+            </div>
+            <div class="block">
+                <p class="text-[8px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest leading-none mb-1">Patient Portal</p>
+                <p class="font-black text-rose-950 tracking-tighter text-sm md:text-base">
+                    Hi, {{ user.first_name|default:"Alex" }}
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <div class="group relative">
+                <div class="w-10 h-10 rounded-full border-2 border-rose-200 overflow-hidden shadow-sm cursor-pointer transition-transform group-hover:scale-105 active:scale-95">
+                    <img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'Alex' }}+{{ user.last_name|default:'Smith' }}&background=fff1f2&color=be123c" alt="Profile" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+    </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto pt-32 px-6">
+        {% if messages %}
+        <div class="mb-8 space-y-4">
+            {% for message in messages %}
+            <div class="p-4 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% else %}bg-rose-50 text-rose-600 border border-rose-100{% endif %} flex items-center justify-between shadow-sm animate-fade-in">
+                <div class="flex items-center space-x-3">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                    <p class="text-xs font-black uppercase tracking-widest">{{ message }}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-current opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="mb-12 text-center">
+            <h2 class="text-4xl md:text-5xl font-black text-rose-950 tracking-tighter mb-2">Order Receipt</h2>
+            <p class="text-slate-500 font-medium">Your payment has been processed successfully</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8">
+            <!-- Receipt Content -->
+            <div class="glass rounded-[2.5rem] p-8 border border-white receipt-card">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <h3 class="text-2xl font-black text-rose-950 mb-2">Mediwise Healthcare</h3>
+                        <p class="text-slate-600">Your trusted healthcare partner</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-rose-600">Receipt #{{ order.id|upper }}</div>
+                        <div class="text-xs text-slate-500">{{ order.created_at|date:"F d, Y" }}</div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-3">Customer Information</h4>
+                        <div class="text-sm">
+                            <p class="mb-1"><strong>Name:</strong> {{ patient.first_name }} {{ patient.last_name }}</p>
+                            <p class="mb-1"><strong>Email:</strong> {{ patient.email|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>Phone:</strong> {{ patient.phone_number|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-3">Payment Details</h4>
+                        <div class="text-sm">
+                            <p class="mb-1"><strong>Transaction ID:</strong> {{ transaction.transaction_id }}</p>
+                            <p class="mb-1"><strong>Method:</strong> Credit Card</p>
+                            <p class="mb-1"><strong>Last 4 Digits:</strong> ****{{ transaction.card_number|slice:"-4:" }}</p>
+                            <p class="mb-1"><strong>Card Holder:</strong> {{ transaction.card_name }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="font-bold text-slate-700 mb-4">Order Items</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border-collapse receipt-table">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Item</th>
+                                    <th class="px-4 py-3 text-center">Quantity</th>
+                                    <th class="px-4 py-3 text-right">Price</th>
+                                    <th class="px-4 py-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                <tr class="border-b border-gray-200">
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium">{{ item.medicine.brand_name }}</div>
+                                        <div class="text-sm text-slate-500">{{ item.medicine.generic_name }}</div>
+                                        {% if item.course_duration %}
+                                            <div class="text-xs text-rose-600 mt-1">Course Duration: {{ item.course_duration }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 text-center">{{ item.quantity }}</td>
+                                    <td class="px-4 py-3 text-right">${{ item.price_at_order }}</td>
+                                    <td class="px-4 py-3 text-right">${{ item.get_subtotal }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="border-t border-rose-200 pt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="text-right">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-slate-600">Subtotal:</span>
+                                <span>${{ order.total_amount|add:-order.gst_amount|floatformat:2 }}</span>
+                            </div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-slate-600">GST (18%):</span>
+                                <span>${{ order.gst_amount|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex justify-between font-black text-lg text-rose-950">
+                                <span>Total:</span>
+                                <span>${{ order.total_amount|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 inline-block">
+                        <div class="flex items-center justify-center space-x-2">
+                            <i class="fas fa-check-circle text-emerald-600 text-xl"></i>
+                            <span class="font-bold text-emerald-800">Payment Successful</span>
+                        </div>
+                        <p class="text-sm text-emerald-700 mt-1">Your order has been confirmed and will be processed shortly</p>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'download_receipt_pdf' order.id %}" 
+                       class="py-3 px-6 bg-blue-600 text-white rounded-xl text-center font-bold hover:bg-blue-700 transition-colors flex items-center justify-center">
+                        <i class="fas fa-download mr-2"></i> Download PDF Receipt
+                    </a>
+                    <a href="{% url 'patient_dashboard' %}" 
+                       class="py-3 px-6 cherry-gradient text-white rounded-xl text-center font-bold hover:scale-105 transition-transform">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

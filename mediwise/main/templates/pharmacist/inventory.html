@@ -146,6 +146,10 @@
                 <i class="fas fa-star text-lg w-6"></i>
                 <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
             </a>
+            <a href="{% url 'pharmacist_earnings' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <i class="fas fa-money-bill-wave text-lg w-6"></i>
+                <span class="sidebar-text ml-4 font-bold text-sm">Earnings</span>
+            </a>
         </nav>
 
         <div class="p-4 border-t border-rose-50 space-y-2">
@@ -199,12 +203,7 @@
                         <p class="text-slate-500 text-sm">List of medicines available in stock</p>
                     </div>
                 </div>
-                {% if hidden_count > 0 %}
-                <div class="bg-amber-50 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-amber-100">
-                    <i class="fas fa-eye-slash"></i>
-                    {{ hidden_count }} items hidden (expiring soon)
-                </div>
-                {% endif %}
+
             </div>
             
             <div class="overflow-x-auto">
@@ -220,33 +219,44 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         {% for medicine in medicines %}
-                        <tr class="group hover:bg-slate-50/50 transition-colors">
+                        <tr class="group hover:bg-slate-50/50 transition-colors {% if medicine.expiry_date <= today %}bg-red-50{% endif %}">
                             <td class="py-6">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                                    <div class="w-12 h-12 rounded-xl {% if medicine.expiry_date <= today %}bg-red-100 text-red-600{% else %}bg-emerald-50 text-emerald-600{% endif %} flex items-center justify-center font-bold text-xs">
                                         <i class="fas fa-pills"></i>
                                     </div>
                                     <div>
-                                        <p class="font-bold text-slate-900">{{ medicine.generic_name }}</p>
-                                        <p class="text-xs text-slate-500">{{ medicine.brand_name }} | {{ medicine.strength }} | {{ medicine.formulation }}</p>
+                                        <p class="font-bold {% if medicine.expiry_date <= today %}text-red-800 line-through{% else %}text-slate-900{% endif %}">{{ medicine.generic_name }}</p>
+                                        <p class="text-xs {% if medicine.expiry_date <= today %}text-red-600{% else %}text-slate-500{% endif %}">{{ medicine.brand_name }} | {{ medicine.strength }} | {{ medicine.formulation }}</p>
                                     </div>
                                 </div>
                             </td>
                             <td class="py-6 text-center">
-                                <span class="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
+                                <span class="text-sm font-medium {% if medicine.expiry_date <= today %}text-red-700 bg-red-100{% else %}text-slate-600 bg-slate-100{% endif %} px-3 py-1 rounded-lg">
                                     #{{ medicine.batch_number }}
                                 </span>
                             </td>
                             <td class="py-6 text-center">
                                 <div class="inline-flex flex-col items-center">
-                                    <span class="text-lg font-bold text-slate-900">{{ medicine.quantity }}</span>
-                                    <span class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Units</span>
+                                    <span class="text-lg font-bold {% if medicine.expiry_date <= today %}text-red-800{% else %}text-slate-900{% endif %}">{{ medicine.quantity }}</span>
+                                    <span class="text-[10px] {% if medicine.expiry_date <= today %}text-red-600{% else %}text-slate-400{% endif %} uppercase font-bold tracking-tighter">Units</span>
                                 </div>
                             </td>
                             <td class="py-6 text-center">
-                                <span class="text-sm font-bold {% if medicine.expiry_date <= soon %}text-amber-600{% else %}text-slate-600{% endif %}">
-                                    {{ medicine.expiry_date|date:"M d, Y" }}
-                                </span>
+                                <div class="flex flex-col items-center">
+                                    <span class="text-sm font-bold {% if medicine.expiry_date <= today %}text-red-700{% elif medicine.expiry_date <= soon %}text-amber-600{% else %}text-slate-600{% endif %}">
+                                        {{ medicine.expiry_date|date:"M d, Y" }}
+                                    </span>
+                                    {% if medicine.expiry_date <= today %}
+                                    <span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full mt-1">
+                                        EXPIRED
+                                    </span>
+                                    {% elif medicine.expiry_date <= soon %}
+                                    <span class="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded-full mt-1">
+                                        EXPIRING SOON
+                                    </span>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td class="py-6 text-right">
                                 <button class="p-2 text-slate-400 hover:text-emerald-600 transition-colors edit-btn"
@@ -446,6 +456,25 @@
             </div>
         </div>
     </div>
+    
+    <!-- Hidden element to store medicines data -->
+    <div id="medicines-data" style="display:none">
+    {
+    {% for med in medicines %}
+        "{{ med.id }}": {
+            "brand_name": "{{ med.brand_name|escapejs }}",
+            "generic_name": "{{ med.generic_name|escapejs }}",
+            "strength": "{{ med.strength|escapejs }}",
+            "formulation": "{{ med.formulation|escapejs }}",
+            "indications": "{{ med.indications|escapejs }}",
+            "batch_number": "{{ med.batch_number|escapejs }}",
+            "manufacture_date": "{{ med.manufacture_date|date:'Y-m-d' }}",
+            "expiry_date": "{{ med.expiry_date|date:'Y-m-d' }}",
+            "medicine_type": "{{ med.medicine_type }}"
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    }
+    </div>
 
     <script>
         // Sidebar Logic
@@ -550,8 +579,42 @@
             }
         });
 
-        // Auto-dismiss Success Message
+        // Pass medicines data through a hidden element
+        const medicinesJson = document.getElementById('medicines-data') ? document.getElementById('medicines-data').textContent : '{}';
+        const medicinesData = JSON.parse(medicinesJson);
+        
+        // Check URL parameters and show add form if requested
         document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const showAddForm = urlParams.get('show_add_form');
+            const medicineId = urlParams.get('medicine_id');
+            
+            if (showAddForm) {
+                // Show the add medicine modal
+                document.getElementById('add-modal').classList.remove('hidden');
+                
+                // If medicine ID is provided, auto-fill the form
+                if (medicineId && medicinesData[medicineId]) {
+                    const medicine = medicinesData[medicineId];
+                    
+                    // Auto-fill the form fields
+                    document.getElementById('id_brand_name').value = medicine.brand_name;
+                    document.getElementById('id_generic_name').value = medicine.generic_name;
+                    document.getElementById('id_strength').value = medicine.strength;
+                    document.getElementById('id_formulation').value = medicine.formulation;
+                    document.getElementById('id_indications').value = medicine.indications;
+                    document.getElementById('id_batch_number').value = medicine.batch_number;
+                    document.getElementById('id_manufacture_date').value = medicine.manufacture_date;
+                    document.getElementById('id_expiry_date').value = medicine.expiry_date;
+                    document.getElementById('id_medicine_type').value = medicine.medicine_type;
+                    
+                    // Clear the quantity field so user can enter new quantity
+                    document.getElementById('id_quantity').value = '';
+                    document.getElementById('id_price').value = '';
+                }
+            }
+            
+            // Auto-dismiss Success Message
             const toast = document.getElementById('success-toast');
             const closeToast = document.getElementById('close-toast');
             

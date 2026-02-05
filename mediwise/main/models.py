@@ -179,6 +179,12 @@ class Transaction(models.Model):
     transaction_id = models.CharField(max_length=100, unique=True)
     payment_method = models.CharField(max_length=50, default='Card')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Card details for payment portal
+    card_name = models.CharField(max_length=100, blank=True, null=True)
+    card_number = models.CharField(max_length=20, blank=True, null=True)
+    card_cvv = models.CharField(max_length=4, blank=True, null=True)
+    
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -354,7 +360,7 @@ class Appointment(models.Model):
 
 
 class Prescription(models.Model):
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='prescriptions')
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='prescriptions', null=True, blank=True)
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     next_appointment_date = models.DateField(null=True, blank=True, help_text="Date for the next appointment")
@@ -378,6 +384,27 @@ class PrescriptionMedicine(models.Model):
     
     def __str__(self):
         return f"{self.drug_name_generic} - Prescription #{self.prescription.id}"
+
+
+class LabTest(models.Model):
+    TEST_CATEGORIES = [
+        ('blood', 'Blood Test'),
+        ('urine', 'Urine Test'),
+        ('imaging', 'Imaging/Radiology'),
+        ('pathology', 'Pathology'),
+        ('other', 'Other'),
+    ]
+    
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name='lab_tests')
+    test_name = models.CharField(max_length=200, help_text="Name of the lab test")
+    test_category = models.CharField(max_length=20, choices=TEST_CATEGORIES, default='other')
+    test_description = models.TextField(blank=True, null=True, help_text="Additional details about the test")
+    priority = models.CharField(max_length=10, choices=[('routine', 'Routine'), ('urgent', 'Urgent')], default='routine')
+    instructions = models.TextField(blank=True, null=True, help_text="Special instructions for the patient")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.test_name} - Prescription #{self.prescription.id}"
 
 
 class Notification(models.Model):

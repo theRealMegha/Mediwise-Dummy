@@ -50,6 +50,26 @@
         .status-completed { background-color: #dcfce7; color: #166534; }
         .status-cancelled { background-color: #fee2e2; color: #b91c1c; }
     </style>
+    <script>
+        function togglePrescriptionDetails(event, prescriptionId) {
+            const detailsElement = document.getElementById('details-' + prescriptionId);
+            const button = event.currentTarget;
+            
+            if (detailsElement.classList.contains('hidden')) {
+                // Show details
+                detailsElement.classList.remove('hidden');
+                button.innerHTML = '<i class="fas fa-eye-slash mr-1"></i> Hide';
+                button.classList.remove('bg-white', 'border-rose-200', 'text-rose-600');
+                button.classList.add('bg-rose-600', 'text-white');
+            } else {
+                // Hide details
+                detailsElement.classList.add('hidden');
+                button.innerHTML = '<i class="fas fa-eye mr-1"></i> Details';
+                button.classList.remove('bg-rose-600', 'text-white');
+                button.classList.add('bg-white', 'border-rose-200', 'text-rose-600');
+            }
+        }
+    </script>
 </head>
 <body class="bg-mesh min-h-screen text-slate-900 pb-20">
 
@@ -181,84 +201,202 @@
             <p class="text-slate-500 font-medium">All your medical prescriptions in one place</p>
         </div>
 
-        <div class="glass rounded-[3rem] p-8 border border-white/50">
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="text-xl font-extrabold text-slate-800">Prescription History</h3>
-                <div class="text-sm text-slate-500">
-                    Showing {{ prescriptions.count }} prescription{{ prescriptions.count|pluralize }}
-                </div>
-            </div>
-
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% if prescriptions %}
-            <div class="space-y-6">
                 {% for prescription in prescriptions %}
-                <div class="group p-6 bg-white/60 hover:bg-white rounded-2xl border border-rose-100 hover:border-rose-400 hover:shadow-lg transition-all duration-300">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div class="flex-1">
-                            <!-- Display all medicines for this prescription -->
-                            {% for medicine in prescription.medicines.all %}
-                            <div class="mb-4 {% if not forloop.first %}pt-4 mt-4 border-t border-slate-100{% endif %}">
-                                <div class="flex flex-wrap items-center gap-4 mb-3">
-                                    <h4 class="font-black text-rose-950 text-lg">{{ medicine.drug_name_generic }}</h4>
-                                    {% if medicine.drug_name_brand %}
-                                    <span class="px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-bold">Brand: {{ medicine.drug_name_brand }}</span>
-                                    {% endif %}
-                                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">{{ medicine.strength }}</span>
-                                </div>
-                                
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                    <div><span class="font-bold text-slate-700">Dosage:</span> {{ medicine.dosage_frequency }}</div>
-                                    <div><span class="font-bold text-slate-700">Route:</span> {{ medicine.route_administration }}</div>
-                                    <div><span class="font-bold text-slate-700">Quantity:</span> {{ medicine.total_quantity }}</div>
-                                    <div><span class="font-bold text-slate-700">Duration:</span> {{ medicine.duration_course }}</div>
-                                </div>
-                                
-                                <div class="mt-3">
-                                    <span class="font-bold text-slate-700">Instructions:</span> {{ medicine.instructions }}
+                <div class="glass rounded-2xl p-6 border border-white/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <!-- Card Header -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 class="font-black text-rose-950 text-lg">Prescription #{{ prescription.id }}</h3>
+                            <p class="text-xs text-slate-500 mt-1">{{ prescription.created_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-white font-bold text-sm shadow-md mb-2">
+                                {{ prescription.doctor.first_name|slice:":1" }}{{ prescription.doctor.last_name|slice:":1" }}
+                            </div>
+                            <span class="text-xs font-bold text-rose-600">Dr. {{ prescription.doctor.last_name }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Doctor Info -->
+                    <div class="mb-4 p-3 bg-rose-50 rounded-xl">
+                        <div class="text-sm">
+                            <span class="font-bold text-rose-800">Speciality:</span> 
+                            <span class="text-rose-700">{{ prescription.doctor.speciality }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Medicines Summary -->
+                    <div class="mb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
+                            <i class="fas fa-pills text-rose-500"></i>
+                            Medicines ({{ prescription.medicines.count }})
+                        </h4>
+                        <div class="space-y-2 max-h-32 overflow-y-auto">
+                            {% for medicine in prescription.medicines.all|slice:":3" %}
+                            <div class="bg-white p-2 rounded-lg border border-rose-100">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <p class="font-bold text-slate-800 text-sm">{{ medicine.drug_name_generic }}</p>
+                                        {% if medicine.drug_name_brand %}
+                                        <p class="text-xs text-slate-600">{{ medicine.drug_name_brand }}</p>
+                                        {% endif %}
+                                        <p class="text-xs text-slate-500">{{ medicine.strength }}</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">
+                                        {{ medicine.dosage_frequency|truncatewords:3 }}
+                                    </span>
                                 </div>
                             </div>
                             {% empty %}
-                            <div class="text-center py-4 text-slate-500">
-                                <p>No medicines recorded for this prescription</p>
+                            <p class="text-sm text-slate-500 italic">No medicines prescribed</p>
+                            {% endfor %}
+                            {% if prescription.medicines.count > 3 %}
+                            <p class="text-xs text-slate-500 text-center pt-2 border-t border-slate-100">
+                                +{{ prescription.medicines.count|add:"-3" }} more medicines
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Lab Tests Summary -->
+                    {% if prescription.lab_tests.all %}
+                    <div class="mb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
+                            <i class="fas fa-flask text-blue-500"></i>
+                            Lab Tests ({{ prescription.lab_tests.count }})
+                        </h4>
+                        <div class="space-y-2 max-h-24 overflow-y-auto">
+                            {% for lab_test in prescription.lab_tests.all|slice:":2" %}
+                            <div class="bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-bold text-blue-800 text-sm">{{ lab_test.test_name }}</p>
+                                    <span class="px-2 py-1 rounded-full text-xs font-bold {% if lab_test.priority == 'urgent' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                        {{ lab_test.priority|title|slice:":1" }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-blue-600 mt-1">{{ lab_test.get_test_category_display }}</p>
                             </div>
                             {% endfor %}
+                            {% if prescription.lab_tests.count > 2 %}
+                            <p class="text-xs text-slate-500 text-center pt-2 border-t border-slate-100">
+                                +{{ prescription.lab_tests.count|add:"-2" }} more tests
+                            </p>
+                            {% endif %}
                         </div>
-                        
-                        <div class="flex flex-col items-end md:items-center gap-3">
-                            <div class="text-center">
-                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Prescribed By</p>
-                                <p class="font-black text-rose-950">Dr. {{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</p>
-                                <p class="text-xs text-slate-500">{{ prescription.doctor.speciality }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Next Appointment -->
+                    {% if prescription.next_appointment_date %}
+                    <div class="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-calendar-check text-blue-500 text-sm"></i>
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Next Appointment</p>
+                                <p class="font-bold text-blue-700 text-sm">{{ prescription.next_appointment_date|date:"M d, Y" }}</p>
                             </div>
-                            <div class="text-center">
-                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date</p>
-                                <p class="font-black text-slate-800">{{ prescription.created_at|date:"M d, Y" }}</p>
-                                {% if prescription.next_appointment_date %}
-                                <div class="mt-2 p-2 bg-blue-50 rounded-lg">
-                                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Next Appointment</p>
-                                    <a href="{% url 'book_appointment' prescription.doctor.id %}?preferred_date={{ prescription.next_appointment_date|date:'Y-m-d' }}" class="font-black text-blue-700 hover:text-blue-800 hover:underline cursor-pointer">
-                                        {{ prescription.next_appointment_date|date:"M d, Y" }}
-                                    </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2">
+                        <a href="{% url 'download_prescription_pdf' prescription.id %}" 
+                           class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-md shadow-rose-500/20 hover:shadow-rose-600/30 transition-all text-center">
+                            <i class="fas fa-download mr-1"></i> PDF
+                        </a>
+                        <button onclick="togglePrescriptionDetails(event, '{{ prescription.id }}')" 
+                                class="flex-1 py-2 bg-white border-2 border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-lg transition-all">
+                            <i class="fas fa-eye mr-1"></i> Details
+                        </button>
+                    </div>
+                    
+                    <!-- Detailed View (Hidden by default) -->
+                    <div id="details-{{ prescription.id }}" class="mt-4 p-4 bg-white rounded-xl border border-rose-100 hidden">
+                        <!-- Full Medicines List -->
+                        {% if prescription.medicines.all %}
+                        <div class="mb-4">
+                            <h5 class="font-bold text-slate-800 text-sm mb-3 border-b border-slate-200 pb-2">Full Medicines List</h5>
+                            <div class="space-y-3">
+                                {% for medicine in prescription.medicines.all %}
+                                <div class="p-3 bg-rose-50 rounded-lg">
+                                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                                        <h6 class="font-bold text-rose-900">{{ medicine.drug_name_generic }}</h6>
+                                        {% if medicine.drug_name_brand %}
+                                        <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-bold">Brand: {{ medicine.drug_name_brand }}</span>
+                                        {% endif %}
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">{{ medicine.strength }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <div><span class="font-semibold text-slate-700">Dosage:</span> {{ medicine.dosage_frequency }}</div>
+                                        <div><span class="font-semibold text-slate-700">Route:</span> {{ medicine.route_administration }}</div>
+                                        <div><span class="font-semibold text-slate-700">Quantity:</span> {{ medicine.total_quantity }}</div>
+                                        <div><span class="font-semibold text-slate-700">Duration:</span> {{ medicine.duration_course }}</div>
+                                    </div>
+                                    {% if medicine.instructions %}
+                                    <div class="mt-2 p-2 bg-white rounded border border-rose-200">
+                                        <span class="font-semibold text-slate-700 text-xs">Instructions:</span>
+                                        <p class="text-slate-600 text-xs mt-1">{{ medicine.instructions }}</p>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% endif %}
+                                {% endfor %}
                             </div>
-                            <div class="mt-2 flex flex-col gap-2">
-                                <a href="{% url 'download_prescription_pdf' prescription.id %}" 
-                                   class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-rose-500/20 hover:shadow-rose-600/30 transition-all transform hover:-translate-y-0.5">
-                                    <i class="fas fa-download mr-2"></i> Download PDF
-                                </a>
-                                <a href="{% url 'registered_pharmacies' %}?prescription_id={{ prescription.id }}" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-600/30 transition-all transform hover:-translate-y-0.5">
-                                    <i class="fas fa-search mr-2"></i> Search Medicine
-                                </a>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Full Lab Tests List -->
+                        {% if prescription.lab_tests.all %}
+                        <div class="mb-4">
+                            <h5 class="font-bold text-slate-800 text-sm mb-3 border-b border-slate-200 pb-2">Lab Tests Required</h5>
+                            <div class="space-y-3">
+                                {% for lab_test in prescription.lab_tests.all %}
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h6 class="font-bold text-blue-900">{{ lab_test.test_name }}</h6>
+                                        <span class="px-2 py-1 rounded-full text-xs font-bold {% if lab_test.priority == 'urgent' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                            {{ lab_test.priority|title }}
+                                        </span>
+                                    </div>
+                                    <div class="text-sm text-blue-700 mb-2">
+                                        <span class="font-semibold">Category:</span> {{ lab_test.get_test_category_display }}
+                                    </div>
+                                    {% if lab_test.test_description %}
+                                    <div class="text-sm text-blue-700 mb-2">
+                                        <span class="font-semibold">Description:</span> {{ lab_test.test_description }}
+                                    </div>
+                                    {% endif %}
+                                    {% if lab_test.instructions %}
+                                    <div class="text-sm text-blue-800 bg-blue-100 p-2 rounded-lg">
+                                        <span class="font-semibold">Instructions:</span> {{ lab_test.instructions }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
                             </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Additional Actions -->
+                        <div class="flex gap-2 pt-3 border-t border-slate-200">
+                            <a href="{% url 'registered_pharmacies' %}?prescription_id={{ prescription.id }}" 
+                               class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-md shadow-blue-500/20 transition-all text-center">
+                                <i class="fas fa-search mr-1"></i> Search Medicine
+                            </a>
+                            {% if prescription.next_appointment_date %}
+                            <a href="{% url 'book_appointment' prescription.doctor.id %}?preferred_date={{ prescription.next_appointment_date|date:'Y-m-d' }}" 
+                               class="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg shadow-md shadow-green-500/20 transition-all text-center">
+                                <i class="fas fa-calendar-plus mr-1"></i> Book Next
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
                 {% endfor %}
-            </div>
             {% else %}
-            <div class="text-center py-16">
+            <div class="col-span-full text-center py-16">
                 <i class="fas fa-prescription-bottle text-5xl text-slate-300 mb-6"></i>
                 <h3 class="text-xl font-black text-slate-500 mb-2">No Prescriptions Yet</h3>
                 <p class="text-slate-400 max-w-md mx-auto">You haven't received any prescriptions yet. Visit a doctor to get your first prescription.</p>
