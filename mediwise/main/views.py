@@ -1,9 +1,54 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
-from .models import MediAdmin, Patient, Users, Doctor, Pharmacist, Medicine, Cart,Transaction,OrderItem,Order, Appointment, Prescription, PrescriptionMedicine, Notification, Review, PrescriptionUpload, Leave, AuditLog
+from .models import MediAdmin, Patient, Users, Doctor, Pharmacist, Medicine, Cart,Transaction,OrderItem,Order, Appointment, Prescription, PrescriptionMedicine, Notification, Review, PrescriptionUpload, Leave, AuditLog, LabReportImage
 from .forms import PatientRegistrationForm, PharmacistRegistrationForm, PatientProfileUpdateForm, DoctorRegistrationForm, PharmacistProfileUpdateForm, MedicineForm, LeaveForm
 from django.contrib import messages
 from django.db.models import Q
+from django.utils import timezone
+from django.core.files.storage import default_storage
+from ml.predictDisease import run_medical_assistant
+from google import genai
+import json
+import os
+
+# Configure Gemini API
+# Get API key from environment 
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyColdtbbaTVHH8Meza-n2mdHeOUfbLClvQ")
+client = genai.Client(api_key=GEMINI_API_KEY)
+
+def chatbot_response(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            user_message = data.get("message", "")
+            
+            if not user_message:
+                return JsonResponse({"error": "No message provided"}, status=400)
+
+            # Check if API key is set
+            if not GEMINI_API_KEY or GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE":
+                return JsonResponse({
+                    "response": "Hello! I'm your Mediwise AI assistant. To enable my medical advice capabilities, please configure the Gemini API key in the backend. How can I help you today?"
+                })
+
+            # System instructions for medical context
+            prompt = f"""
+            You are Mediwise AI, a helpful medical assistant for a patient dashboard. 
+            Keep your responses concise, professional, and medical-focused. 
+            If asked about specific medical conditions, always advise consulting a professional doctor.
+            User: {user_message}
+            """
+            
+            response = client.models.generate_content(
+                model="gemini-flash-latest", 
+                contents=prompt
+            )
+            return JsonResponse({"response": response.text})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 
@@ -1093,7 +1138,7 @@ def patient_records(request):
     # Get notifications for the patient, excluding those read more than 2 days ago
     from django.utils import timezone
     from datetime import timedelta
-    from .models import Notification
+    from .models import Notification, LabReportImage
     
     # Mark all unread notifications as read and update their read_at timestamp
     unread_notifications = Notification.objects.filter(patient=user, is_read=False)
@@ -1111,11 +1156,182 @@ def patient_records(request):
         Q(is_read=False) | Q(read_at__gte=two_days_ago)
     ).order_by('-created_at')[:5]
     
+    # Get lab report images for this patient
+    lab_reports = LabReportImage.objects.filter(patient=user).order_by('-uploaded_at')
+    
     return render(request, 'patient/records.html', {
         'user': user, 
         'notifications': notifications,
-        'cart_count': cart_count
+        'cart_count': cart_count,
+        'lab_reports': lab_reports
     })
+
+
+def upload_lab_report(request):
+    if request.method == 'POST':
+        user_id = request.session.get('patient_id')
+        if user_id is None:
+            return redirect('login')
+        
+        user = Patient.objects.filter(id=user_id).first()
+        if not user:
+            return redirect('login')
+        
+        if 'lab_report_image' in request.FILES:
+            lab_report_image = request.FILES['lab_report_image']
+            report_name = request.POST.get('report_name', f'Lab Report {timezone.now().strftime("%Y-%m-%d")}')
+            notes = request.POST.get('notes', '')
+            
+            # Validate file type
+            import os
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.pdf']
+            ext = os.path.splitext(lab_report_image.name)[1].lower()
+            if ext not in allowed_extensions:
+                messages.error(request, 'Invalid file type. Please upload an image file (JPG, PNG, GIF, BMP) or PDF.')
+                return redirect('patient_records')
+            
+            # Create LabReportImage instance
+            lab_report = LabReportImage.objects.create(
+                patient=user,
+                image=lab_report_image,
+                report_name=report_name,
+                notes=notes
+            )
+            
+            messages.success(request, 'Lab report uploaded successfully!')
+        else:
+            messages.error(request, 'No file selected. Please choose an image or PDF file.')
+        
+        return redirect('patient_records')
+    
+    return redirect('patient_records')
+
+
+def delete_lab_report(request, report_id):
+    if request.method == 'POST':
+        user_id = request.session.get('patient_id')
+        if user_id is None:
+            return redirect('login')
+        
+        user = Patient.objects.filter(id=user_id).first()
+        if not user:
+            return redirect('login')
+        
+        try:
+            lab_report = LabReportImage.objects.get(id=report_id, patient=user)
+            # Store the file name before deleting the model instance
+            file_to_delete = lab_report.image.name
+            lab_report.delete()
+            
+            # Delete the physical file from storage
+            if file_to_delete and default_storage.exists(file_to_delete):
+                default_storage.delete(file_to_delete)
+                
+            messages.success(request, 'Lab report and associated file deleted successfully!')
+        except LabReportImage.DoesNotExist:
+            messages.error(request, 'Lab report not found or you do not have permission to delete it.')
+        
+        return redirect('patient_records')
+    
+    return redirect('patient_records')
+
+
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+def predict_disease(request, report_id):
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+        
+    user_id = request.session.get('patient_id')
+    if not user_id:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
+    start_time = time.time()
+    logger.info(f"Starting prediction for report_id: {report_id}, user_id: {user_id}")
+    
+    try:
+        # 1. Fetch the report and verify ownership
+        lab_report = LabReportImage.objects.get(id=report_id, patient_id=user_id)
+        file_path = lab_report.image.path # Absolute path to the file
+        logger.info(f"File path: {file_path}")
+
+        # 2. Call the ML function directly
+        result = run_medical_assistant(file_path)
+        processing_time = time.time() - start_time
+        logger.info(f"Prediction completed in {processing_time:.2f} seconds")
+
+        # 3. Handle errors returned by the ML logic
+        if "error" in result:
+            logger.error(f"Prediction error: {result['error']}")
+            return JsonResponse({
+                'success': False, 
+                'error': result['error']
+            }, status=400)
+
+        # 4. Success Response
+        response_data = {
+            'success': True,
+            'result': result,
+            'message': 'Disease prediction completed successfully!',
+            'processing_time': f"{processing_time:.2f} seconds"
+        }
+        logger.info(f"Prediction successful: {result.get('condition', 'Unknown')}")
+        return JsonResponse(response_data)
+
+    except LabReportImage.DoesNotExist:
+        logger.error(f"Report not found: {report_id}")
+        return JsonResponse({'success': False, 'error': 'Report not found'}, status=404)
+    except Exception as e:
+        processing_time = time.time() - start_time
+        logger.error(f"Prediction failed after {processing_time:.2f} seconds: {str(e)}")
+        return JsonResponse({'success': False, 'error': f'System error: {str(e)}'}, status=500)
+
+def parse_prediction_output(output):
+    """
+    Parse the output from the prediction function to extract relevant information
+    """
+    import re
+    
+    # Check if the output contains the custom "no data" message
+    if "Unable to determine - No readable data found" in output:
+        return {
+            'condition': "Unable to determine - No readable data found",
+            'confidence': "0",
+            'diet': "Unable to provide recommendations based on this image",
+            'workout': "Unable to provide recommendations based on this image",
+            'precautions': "Please ensure the image is clear and contains readable lab report data"
+        }
+    
+    # Extract predicted condition
+    condition_match = re.search(r'Predicted Condition: (.+)', output)
+    condition = condition_match.group(1).strip() if condition_match else "Unknown"
+    
+    # Extract confidence
+    confidence_match = re.search(r'Model Confidence: ([\d.]+)%', output)
+    confidence = confidence_match.group(1).strip() if confidence_match else "0.0"
+    
+    # Extract diet recommendation
+    diet_match = re.search(r'Diet: (.+)', output)
+    diet = diet_match.group(1).strip() if diet_match else "No specific recommendations"
+    
+    # Extract workout recommendation
+    workout_match = re.search(r'Workout: (.+)', output)
+    workout = workout_match.group(1).strip() if workout_match else "No specific recommendations"
+    
+    # Extract precautions
+    precautions_match = re.search(r'Precautions: (.+)', output)
+    precautions = precautions_match.group(1).strip() if precautions_match else "No specific precautions"
+    
+    return {
+        'condition': condition,
+        'confidence': confidence,
+        'diet': diet,
+        'workout': workout,
+        'precautions': precautions
+    }
 
 def patient_orders(request):
     patient_id = request.session.get('patient_id')
@@ -1449,10 +1665,17 @@ def delete_prescription_upload(request, prescription_id):
         # Store prescription details for the success message
         pharmacy_name = prescription.pharmacist.pharmacy_name if prescription.pharmacist else "all pharmacies"
         
+        # Store file name for deletion
+        file_to_delete = prescription.prescription_image.name
+        
         # Delete the prescription
         prescription.delete()
         
-        messages.success(request, f"Prescription for {pharmacy_name} has been successfully deleted.")
+        # Delete the physical file
+        if file_to_delete and default_storage.exists(file_to_delete):
+            default_storage.delete(file_to_delete)
+            
+        messages.success(request, f"Prescription for {pharmacy_name} and its associated file have been successfully deleted.")
         return redirect('view_my_prescriptions')
     
     context = {

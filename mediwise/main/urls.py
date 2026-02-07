@@ -23,6 +23,9 @@ urlpatterns = [
     path('order/<int:order_id>/receipt/', views.view_order_receipt, name='view_order_receipt'),
     path('order/<int:order_id>/receipt/download/', views.generate_receipt_pdf, name='download_receipt_pdf'),
     path('patient_records/', views.patient_records, name='patient_records'),
+    path('patient_records/upload/', views.upload_lab_report, name='upload_lab_report'),
+    path('patient_records/delete/<int:report_id>/', views.delete_lab_report, name='delete_lab_report'),
+    path('patient_records/predict/<int:report_id>/', views.predict_disease, name='predict_disease'),
     path('patient_orders/', views.patient_orders, name='patient_orders'),
     path('patient/doctors/', views.view_doctors, name='view_doctors'),
     path('patient/appointments/', views.patient_appointments, name='patient_appointments'),
@@ -83,6 +86,7 @@ urlpatterns = [
     path('admin_finance/', views.financial_oversight, name='financial_oversight'),
     path('admin_ratings_feedback/', views.admin_ratings_feedback, name='admin_ratings_feedback'),
     
+    path('api/chatbot/', views.chatbot_response, name='chatbot_response'),
     path('logout/', views.logout, name='logout'),
 ]
 

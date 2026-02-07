@@ -1,0 +1,388 @@
+<style>
+    /* Chatbot Styles */
+    #chatbot-window {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(20px) scale(0.95);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #chatbot-window.active {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .chat-bubble {
+        max-width: 85%;
+        border-radius: 1.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .chat-bubble.user {
+        background: linear-gradient(135deg, #fb7185 0%, #be123c 100%);
+        color: white;
+        border-bottom-right-radius: 0.25rem;
+        margin-left: auto;
+    }
+
+    .chat-bubble.ai {
+        background: white;
+        color: #1e293b;
+        border-bottom-left-radius: 0.25rem;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .typing-dot {
+        width: 4px;
+        height: 4px;
+        background: #be123c;
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+
+    /* Aura Animation */
+    @keyframes rotate-aura {
+        from {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        to {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+
+    .aura-container {
+        position: relative;
+        padding: 4px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+        overflow: hidden;
+        transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .aura-container::before {
+        content: '';
+        position: absolute;
+        width: 150%;
+        height: 150%;
+        background: conic-gradient(from 0deg,
+                transparent 0%,
+                #be123c 25%,
+                #fb7185 50%,
+                #be123c 75%,
+                transparent 100%);
+        top: 50%;
+        left: 50%;
+        animation: rotate-aura 4s linear infinite;
+        z-index: -1;
+    }
+
+    .aura-container:hover {
+        transform: scale(1.1);
+    }
+
+    /* Floating Animation */
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+
+        100% {
+            transform: translateY(0px);
+        }
+    }
+
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .chat-toggle-btn {
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+    }
+
+    .chat-toggle-btn::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        background: linear-gradient(135deg, #be123c, #fb7185);
+        border-radius: 50%;
+        opacity: 0.3;
+        z-index: -1;
+        animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes pulse-glow {
+        0% {
+            transform: scale(1);
+            opacity: 0.3;
+        }
+
+        50% {
+            transform: scale(1.1);
+            opacity: 0.1;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 0.3;
+        }
+    }
+
+    .chat-bubble.ai p {
+        margin: 0;
+    }
+
+    .chat-bubble.ai p+p {
+        margin-top: 0.5rem;
+    }
+
+    .chat-bubble.ai ul,
+    .chat-bubble.ai ol {
+        margin: 0.5rem 0;
+        padding-left: 1.25rem;
+    }
+
+    .chat-bubble.ai li {
+        margin-bottom: 0.25rem;
+    }
+
+    /* Math styling */
+    .mjx-chtml {
+        font-size: 110% !important;
+    }
+
+    @keyframes typing {
+
+        0%,
+        80%,
+        100% {
+            transform: scale(0.6);
+            opacity: 0.4;
+        }
+
+        40% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+
+<!-- Chatbot Widget -->
+<div class="fixed bottom-6 right-6 z-[60] flex flex-col items-end">
+    <!-- Chat Window -->
+    <div id="chatbot-window"
+        class="w-[350px] md:w-[400px] h-[500px] glass rounded-[2.5rem] shadow-2xl border border-rose-100/50 flex flex-col overflow-hidden mb-4">
+        <!-- Header -->
+        <div class="cherry-gradient p-6 flex items-center justify-between"
+            style="background: linear-gradient(135deg, #be123c 0%, #fb7185 100%);">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white text-xl">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <h4 class="text-white font-black text-sm uppercase tracking-widest">Mediwise AI</h4>
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                        <span class="text-[10px] text-rose-100 font-bold uppercase tracking-widest">Online</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="text-white opacity-70 hover:opacity-100 transition-opacity">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-rose-50/30">
+            <div class="chat-bubble ai">
+                Hello! I'm your Mediwise AI assistant. How can I help you with your health journey today?
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t border-rose-50">
+            <form id="chat-form" class="relative">
+                <input type="text" id="chat-input" placeholder="Ask anything about your health..."
+                    class="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:border-rose-300 transition-colors">
+                <button type="submit"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-white rounded-xl shadow-lg shadow-rose-200 active:scale-95 transition-transform"
+                    style="background: linear-gradient(135deg, #fb7185 0%, #be123c 100%);">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toggle Button Wrapper with Aura -->
+    <div class="aura-container float-animation relative">
+        <button onclick="toggleChat()"
+            class="chat-toggle-btn w-16 h-16 rounded-full shadow-2xl shadow-rose-400/40 flex items-center justify-center text-white text-2xl hover:scale-110 active:scale-95 transition-all"
+            style="background: linear-gradient(135deg, #be123c 0%, #fb7185 100%);">
+            <i class="fas fa-comment-medical" id="chat-icon"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    // Magnetic Effect Logic
+    (function () {
+        const aura = document.querySelector('.aura-container');
+        const btn = document.querySelector('.chat-toggle-btn');
+
+        if (aura && btn) {
+            aura.addEventListener('mousemove', (e) => {
+                const rect = aura.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+
+                btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px) scale(1.1)`;
+                aura.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px)`;
+            });
+
+            aura.addEventListener('mouseleave', () => {
+                btn.style.transform = `translate(0px, 0px) scale(1)`;
+                aura.style.transform = `translate(0px, 0px)`;
+            });
+        }
+    })();
+</script>
+
+<!-- Add Markdown and LaTeX Support -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        options: {
+            processHtmlClass: 'chat-bubble'
+        }
+    };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+    function toggleChat() {
+        const windowChat = document.getElementById('chatbot-window');
+        const iconChat = document.getElementById('chat-icon');
+        const aura = document.querySelector('.aura-container');
+
+        windowChat.classList.toggle('active');
+        aura.classList.toggle('float-animation'); // Pause float while open
+
+        if (windowChat.classList.contains('active')) {
+            iconChat.classList.remove('fa-comment-medical');
+            iconChat.classList.add('fa-chevron-down');
+        } else {
+            iconChat.classList.remove('fa-chevron-down');
+            iconChat.classList.add('fa-comment-medical');
+        }
+    }
+
+    (function () {
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+
+        function appendMessage(role, text) {
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${role} animate-fade-in`;
+
+            if (role === 'ai') {
+                // Pre-process: Protect LaTeX from Markdown interpretation
+                // We find LaTeX patterns and wrap them in a placeholder
+                const placeholders = [];
+                let processedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^$]*?\$|\\\[[\s\S]*?\\\]|\\\(.*?\\\))/g, (match) => {
+                    placeholders.push(match);
+                    return `LATEXPLACEHOLDER${placeholders.length - 1}PLACEHOLDER`;
+                });
+
+                // Parse as Markdown
+                let htmlContent = marked.parse(processedText);
+
+                // Restore LaTeX placeholders
+                htmlContent = htmlContent.replace(/LATEXPLACEHOLDER(\d+)PLACEHOLDER/g, (match, p1) => {
+                    return placeholders[parseInt(p1)];
+                });
+
+                bubble.innerHTML = htmlContent;
+                chatMessages.appendChild(bubble);
+
+                // Trigger MathJax rendering
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([bubble]).catch(err => console.error('MathJax error:', err));
+                }
+            } else {
+                bubble.innerText = text;
+                chatMessages.appendChild(bubble);
+            }
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.id = 'typing-indicator';
+            indicator.className = 'chat-bubble ai flex space-x-1 items-center w-16';
+            indicator.innerHTML = `
+                <div class="typing-dot" style="animation-delay: 0s"></div>
+                <div class="typing-dot" style="animation-delay: 0.2s"></div>
+                <div class="typing-dot" style="animation-delay: 0.4s"></div>
+            `;
+            chatMessages.appendChild(indicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        if (chatForm) {
+            chatForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                chatInput.value = '';
+                appendMessage('user', message);
+                showTypingIndicator();
+
+                try {
+                    const response = await fetch('/api/chatbot/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ message })
+                    });
+
+                    const data = await response.json();
+                    removeTypingIndicator();
+
+                    if (data.response) {
+                        appendMessage('ai', data.response);
+                    } else if (data.error) {
+                        appendMessage('ai', 'Sorry, I encountered an error: ' + data.error);
+                    }
+                } catch (err) {
+                    removeTypingIndicator();
+                    appendMessage('ai', 'Sorry, I could not connect to the server.');
+                }
+            };
+        }
+    })();
+</script>

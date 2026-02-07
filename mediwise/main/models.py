@@ -463,6 +463,34 @@ class PrescriptionUpload(models.Model):
         # This will be implemented in the view logic
         return []
 
+def lab_report_image_path(instance, filename):
+    # File will be uploaded to MEDIA_ROOT/lab_reports/patient_<id>/<filename>
+    import os
+    ext = filename.split('.')[-1]
+    # Generate unique filename using patient ID and timestamp
+    import uuid
+    from datetime import datetime
+    filename = f'lab_report_{instance.patient.id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{uuid.uuid4().hex[:8]}.{ext}'
+    return os.path.join('lab_reports', filename)
+
+
+class LabReportImage(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='lab_report_images')
+    image = models.ImageField(upload_to=lab_report_image_path, help_text="Lab report image file")
+    report_name = models.CharField(max_length=200, help_text="Name/description of the lab report")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True, help_text="Additional notes about the lab report")
+    
+    def __str__(self):
+        return f"{self.report_name} - {self.patient.first_name} {self.patient.last_name}"
+    
+    @property
+    def file_extension(self):
+        import os
+        _, ext = os.path.splitext(self.image.name)
+        return ext.lower() if ext else ''
+
+
 class Review(models.Model):
     REVIEW_TYPE_CHOICES = [
         ('doctor', 'Doctor'),
