@@ -6,382 +6,762 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <title>Mediwise | My Cart</title>
     <style>
         ::-webkit-scrollbar { display: none; }
         body { -ms-overflow-style: none; scrollbar-width: none; overflow-x: hidden; }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+        body, html {
+            background-color: #F8F9FA;
+            font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
         }
 
-        .cherry-gradient {
-            background: linear-gradient(135deg, #be123c 0%, #fb7185 100%);
+        .gradient-text {
+            background: linear-gradient(135deg, #880E4F 0%, #6A0D3F 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .bg-mesh {
-            background-color: #fff1f2;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(251, 113, 133, 0.15) 0, transparent 50%), 
-                radial-gradient(at 100% 100%, rgba(190, 18, 60, 0.1) 0, transparent 50%);
+        /* Toast Message Styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 450px;
         }
-
-        .health-card {
-            transition: all 0.4s ease;
-        }
-        .health-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 25px 50px -12px rgba(190, 18, 60, 0.1);
-        }
-        /* Custom effects for the Glassmorphism look */
-    .glass {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(225, 29, 72, 0.1);
-    }
-
-    .cherry-gradient {
-        background: linear-gradient(135deg, #fb7185 0%, #be123c 100%);
-    }
-
-    /* Smooth transition for navigation links */
-    .nav-link {
-        transition: all 0.2s ease-in-out;
-    }
-
-    .nav-link:hover {
-        transform: translateY(-1px);
-    }
-    </style>
-</head>
-<body class="bg-mesh min-h-screen text-slate-900 pb-20">
-    {% csrf_token %}
-       <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl" style="backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
-    <div class="rounded-[2rem] px-5 py-3 flex justify-between items-center shadow-2xl shadow-rose-900/5 border border-rose-100/20" 
-         style="background: rgba(255, 255, 255, 0.85);">
         
-        <div class="flex items-center space-x-4">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200 flex-shrink-0" 
-                 style="background: linear-gradient(135deg, #fb7185 0%, #be123c 100%);">
-                <i class="fas fa-heart-pulse text-white text-lg"></i>
-            </div>
-            <div class="block">
-                <p class="text-[8px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest leading-none mb-1">Patient Portal</p>
-                <p class="font-black text-rose-950 tracking-tighter text-sm md:text-base">
-                    Hi, {{ user.first_name|default:"Alex" }}
-                </p>
-            </div>
-        </div>
+        .toast-message {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out forwards;
+            border-left: 5px solid;
+        }
+        
+        .toast-message.success {
+            border-left-color: #10b981;
+        }
+        
+        .toast-message.info {
+            border-left-color: #3b82f6;
+        }
+        
+        .toast-message.error {
+            border-left-color: #ef4444;
+        }
+        
+        .toast-message.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .toast-message p {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+        
+        .toast-message i {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .toast-message.success i {
+            color: #10b981;
+        }
+        
+        .toast-message.info i {
+            color: #3b82f6;
+        }
+        
+        .toast-message.error i {
+            color: #ef4444;
+        }
+        
+        .toast-message.warning i {
+            color: #f59e0b;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toast-close:hover {
+            opacity: 1;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOutUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+        }
+        
+        .toast-hiding {
+            animation: fadeOutUp 0.3s ease-out forwards;
+        }
 
-        <div class="hidden lg:flex items-center space-x-1 p-1 rounded-2xl border border-rose-100/50" 
-             style="background-color: rgba(255, 241, 242, 0.5);">
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px-5px rgba(0, 0, 0, 0.05), 0 10px 10px-5px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px-5px rgba(0, 0, 0, 0.08), 0 10px 10px-5px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background-color: #880E4F;
+            color: white;
+            border-radius: 12px;
+           padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5D0038;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(136, 14, 79, 0.25);
+        }
+
+        .outline-btn {
+            background: transparent;
+            border: 2px solid #880E4F;
+            color: #880E4F;
+            transition: all 0.3s ease;
+        }
+        
+        .outline-btn:hover {
+            background: #880E4F;
+            color: white;
+        }
+        
+        .lucide-icon {
+            width: 16px;
+           height: 16px;
+            stroke-width: 2;
+        }
+        
+        /* Custom animations */
+        @keyframes fadeIn {
+           from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+           100% { transform: scale(1); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+        .animate-pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        /* Refined Light Summary Card */
+        /* Light Order Summary */
+.summary-card-light {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 28px;
+    box-shadow: 0 10px 30px-15px rgba(0, 0, 0, 0.05);
+}
+
+/* Smaller Cart Item Card */
+.cart-item-xl {
+    background: white;
+    border: 1px solid #f1f5f9;
+    border-radius: 24px;
+  padding: 1.75rem;
+    transition: all 0.3s ease;
+}
+
+.cart-item-xl:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -10px rgba(136, 14, 79, 0.08);
+}
+
+.med-icon-lg {
+    width: 64px;
+  height: 64px;
+    background: #fdf2f8;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #880E4F;
+}
+
+/* Quantity Controls */
+.qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #f8fafc;
+  padding: 0.4rem;
+    border-radius: 14px;
+    border: 1px solid #edf2f7;
+}
+
+.qty-btn {
+    width: 36px;
+  height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+    </style>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Initialize lucide icons
+        lucide.createIcons();
+        
+        // Modal functions
+        
+        function resetMedicineStatus() {
+            // Reset all medicine status indicators
+            const statusElements = document.querySelectorAll('[id^="medicineStatus_"]');
+            statusElements.forEach(el => {
+                el.textContent = 'Checking...';
+                el.className = 'px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+            });
+        }
+        
+        // Image preview functionality
+        document.getElementById('prescription_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            console.log('File selected:', file);
+            console.log('File name:', file ? file.name : 'No file');
             
-            <a href="{% url 'patient_dashboard' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-               {% if request.resolver_match.url_name == 'patient_dashboard' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+            if (file) {
+                // Show filename and update UI immediately with enhanced visibility
+                const fileNameDisplay = document.getElementById('file-name');
+                const fileStatus = document.getElementById('file-status');
+                const filePreview = document.getElementById('file-preview');
+                const fileIcon = document.getElementById('file-icon');
+                const fileLabelText = document.getElementById('file-label-text');
+                const dropText = document.getElementById('drop-text');
+                const uploadIcon = document.getElementById('upload-icon');
+                const dropZone = document.getElementById('drop-zone');
+                
+                if (fileNameDisplay) {
+                    fileNameDisplay.textContent = file.name;
+                    // Add animation effect
+                    fileNameDisplay.classList.add('animate-pulse');
+                    setTimeout(() => fileNameDisplay.classList.remove('animate-pulse'), 1000);
+                }
+                if (fileStatus) fileStatus.textContent = "Ready to upload";
+                if (filePreview) {
+                    filePreview.classList.remove('hidden');
+                    // Add entrance animation
+                    filePreview.classList.add('animate-fade-in');
+                }
+                
+                // Update file icon based on file type
+                if (fileIcon) {
+                    if (file.name.toLowerCase().endsWith('.pdf')) {
+                        fileIcon.className = "fas fa-file-pdf text-xl";
+                    } else {
+                        fileIcon.className = "fas fa-file-image text-xl";
+                    }
+                }
+                
+                if (fileLabelText) fileLabelText.textContent = "Replace file";
+                if (dropText) dropText.style.display = 'none';
+                
+                // Success styling with enhanced visual feedback
+                if (dropZone) {
+                    dropZone.classList.replace('border-gray-300', 'border-emerald-500');
+                    dropZone.classList.add('bg-emerald-50/30');
+                    dropZone.classList.add('ring-2', 'ring-emerald-200');
+                }
+                if (uploadIcon) uploadIcon.className = "fas fa-check-circle text-4xl text-emerald-600 mb-4";
+                
+                // Show medicine analysis section with animation
+                const medicineCheckSection = document.getElementById('medicine-check-section');
+                if (medicineCheckSection) {
+                    medicineCheckSection.classList.remove('hidden');
+                    medicineCheckSection.classList.add('animate-fade-in');
+                    analyzeMedicines(file, e.target);
+                }
+                
+                // Also show image preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewImage = document.getElementById('previewImage');
+                    const imagePreview = document.getElementById('imagePreview');
+                    if (previewImage) previewImage.src = e.target.result;
+                    if (imagePreview) {
+                        imagePreview.classList.remove('hidden');
+                        imagePreview.classList.add('animate-fade-in');
+                    }
+                };
+                reader.readAsDataURL(file);
+                
+                // Enable submit button
+                const submitBtn = document.getElementById('submitPrescriptionBtn');
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+        
+        // REMOVE FILE FUNCTIONALITY
+        document.getElementById('remove-file').addEventListener('click', function(e) {
+            e.stopPropagation();
+            resetFileInput();
+        });
+        
+        function resetFileInput() {
+            // Reset file input
+            const fileInput = document.getElementById('prescription_image');
+            if (fileInput) fileInput.value = '';
+            
+            // Reset UI elements
+            const filePreview = document.getElementById('file-preview');
+            const medicineCheckSection = document.getElementById('medicine-check-section');
+            const fileLabelText = document.getElementById('file-label-text');
+            const dropText = document.getElementById('drop-text');
+            const dropZone = document.getElementById('drop-zone');
+            const uploadIcon = document.getElementById('upload-icon');
+            const imagePreview = document.getElementById('imagePreview');
+            const submitBtn = document.getElementById('submitPrescriptionBtn');
+            
+            if (filePreview) filePreview.classList.add('hidden');
+            if (medicineCheckSection) medicineCheckSection.classList.add('hidden');
+            if (fileLabelText) fileLabelText.textContent = "Click to upload";
+            if (dropText) dropText.style.display = 'inline';
+            
+            // Reset styling
+            if (dropZone) {
+                dropZone.classList.replace('border-emerald-400', 'border-gray-300');
+                dropZone.classList.remove('bg-emerald-50/20');
+            }
+            if (uploadIcon) uploadIcon.className = "fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4";
+            
+            // Reset image preview
+            if (imagePreview) imagePreview.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = true;
+            
+            // Reset medicine status indicators
+            resetMedicineStatus();
+        }
+        
+        // MEDICINE ANALYSIS FUNCTION
+        
+        function showMockMedicineData(medicineResults) {
+            // Show mock data as fallback
+            const mockMedicines = [
+                { name: 'Paracetamol', strength: '500mg', dosage: '1 tablet 3 times daily', duration: '7 days', status: 'available' },
+                { name: 'Cetirizine', strength: '10mg', dosage: '1 tablet at bedtime', duration: '7 days', status: 'available' },
+                { name: 'Amoxicillin', strength: '500mg', dosage: '1 capsule 2 times daily', duration: '5 days', status: 'unavailable' }
+            ];
+            
+            mockMedicines.forEach(med => {
+                const medElement = document.createElement('div');
+                medElement.className = `p-3 rounded-lg border ${med.status === 'available' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`;
+                medElement.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-slate-800">${med.name}</div>
+                            <div class="text-xs text-slate-600">${med.strength} • ${med.dosage}</div>
+                            <div class="text-xs text-slate-500">Duration: ${med.duration}</div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${med.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${med.status === 'available' ? 'Available' : 'Unavailable'}
+                        </span>
+                    </div>
+                `;
+                medicineResults.appendChild(medElement);
+            });
+            
+            const summary = document.createElement('div');
+            summary.className = 'mt-3 pt-3 border-t border-blue-200 text-sm';
+            summary.innerHTML = `
+                <div class="font-bold text-blue-800">Summary: 2/3 medicines available</div>
+                <div class="text-blue-600 text-xs">Simulation data - upload to see real results</div>
+            `;
+            medicineResults.appendChild(summary);
+        }
+        
+        function updateCartMedicineStatus(medicines) {
+            // Update the medicine status indicators in the cart section
+            const cartItems = document.querySelectorAll('[id^="medicineStatus_"]');
+            cartItems.forEach(item => {
+                const medicineNameElement = item.closest('.flex').querySelector('.font-medium');
+                if (medicineNameElement) {
+                    const medicineName = medicineNameElement.textContent.toLowerCase().trim();
+                    
+                    // Find if this medicine is available in the analyzed results
+                    const isAvailable = medicines.some(med => {
+                        const medName = med.name.toLowerCase().trim();
+                        // Check for exact match or partial match
+                        return med.status === 'available' && 
+                               (medName === medicineName || 
+                                medName.includes(medicineName) || 
+                                medicineName.includes(medName));
+                    });
+                    
+                    if (isAvailable) {
+                        item.textContent = '✓ Available';
+                        item.className = 'px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                    } else {
+                        item.textContent = '✗ Not Found';
+                        item.className = 'px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+                    }
+                }
+            });
+        }
+        
+        // DRAG AND DROP
+        const dropZone = document.getElementById('drop-zone');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+            dropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('border-[#880E4F]', 'bg-pink-50/30'));
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-[#880E4F]', 'bg-pink-50/30'));
+
+        dropZone.addEventListener('drop', (e) => {
+            dropZone.classList.remove('border-[#880E4F]', 'bg-pink-50/30');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                const fileInput = document.getElementById('prescription_image');
+                fileInput.files = files;
+                // Trigger the change event manually to run the UI update above
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    
+        
+        
+        
+        function updateMedicineStatus(medicineMatches) {
+            // Update each medicine status indicator
+            for (const [medicineId, isPresent] of Object.entries(medicineMatches)) {
+                const statusElement = document.getElementById('medicineStatus_' + medicineId);
+                if (statusElement) {
+                    if (isPresent) {
+                        statusElement.textContent = '✓ Present';
+                        statusElement.className = 'px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                    } else {
+                        statusElement.textContent = '✗ Not Found';
+                        statusElement.className = 'px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+                    }
+                }
+            }
+        }
+        
+        function showMessage(message, type) {
+            // Create message element
+            const messageEl = document.createElement('div');
+            messageEl.className = `fixed top-20 right-4 z-50 p-4 rounded-2xl shadow-lg max-w-sm animate-fade-in ${
+                type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
+                type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' :
+                'bg-yellow-50 text-yellow-800 border border-yellow-200'
+            }`;
+            messageEl.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' :
+                        type === 'error' ? 'fa-exclamation-circle' :
+                        'fa-exclamation-triangle'
+                    }"></i>
+                    <p class="text-sm font-bold">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-current opacity-50 hover:opacity-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(messageEl);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (messageEl.parentElement) {
+                    messageEl.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</head>
+<body class="min-h-screen text-slate-900 pb-20">
+
+    {% csrf_token %}
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl">
+    <div class="rounded-2xl px-5 py-3 flex justify-between items-center shadow-lg bg-white border border-gray-100">
+
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br from-[#880E4F] to-[#6A0D3F] flex-shrink-0">
+                    <i class="fas fa-heart-pulse text-white text-lg"></i>
+                </div>
+                <div class="block">
+                    <p class="text-[8px] md:text-[10px] font-bold text-[#880E4F] uppercase tracking-widest leading-none mb-1">
+                        Patient Portal</p>
+                    <p class="font-bold text-[#1e293b] tracking-tight text-sm md:text-base">
+                        Hi, {{ user.first_name|default:"Alex" }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="hidden lg:flex items-center space-x-1 p-1 rounded-xl bg-gray-50 border border-gray-200">
+
+                <a href="{% url 'patient_dashboard' %}" 
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_dashboard' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                Overview
             </a>
 
             <a href="{% url 'patient_records' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-               {% if request.resolver_match.url_name == 'patient_records' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_records' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                Records
             </a>
 
             <a href="{% url 'patient_prescriptions' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-               {% if request.resolver_match.url_name == 'patient_prescriptions' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_prescriptions' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                Prescriptions
             </a>
 
             <a href="{% url 'registered_pharmacies' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-               {% if request.resolver_match.url_name == 'registered_pharmacies' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'registered_pharmacies' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                Pharmacy
             </a>
 
             <a href="{% url 'view_doctors' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-               {% if request.resolver_match.url_name == 'view_doctors' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'view_doctors' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                Doctors
             </a>
 
             <a href="{% url 'patient_appointments' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-               {% if request.resolver_match.url_name == 'patient_appointments' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_appointments' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                My Appointments
             </a>
 
             <a href="{% url 'patient_orders' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-               {% if request.resolver_match.url_name == 'patient_orders' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_orders' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                Orders
             </a>
             
             <a href="{% url 'patient_notifications' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center relative transition-all
-               {% if request.resolver_match.url_name == 'patient_notifications' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center relative transition-all
+               {% if request.resolver_match.url_name == 'patient_notifications' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                 <span>Notifications</span>
                 {% if notifications %}
-                <span class="ml-2 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px] shadow-lg shadow-rose-200">{{ notifications|length }}</span>
+                <span class="ml-2 w-5 h-5 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[10px] shadow-md">{{ notifications|length }}</span>
                 {% endif %}
             </a>
 
             <a href="{% url 'view_cart' %}" 
-               class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center relative transition-all
-               {% if request.resolver_match.url_name == 'view_cart' %} bg-white text-rose-950 shadow-sm {% else %} text-slate-500 hover:text-rose-600 {% endif %}">
+               class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center relative transition-all
+               {% if request.resolver_match.url_name == 'view_cart' %} bg-white text-[#880E4F] shadow-sm {% else %} text-gray-500 hover:text-[#880E4F] {% endif %}">
                 <span>Cart</span>
                 {% if cart_count > 0 %}
-                <span class="ml-2 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px] shadow-lg shadow-rose-200">{{ cart_count }}</span>
+                <span class="ml-2 w-5 h-5 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[10px] shadow-md">{{ cart_count }}</span>
                 {% endif %}
             </a>
-        </div>
+            </div>
 
-        <div class="flex items-center space-x-3">
-            <a href="{% url 'view_cart' %}" class="lg:hidden w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 relative">
+            <div class="flex items-center space-x-3">
+            <a href="{% url 'view_cart' %}" class="lg:hidden w-10 h-10 rounded-xl bg-[#FCE4EC] flex items-center justify-center text-[#880E4F] relative">
                 <i class="fas fa-shopping-cart"></i>
                 {% if cart_count > 0 %}
-                <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white rounded-full flex items-center justify-center text-[8px]">{{ cart_count }}</span>
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[8px]">{{ cart_count }}</span>
                 {% endif %}
             </a>
 
             <div class="group relative">
-                <div class="w-10 h-10 rounded-full border-2 border-rose-200 overflow-hidden shadow-sm cursor-pointer transition-transform group-hover:scale-105 active:scale-95">
-                    <img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'Alex' }}+{{ user.last_name|default:'Smith' }}&background=fff1f2&color=be123c" alt="Profile" class="w-full h-full object-cover">
+                <div class="w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm cursor-pointer transition-transform group-hover:scale-105 active:scale-95">
+                    <img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'Alex' }}+{{ user.last_name|default:'Smith' }}&background=e0e7ff&color=6A0D3F" alt="Profile" class="w-full h-full object-cover">
                 </div>
 
-                <div class="absolute right-0 mt-4 w-52 rounded-2xl p-2 opacity-0 invisible translate-y-3 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 shadow-2xl z-50 border border-rose-100" 
-                     style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+                <div class="absolute right-0 mt-4 w-52 rounded-xl p-2 opacity-0 invisible translate-y-3 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 shadow-xl z-50 border border-gray-100 bg-white">
                     <div class="px-4 py-2 mb-1">
-                        <p class="text-[9px] font-black text-rose-400 uppercase tracking-widest">Account Settings</p>
+                        <p class="text-[9px] font-bold text-[#880E4F] uppercase tracking-widest">Account Settings</p>
                     </div>
-                    <a href="{% url 'update_profile' %}" class="flex items-center space-x-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-700 rounded-xl transition-colors">
+                    <a href="{% url 'update_profile' %}" class="flex items-center space-x-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-[#FCE4EC] hover:text-[#880E4F] rounded-lg transition-colors">
                         <i class="fas fa-user-circle opacity-50"></i>
                         <span>Profile Management</span>
                     </a>
-                    <hr class="my-2 border-rose-100/50">
-                    <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors">
+                    <hr class="my-2 border-gray-100">
+                    <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-2 text-xs font-bold text-[#880E4F] hover:bg-[#FCE4EC] rounded-lg transition-colors">
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Logout</span>
                     </a>
                 </div>
             </div>
         </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto pt-32 px-6">
+    
+    <!-- Toast Messages Container -->
+    {% if messages %}
+    <div class="toast-container">
+        {% for message in messages %}
+        <div class="toast-message {% if message.tags == 'success' %}success{% elif message.tags == 'info' %}info{% elif message.tags == 'error' %}error{% else %}warning{% endif %}">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'info' %}fa-info-circle{% elif message.tags == 'error' %}fa-times-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+            <p>{{ message }}</p>
+            <button type="button" class="toast-close" onclick="this.parentElement.classList.add('toast-hiding'); setTimeout(() => this.parentElement.remove(), 300);">
+                <i class="fas fa-times" style="color: #64748b;"></i>
+            </button>
+        </div>
+        {% endfor %}
     </div>
-</nav>
+    {% endif %}
+    
+    <!-- Page Heading -->
+    <h1 class="text-4xl md:text-5xl font-bold text-[#880E4F] tracking-tight mb-1">My Cart</h1>
+            <p class="text-gray-500 font-medium">Manage your purchases.</p>
 
-    <main class="max-w-6xl mx-auto pt-32 px-6">
-        {% if messages %}
-        <div class="mb-8 space-y-4">
-            {% for message in messages %}
-            <div class="p-4 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% else %}bg-rose-50 text-rose-600 border border-rose-100{% endif %} flex items-center justify-between shadow-sm animate-fade-in">
-                <div class="flex items-center space-x-3">
-                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
-                    <p class="text-xs font-black uppercase tracking-widest">{{ message }}</p>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-current opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="mb-12">
-            <h2 class="text-4xl md:text-5xl font-black text-rose-950 tracking-tighter mb-2">Cart Review</h2>
-            <p class="text-slate-500 font-medium">Please review your items before proceeding to payment.</p>
+    
+    <div class="lg:col-span-8 space-y-6">
+    {% for item in cart_items %}
+    <div class="cart-item-xl flex flex-col md:flex-row items-center gap-6">
+        <div class="med-icon-lg flex-shrink-0">
+            <i class="fas fa-pills text-2xl"></i>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-8 space-y-4">
-                    {% for item in cart_items %}
-                <div class="glass rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 border border-white">
-                    <div class="flex items-center space-x-6">
-                        <div class="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600">
-                            <i class="fas fa-capsules text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-black text-rose-950 text-lg">{{ item.medicine.generic_name }}</h3>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ item.medicine.brand_name }}</p>
-                            <p class="text-xs text-rose-400 font-black mt-1">{{ item.medicine.pharmacist.pharmacy_name }}</p>
-                            {% if item.medicine.medicine_type == 'Rx' %}
-                            <div class="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold inline-flex items-center gap-1">
-                                <i class="fas fa-prescription-bottle-alt"></i> Prescription Required
-                            </div>
-                            {% endif %}
-                            {% if item.added_from_prescription %}
-                            <div class="mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold inline-flex items-center gap-1">
-                                <i class="fas fa-check"></i> From Prescription
-                            </div>
-                            {% endif %}
-                            <div class="mt-3">
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">Course Duration</label>
-                                <input type="text" 
-       name="course_duration_{{ item.id }}" 
-       onchange="updateCourseDuration(this, '{{ item.id }}')" 
-       placeholder="e.g., 3 months" 
-       class="w-full md:w-32 px-3 py-2 text-xs bg-white border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-300 focus:border-transparent outline-none"
-       value="{{ item.course_duration|default:'' }}">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center space-x-8">
-                        <div class="flex items-center bg-rose-50 rounded-xl p-1 border border-rose-100">
-                            <a href="{% url 'update_cart_quantity' item.id 'decrease' %}" class="w-8 h-8 rounded-lg flex items-center justify-center text-rose-600 hover:bg-white transition-colors">
-                                <i class="fas fa-minus text-[10px]"></i>
-                            </a>
-                            <span class="px-4 font-black text-rose-950">{{ item.quantity }}</span>
-                            <a href="{% url 'update_cart_quantity' item.id 'increase' %}" class="w-8 h-8 rounded-lg flex items-center justify-center text-rose-600 hover:bg-white transition-colors">
-                                <i class="fas fa-plus text-[10px]"></i>
-                            </a>
-                        </div>
-                        <div class="text-right flex items-center space-x-4">
-                            <div>
-                                <p class="text-lg font-black text-rose-950">Qty: {{ item.quantity }}</p>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">In Stock: {{ item.medicine.quantity }}</p>
-                            </div>
-                            <a href="{% url 'remove_from_cart' item.id %}" class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="glass rounded-[3rem] p-20 text-center border border-white">
-                    <div class="w-20 h-20 bg-rose-50 text-rose-300 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-shopping-basket text-3xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-black text-rose-950 mb-2">Cart is Empty</h3>
-                    <p class="text-slate-500 font-medium mb-8">You haven't added any medicines yet.</p>
-                    <a href="{% url 'registered_pharmacies' %}" class="px-8 py-3 cherry-gradient text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-200 inline-block">Browse Pharmacies</a>
-                </div>
-                {% endfor %}
-                
-                </form>
-            </div>
+        <div class="flex-grow text-center md:text-left">
+            <h3 class="text-lg font-bold text-slate-800">{{ item.medicine.generic_name }}</h3>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{{ item.medicine.brand_name }}</p>
+            <p class="text-xs text-[#880E4F] font-bold mt-2">{{ item.medicine.pharmacist.pharmacy_name }}</p>
+            
+            {% if item.medicine.medicine_type == 'Rx' %}
+            <span class="mt-3 inline-flex items-center px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold border border-rose-100">
+                <i class="fas fa-file-prescription mr-2"></i> Rx Required
+            </span>
+            {% endif %}
+        </div>
 
-            <div class="lg:col-span-4">
-                {% if cart_items %}
-                <div class="glass rounded-[2.5rem] p-8 border border-white sticky top-32">
-                    <h3 class="text-xl font-black text-rose-950 mb-6">Order Summary</h3>
-                    
-                    <div class="space-y-4 mb-8">
-                        <div class="flex justify-between text-sm font-bold text-slate-500">
-                            <span>Total Items</span>
-                            <span>{{ cart_items.count }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm font-bold text-slate-500">
-                            <span>Subtotal</span>
-                            <span>${{ subtotal|floatformat:2 }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm font-bold text-slate-500">
-                            <span>GST (18%)</span>
-                            <span>${{ gst_amount|floatformat:2 }}</span>
-                        </div>
-                        <div class="flex justify-between text-lg font-black text-rose-950 pt-2 border-t border-rose-100">
-                            <span>Total</span>
-                            <span>${{ total_amount|floatformat:2 }}</span>
-                        </div>
-                    </div>
-                    
-                    {% with rx_items=cart_items|filter_rx_medicines %}
-                    {% if rx_items %}
-                        <!-- Check if any Rx items were NOT added from a prescription -->
-                        {% with non_prescription_rx_items=rx_items|filter_not_from_prescription %}
-                        {% if non_prescription_rx_items %}
-                        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-                            <div class="flex items-start">
-                                <i class="fas fa-exclamation-triangle text-yellow-600 text-lg mt-1 mr-3"></i>
-                                <div>
-                                    <h4 class="font-bold text-yellow-800 mb-1">Prescription Required</h4>
-                                    <p class="text-sm text-yellow-700 mb-2">You have prescription-only medicines in your cart. You need to upload a valid prescription before checkout.</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        {% for item in non_prescription_rx_items %}
-                                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">{{ item.medicine.generic_name }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <a href="{% url 'view_my_prescriptions' %}" class="w-full py-3 bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest text-center shadow-lg hover:scale-[1.02] transition-transform inline-block">
-                                Cancel
-                            </a>
-                            <a href="{% url 'upload_prescription' %}" class="w-full py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest text-center shadow-lg shadow-blue-200 hover:scale-[1.02] transition-transform inline-block">
-                                <i class="fas fa-upload mr-1"></i> Upload Prescription
-                            </a>
-                        </div>
-                        {% else %}
-                        <!-- All Rx items were added from prescriptions, allow checkout -->
-                        <a href="{% url 'checkout' %}" class="w-full py-5 cherry-gradient text-white rounded-2xl text-xs font-black uppercase tracking-widest text-center shadow-xl shadow-rose-200 hover:scale-[1.02] transition-transform inline-block">
-                            Proceed to Payment
-                        </a>
-                        {% endif %}
-                        {% endwith %}
-                    {% else %}
-                    <a href="{% url 'checkout' %}" class="w-full py-5 cherry-gradient text-white rounded-2xl text-xs font-black uppercase tracking-widest text-center shadow-xl shadow-rose-200 hover:scale-[1.02] transition-transform inline-block">
-                        Proceed to Payment
+        <div class="flex flex-col items-center md:items-end gap-4">
+            <span class="text-xl font-black text-slate-900">₹{{ item.get_total_price|default:"0.00" }}</span>
+            
+            <div class="flex items-center gap-3">
+                <div class="flex items-center bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                    <a href="{% url 'update_cart_quantity' item.id 'decrease' %}" class="w-9 h-9 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-[#880E4F]">
+                        <i class="fas fa-minus text-xs"></i>
                     </a>
-                    {% endif %}
-                    {% endwith %}
-                    
-                    <p class="text-[10px] text-center text-slate-400 mt-6 font-medium leading-relaxed">
-                        By clicking "Proceed to Payment", you agree to our terms of service and medical privacy policy.
-                    </p>
+                    <span class="px-4 font-black text-slate-800 text-base">{{ item.quantity }}</span>
+                    <a href="{% url 'update_cart_quantity' item.id 'increase' %}" class="w-9 h-9 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-[#880E4F]">
+                        <i class="fas fa-plus text-xs"></i>
+                    </a>
                 </div>
-                {% endif %}
+
+                <a href="{% url 'remove_from_cart' item.id %}" class="w-10 h-10 flex items-center justify-center rounded-lg bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white transition-all">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
             </div>
         </div>
-    </main>
+    </div>
+    {% endfor %}
+</div>
 
-    <div class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] glass rounded-3xl p-2 flex justify-around items-center shadow-2xl border border-rose-100">
-        <a href="{% url 'patient_dashboard' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-home"></i></a>
-        <a href="{% url 'view_doctors' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-user-md"></i></a>
-        <a href="{% url 'patient_appointments' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-calendar"></i></a>
-        <a href="{% url 'patient_orders' %}" class="w-12 h-12 rounded-2xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-box"></i></a>
-        <a href="{% url 'view_cart' %}" class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 transition-all flex items-center justify-center relative">
+<div class="lg:col-span-4">
+    <div class="summary-card-light p-8 sticky top-32">
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Order Summary</h3>
+        
+        <div class="space-y-4 mb-8">
+            <div class="flex justify-between text-slate-500 font-medium">
+                <span>Items Subtotal</span>
+                <span class="text-slate-900">₹{{ subtotal|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between text-slate-500 font-medium">
+                <span>GST (18%)</span>
+                <span class="text-slate-900">₹{{ gst_amount|floatformat:2 }}</span>
+            </div>
+            <div class="pt-4 border-t border-slate-100 flex justify-between items-end">
+                <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Total Amount</span>
+                <span class="text-3xl font-black text-[#880E4F]">₹{{ total_amount|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        {% with rx_items=cart_items|filter_rx_medicines %}
+        {% with non_prescription_rx_items=rx_items|filter_not_from_prescription %}
+            {% if non_prescription_rx_items %}
+                <div class="text-center py-3 bg-yellow-50 border border-yellow-200 rounded-xl text-xs text-yellow-800 font-semibold">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Prescription upload feature is currently unavailable. Please contact support for assistance.
+                </div>
+            {% else %}
+                <a href="{% url 'checkout' %}" class="w-full block text-center py-4 bg-gradient-to-r from-[#880E4F] to-[#6A0D3F] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-pink-100 hover:scale-[1.02] transition-all">
+                    Secure Checkout
+                </a>
+            {% endif %}
+        {% endwith %}
+        {% endwith %}
+    </div>
+</div>
+</main>
+
+    <div class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] bg-white rounded-2xl p-2 flex justify-around items-center shadow-xl border border-gray-200">
+        <a href="{% url 'patient_dashboard' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-home"></i></a>
+        <a href="{% url 'view_doctors' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-user-md"></i></a>
+        <a href="{% url 'patient_appointments' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-calendar"></i></a>
+        <a href="{% url 'patient_orders' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-box"></i></a>
+        <a href="{% url 'view_cart' %}" class="w-12 h-12 rounded-xl bg-[#FCE4EC] text-[#880E4F] transition-all flex items-center justify-center relative">
             <i class="fas fa-shopping-cart"></i>
             {% if cart_count > 0 %}
-            <span class="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px] border-2 border-white">{{ cart_count }}</span>
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[10px] border border-white">{{ cart_count }}</span>
             {% endif %}
         </a>
         
     </div>
 
-    <script>
-        function updateCourseDuration(inputElement, itemId) {
-            // Create a temporary form to submit the course duration update
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{% url "update_cart_course_duration" %}?next={{ request.get_full_path|urlencode }}';
-            form.style.display = 'none';
-            
-            // Add CSRF token
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value || '';
-            if (!csrfToken) {
-                console.error('CSRF token not found');
-                return;
-            }
-            
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = 'csrfmiddlewaretoken';
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
-            
-            // Add course duration
-            const durationInput = document.createElement('input');
-            durationInput.type = 'hidden';
-            durationInput.name = 'course_duration_' + itemId;
-            durationInput.value = inputElement.value;
-            form.appendChild(durationInput);
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-    </script>
+    <!-- Upload Prescription Modal - REMOVED: Feature discontinued -->
+    <!--
+    <div id="uploadPrescriptionModal" class="fixed inset-0 z-50 hidden">
+        ... (modal content removed)
+    </div>
+    -->
 </body>
 </html>

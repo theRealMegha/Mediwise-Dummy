@@ -7,177 +7,438 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Mediwise | Premium Healthcare Hub</title>
     <style>
-        /* Global Reset & Scrollbar Removal */
         ::-webkit-scrollbar { display: none; }
         html { -ms-overflow-style: none; scrollbar-width: none; overflow-x: hidden; }
 
         .glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(32px) saturate(180%);
+            -webkit-backdrop-filter: blur(32px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.05);
         }
 
         .cherry-gradient {
-            background: linear-gradient(135deg, #be123c 0%, #fb7185 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #f43f5e 50%, #fb7185 100%);
+        }
+
+        .rose-glow {
+            box-shadow: 0 0 40px rgba(244, 63, 94, 0.3),
+                        0 0 80px rgba(244, 63, 94, 0.1);
         }
 
         .bg-mesh {
-            background-color: #fff1f2;
+            background-color: #fff5f7;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(251, 113, 133, 0.2) 0, transparent 50%), 
-                radial-gradient(at 100% 100%, rgba(190, 18, 60, 0.1) 0, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.15) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(251, 113, 133, 0.1) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(225, 29, 72, 0.08) 0, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(251, 113, 133, 0.12) 0, transparent 50%);
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f43f5e, #fb7185);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ec4899, #f43f5e);
+            top: 60%;
+            left: 80%;
+            animation-delay: 5s;
+        }
+
+        .shape:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #fb7185, #f43f5e);
+            top: 40%;
+            left: 60%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, 30px) rotate(90deg); }
+            50% { transform: translate(-20px, 50px) rotate(180deg); }
+            75% { transform: translate(30px, -20px) rotate(270deg); }
         }
 
         .bento-item {
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: transform, box-shadow;
         }
         .bento-item:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 30px 60px -12px rgba(190, 18, 60, 0.15);
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 40px 80px -12px rgba(244, 63, 94, 0.2);
+        }
+
+        /* Marquee Animation */
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: 200%;
+            animation: scroll 35s linear infinite;
         }
 
         @keyframes pulse-soft {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.98); }
         }
-        .animate-pulse-soft { animation: pulse-soft 2s infinite; }
+        .animate-pulse-soft { animation: pulse-soft 3s infinite ease-in-out; }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .shimmer {
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.3) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 3s infinite;
+        }
+
+        /* Contact Form Styles */
+        .contact-input {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .contact-input:focus {
+            outline: none;
+            border-color: #f43f5e;
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Button hover effects */
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        .btn-primary:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #dc2626, #f43f5e, #fb7185);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Enhanced card hover */
+        .feature-card {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .feature-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 20px 60px -12px rgba(244, 63, 94, 0.25);
+        }
+        .feature-card:hover .icon-wrapper {
+            transform: scale(1.15) rotate(5deg);
+        }
     </style>
 </head>
-<body class="bg-mesh text-slate-900 selection:bg-rose-200">
+<body class="bg-mesh text-slate-900 selection:bg-rose-200 relative">
+
+    <!-- Animated Background Shapes -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
 
     <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-6xl">
         <div class="glass rounded-3xl px-8 py-4 flex justify-between items-center shadow-2xl shadow-rose-900/5">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 cherry-gradient rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                <div class="w-10 h-10 cherry-gradient rounded-xl flex items-center justify-center shadow-lg shadow-rose-300 rose-glow">
                     <i class="fas fa-notes-medical text-white text-lg"></i>
                 </div>
-                <span class="font-black text-2xl tracking-tighter text-rose-950">Mediwise</span>
+                <span class="font-black text-2xl tracking-tighter bg-gradient-to-r from-rose-600 to-rose-400 bg-clip-text text-transparent">Mediwise</span>
             </div>
             
             <div class="hidden lg:flex items-center space-x-2 bg-rose-50/50 p-1 rounded-2xl border border-rose-100/50">
                 <a href="#stats" class="px-5 py-2 hover:bg-white rounded-xl text-rose-900 text-sm font-bold transition-all">Analytics</a>
+                <a href="#features" class="px-5 py-2 hover:bg-white rounded-xl text-rose-900 text-sm font-bold transition-all">Services</a>
                 <a href="#security" class="px-5 py-2 hover:bg-white rounded-xl text-rose-900 text-sm font-bold transition-all">Security</a>
-                <a href="#resources" class="px-5 py-2 hover:bg-white rounded-xl text-rose-900 text-sm font-bold transition-all">Library</a>
+                <a href="#contact" class="px-5 py-2 hover:bg-white rounded-xl text-rose-900 text-sm font-bold transition-all">Contact</a>
             </div>
 
             <div class="flex items-center space-x-4">
-                <div class="hidden md:flex items-center space-x-2 mr-4">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse-soft"></span>
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Systems Nominal</span>
-                </div>
-                <a href="{% url 'login' %}" class="cherry-gradient text-white px-8 py-2.5 rounded-2xl font-bold hover:opacity-90 transition-all active:scale-95 shadow-md shadow-rose-200">
+                <a href="{% url 'login' %}" class="btn-primary cherry-gradient text-white px-8 py-2.5 rounded-2xl font-bold hover:shadow-xl hover:shadow-rose-300/50 transition-all active:scale-95 shadow-md shadow-rose-200">
                     Sign In
                 </a>
             </div>
         </div>
     </nav>
 
-    <header class="pt-52 pb-24 px-6 text-center">
-        <div class="inline-flex items-center px-4 py-1.5 bg-white border border-rose-100 text-rose-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-sm">
-            <i class="fas fa-star mr-2"></i> Trusted by 500+ Medical Centers
+    <header class="pt-52 pb-20 px-6 text-center relative z-10">
+        <div class="inline-flex items-center px-4 py-1.5 bg-white/80 backdrop-blur-md border border-rose-200 text-rose-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-lg shadow-rose-100/50 hover:shadow-xl transition-shadow">
+            <i class="fas fa-bolt mr-2 text-rose-400 animate-pulse"></i> v2.0 Now Live
         </div>
         <h1 class="text-6xl md:text-8xl font-black text-rose-950 mb-10 tracking-tighter leading-[0.85]">
-            Experience health, <br><span class="text-rose-600 italic">without friction.</span>
+            Experience health, <br><span class="gradient-text italic">without friction.</span>
         </h1>
         <p class="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
-            The next-generation portal for medical records, consultations, and prescriptions. Built with military-grade privacy and a human touch.
+            The next-generation portal for medical records and consultations. Built with military-grade privacy and a human touch.
         </p>
         
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-            <a href="{% url 'login' %}" class="w-full sm:w-auto px-12 py-5 cherry-gradient text-white rounded-[2rem] font-black text-lg shadow-2xl shadow-rose-400/40 hover:scale-105 transition-transform flex items-center justify-center">
-                Get Started Now <i class="fas fa-chevron-right ml-3 text-sm"></i>
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-20">
+            <a href="#" class="btn-primary w-full sm:w-auto px-12 py-5 cherry-gradient text-white rounded-[2rem] font-black text-lg shadow-2xl shadow-rose-400/40 hover:scale-105 transition-transform flex items-center justify-center group">
+                Get Started Now <i class="fas fa-chevron-right ml-3 text-sm group-hover:translate-x-1 transition-transform"></i>
             </a>
-            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest sm:ml-4">
-                No credit card required
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest sm:ml-4 flex items-center bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl">
+                <i class="fas fa-shield-halved mr-2 text-rose-400"></i> Encrypted & Secure
+            </div>
+        </div>
+
+        <div class="max-w-5xl mx-auto overflow-hidden opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+            <div class="animate-marquee whitespace-nowrap flex items-center gap-16">
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-clinic-medical mr-2"></i> Mayo Clinic</span>
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-hospital-user mr-2"></i> BlueCross</span>
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-microscope mr-2"></i> Heal Pharma</span>
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-pills mr-2"></i> CVS Health</span>
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-heartbeat mr-2"></i> UnitedHealth</span>
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-clinic-medical mr-2"></i> Mayo Clinic</span>
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-hospital-user mr-2"></i> BlueCross</span>
+                <span class="text-2xl font-black text-slate-400 uppercase"><i class="fas fa-microscope mr-2"></i> Pfizer</span>
             </div>
         </div>
     </header>
 
-    <section id="stats" class="max-w-6xl mx-auto px-6 mb-16">
+    <section id="stats" class="max-w-6xl mx-auto px-6 mb-16 relative z-10">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="glass p-8 rounded-[2.5rem] bento-item border-l-4 border-l-rose-500">
-                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Patients</p>
-                <h4 class="text-4xl font-black text-rose-950">14.2k</h4>
-                <div class="mt-4 text-[10px] font-bold text-emerald-600"><i class="fas fa-arrow-up mr-1"></i> 12% This Month</div>
+            <div class="glass p-8 rounded-[2.5rem] bento-item border-l-4 border-l-rose-500 group hover:border-l-rose-600">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Active Patients</p>
+                <h4 class="text-4xl font-black text-rose-950 group-hover:scale-110 transition-transform origin-left">14.2k</h4>
+                <div class="mt-4 text-[10px] font-bold text-emerald-600 flex items-center"><i class="fas fa-arrow-up mr-1"></i> 12% Growth</div>
             </div>
-            <div class="glass p-8 rounded-[2.5rem] bento-item">
-                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Providers</p>
-                <h4 class="text-4xl font-black text-rose-950">890+</h4>
-                <div class="mt-4 text-[10px] font-bold text-slate-400">Global Network</div>
+            <div class="glass-card p-8 rounded-[2.5rem] bento-item">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Cloud Nodes</p>
+                <h4 class="text-4xl font-black text-rose-950">124</h4>
+                <div class="mt-4 text-[10px] font-bold text-slate-400">Global Regions</div>
             </div>
-            <div class="cherry-gradient p-8 rounded-[2.5rem] bento-item text-white shadow-xl shadow-rose-200">
-                <p class="text-xs font-black text-rose-100 uppercase tracking-widest mb-2">Reliability</p>
-                <h4 class="text-4xl font-black">99.9%</h4>
-                <div class="mt-4 text-[10px] font-bold text-rose-100">Uptime Guaranteed</div>
+            <div class="cherry-gradient p-8 rounded-[2.5rem] bento-item text-white shadow-xl shadow-rose-300/50 rose-glow">
+                <p class="text-xs font-black text-rose-100 uppercase tracking-widest mb-2">Uptime Rate</p>
+                <h4 class="text-4xl font-black">99.99%</h4>
+                <div class="mt-4 text-[10px] font-bold text-rose-100 italic">SLA Protected</div>
             </div>
-            <div class="glass p-8 rounded-[2.5rem] bento-item">
-                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Response</p>
-                <h4 class="text-4xl font-black text-rose-950">&lt; 2m</h4>
-                <div class="mt-4 text-[10px] font-bold text-slate-400">Average Triage</div>
+            <div class="glass-card p-8 rounded-[2.5rem] bento-item">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Response Time</p>
+                <h4 class="text-4xl font-black text-rose-950">&lt; 150ms</h4>
+                <div class="mt-4 text-[10px] font-bold text-slate-400">Avg API Latency</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="max-w-6xl mx-auto px-6 mb-32 relative z-10">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-black text-rose-950 tracking-tight leading-tight">Everything you need to <br><span class="gradient-text">manage care.</span></h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="feature-card bg-white/50 p-10 rounded-[3rem] border border-white/60 hover:bg-white/70 backdrop-blur-sm">
+                <div class="icon-wrapper w-14 h-14 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-6 text-2xl shadow-md shadow-rose-200/50">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h3 class="text-xl font-black text-rose-950 mb-4">HD Telemedicine</h3>
+                <p class="text-slate-500 leading-relaxed text-sm">Crystal clear video consultations with integrated diagnostic tools and real-time vitals monitoring.</p>
+            </div>
+            <div class="feature-card bg-white/50 p-10 rounded-[3rem] border border-white/60 hover:bg-white/70 backdrop-blur-sm">
+                <div class="icon-wrapper w-14 h-14 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-6 text-2xl shadow-md shadow-rose-200/50">
+                    <i class="fas fa-file-medical-alt"></i>
+                </div>
+                <h3 class="text-xl font-black text-rose-950 mb-4">Unified Records</h3>
+                <p class="text-slate-500 leading-relaxed text-sm">Sync your entire medical history from various providers into one interoperable dashboard.</p>
+            </div>
+            <div class="feature-card bg-white/50 p-10 rounded-[3rem] border border-white/60 hover:bg-white/70 backdrop-blur-sm">
+                <div class="icon-wrapper w-14 h-14 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-6 text-2xl shadow-md shadow-rose-200/50">
+                    <i class="fas fa-prescription-bottle-medical"></i>
+                </div>
+                <h3 class="text-xl font-black text-rose-950 mb-4">Smart Pharmacy</h3>
+                <p class="text-slate-500 leading-relaxed text-sm">Automated refills and drug-interaction warnings powered by the Mediwise clinical engine.</p>
             </div>
         </div>
     </section>
 
     <main class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-6 pb-32">
-        
-        <section id="security" class="md:col-span-8 bg-white rounded-[3rem] p-12 relative overflow-hidden bento-item border border-rose-100 group">
+        <section id="security" class="md:col-span-8 bg-gradient-to-br from-white to-rose-50 rounded-[3rem] p-12 relative overflow-hidden bento-item border border-rose-100 group shadow-xl shadow-rose-100/50">
             <div class="relative z-10 flex flex-col h-full justify-between">
                 <div class="max-w-md">
-                    <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-rose-50 to-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-rose-200/50">
                         <i class="fas fa-shield-heart text-3xl"></i>
                     </div>
                     <h2 class="text-4xl font-black text-rose-950 mb-6 leading-tight">Patient-First <br>Security Model.</h2>
                     <p class="text-slate-500 text-lg leading-relaxed">We utilize asymmetric encryption where your private key never leaves your device. Total privacy, total control.</p>
                 </div>
                 <div class="mt-12 flex items-center space-x-6">
-                    <span class="flex items-center text-xs font-black text-rose-600"><i class="fas fa-check-circle mr-2"></i> HIPAA COMPLIANT</span>
-                    <span class="flex items-center text-xs font-black text-rose-600"><i class="fas fa-check-circle mr-2"></i> END-TO-END ENCRYPTED</span>
+                    <span class="flex items-center text-[10px] font-black text-rose-600 tracking-widest bg-rose-50 px-3 py-1.5 rounded-full"><i class="fas fa-check-circle mr-2"></i> HIPAA COMPLIANT</span>
+                    <span class="flex items-center text-[10px] font-black text-rose-600 tracking-widest bg-rose-50 px-3 py-1.5 rounded-full"><i class="fas fa-check-circle mr-2"></i> SOC2 TYPE II</span>
                 </div>
             </div>
             <i class="fas fa-lock absolute -bottom-10 -right-10 text-[18rem] text-rose-50/50 -rotate-12 group-hover:rotate-0 transition-transform duration-700"></i>
+            <div class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-rose-100/30 to-transparent rounded-full blur-3xl"></div>
         </section>
 
-        <section id="resources" class="md:col-span-4 glass rounded-[3rem] p-10 bento-item flex flex-col">
+        <section id="resources" class="md:col-span-4 glass rounded-[3rem] p-10 bento-item flex flex-col shadow-xl shadow-rose-100/30">
             <h3 class="text-xl font-black text-rose-950 mb-8 uppercase tracking-tighter">Quick Library</h3>
             <div class="space-y-4">
-                <a href="#" class="block p-4 bg-white/50 rounded-2xl border border-white hover:border-rose-200 transition-all">
-                    <h5 class="font-bold text-sm text-rose-900">Mental Wellness Tips</h5>
-                    <p class="text-[10px] text-slate-400 mt-1">5 MIN READ</p>
+                <a href="#" class="group block p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white hover:border-rose-200 hover:bg-white transition-all shadow-sm hover:shadow-md">
+                    <div class="flex justify-between items-start">
+                        <h5 class="font-bold text-sm text-rose-900">Mental Wellness Tips</h5>
+                        <i class="fas fa-arrow-right text-[10px] text-rose-300 group-hover:translate-x-2 transition-transform"></i>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 uppercase">5 MIN READ</p>
                 </a>
-                <a href="#" class="block p-4 bg-white/50 rounded-2xl border border-white hover:border-rose-200 transition-all">
-                    <h5 class="font-bold text-sm text-rose-900">Understanding mRNA</h5>
-                    <p class="text-[10px] text-slate-400 mt-1">12 MIN READ</p>
+                <a href="#" class="group block p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white hover:border-rose-200 hover:bg-white transition-all shadow-sm hover:shadow-md">
+                    <div class="flex justify-between items-start">
+                        <h5 class="font-bold text-sm text-rose-900">Understanding mRNA</h5>
+                        <i class="fas fa-arrow-right text-[10px] text-rose-300 group-hover:translate-x-2 transition-transform"></i>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 uppercase">12 MIN READ</p>
                 </a>
-                <a href="#" class="block p-4 bg-white/50 rounded-2xl border border-white hover:border-rose-200 transition-all">
-                    <h5 class="font-bold text-sm text-rose-900">Pharmacy FAQs</h5>
-                    <p class="text-[10px] text-slate-400 mt-1">DOCUMENTATION</p>
+                <a href="#" class="group block p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white hover:border-rose-200 hover:bg-white transition-all shadow-sm hover:shadow-md">
+                    <div class="flex justify-between items-start">
+                        <h5 class="font-bold text-sm text-rose-900">Pharmacy FAQs</h5>
+                        <i class="fas fa-arrow-right text-[10px] text-rose-300 group-hover:translate-x-2 transition-transform"></i>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 uppercase">DOCUMENTATION</p>
                 </a>
             </div>
-            <button class="mt-auto pt-6 text-xs font-black text-rose-600 hover:underline">VIEW ALL RESOURCES</button>
+            <button class="mt-auto pt-6 text-xs font-black text-rose-600 hover:text-rose-700 hover:underline text-left transition-colors flex items-center gap-2 group">
+                VIEW ALL RESOURCES <i class="fas fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+            </button>
         </section>
 
-        <section class="md:col-span-12 bg-slate-950 rounded-[3rem] p-12 text-white bento-item overflow-hidden relative">
-            <div class="grid lg:grid-cols-2 gap-12 items-center relative z-10">
-                <div>
-                    <h3 class="text-4xl font-black mb-6 leading-tight">Engineered for the <br>Next Generation.</h3>
-                    <p class="text-slate-400 text-lg mb-8">Mediwise Core™ connects disparate medical systems into one unified, lightning-fast dashboard for patients and doctors alike.</p>
-                    <div class="flex space-x-4">
-                        <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <i class="fas fa-microchip text-rose-500 mb-3 block"></i>
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Edge Computing</span>
-                        </div>
-                        <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <i class="fas fa-network-wired text-rose-500 mb-3 block"></i>
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Global API</span>
-                        </div>
-                    </div>
+        <section class="md:col-span-12 bg-gradient-to-br from-rose-600 via-rose-500 to-rose-700 rounded-[3rem] p-16 text-white text-center relative overflow-hidden bento-item shadow-2xl shadow-rose-400/50">
+            <div class="relative z-10">
+                <h3 class="text-4xl md:text-5xl font-black mb-6">Ready to simplify your care?</h3>
+                <p class="text-rose-100 text-lg mb-10 max-w-xl mx-auto">Join thousands of patients who have already switched to the modern way of healthcare management.</p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="{% url 'login' %}" class="btn-primary bg-white text-rose-600 px-8 py-3.5 rounded-2xl font-bold hover:bg-rose-50 transition-all active:scale-95 shadow-xl shadow-rose-900/20">
+                        Create Account
+                    </a>
+                    <button class="btn-primary bg-rose-700/40 text-white border-2 border-white/30 px-10 py-3.5 rounded-2xl font-black hover:bg-rose-700/60 transition-all backdrop-blur-sm">
+                        Talk to Sales
+                    </button>
                 </div>
-                <div class="hidden lg:block">
-                    <div class="relative w-full h-64 bg-rose-500/10 rounded-3xl border border-white/10 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent"></div>
-                        <i class="fas fa-project-diagram text-8xl text-rose-500/20"></i>
+            </div>
+            <div class="absolute top-0 right-0 w-80 h-80 bg-rose-400 rounded-full -mr-32 -mt-32 blur-3xl opacity-40 animate-pulse-soft"></div>
+            <div class="absolute bottom-0 left-0 w-80 h-80 bg-rose-800 rounded-full -ml-32 -mb-32 blur-3xl opacity-40 animate-pulse-soft"></div>
+            <div class="absolute inset-0 shimmer opacity-20"></div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="md:col-span-12 relative z-10">
+            <div class="glass-card rounded-[3rem] p-12 bento-item border border-rose-100 shadow-xl shadow-rose-100/30">
+                <div class="text-center mb-12">
+                    <div class="w-16 h-16 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-6 mx-auto shadow-lg shadow-rose-200/50">
+                        <i class="fas fa-envelope text-3xl"></i>
                     </div>
+                    <h2 class="text-4xl font-black text-rose-950 mb-4">Get in Touch</h2>
+                    <p class="text-slate-500 text-lg max-w-xl mx-auto">Have questions? We're here to help. Send us a message and we'll respond as soon as possible.</p>
+                </div>
+                
+                <div class="max-w-3xl mx-auto">
+                    <form id="contactForm" method="POST" action="{% url 'contact_us' %}" class="space-y-6">
+                        {% csrf_token %}
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="name" class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Full Name *</label>
+                                <input type="text" id="name" name="name" required
+                                    class="contact-input w-full px-6 py-4 bg-white/80 border border-slate-200 rounded-2xl text-slate-900 font-semibold placeholder-slate-400"
+                                    placeholder="John Doe">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Email Address *</label>
+                                <input type="email" id="email" name="email" required
+                                    class="contact-input w-full px-6 py-4 bg-white/80 border border-slate-200 rounded-2xl text-slate-900 font-semibold placeholder-slate-400"
+                                    placeholder="john@example.com">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="subject" class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Subject *</label>
+                            <input type="text" id="subject" name="subject" required
+                                class="contact-input w-full px-6 py-4 bg-white/80 border border-slate-200 rounded-2xl text-slate-900 font-semibold placeholder-slate-400"
+                                placeholder="How can we help?">
+                        </div>
+                        
+                        <div>
+                            <label for="message" class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Message *</label>
+                            <textarea id="message" name="message" rows="6" required
+                                class="contact-input w-full px-6 py-4 bg-white/80 border border-slate-200 rounded-2xl text-slate-900 font-semibold placeholder-slate-400 resize-none"
+                                placeholder="Tell us more about your inquiry..."></textarea>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+                            <p class="text-xs text-slate-400 font-medium bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl">
+                                <i class="fas fa-shield-check mr-2 text-rose-500"></i>Your information is secure and will only be used to respond to your inquiry.
+                            </p>
+                            <button type="submit" 
+                                class="btn-primary w-full sm:w-auto cherry-gradient text-white px-12 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-rose-400/40 hover:scale-105 transition-transform active:scale-95 flex items-center justify-center gap-3">
+                                <span>Send Message</span>
+                                <i class="fas fa-paper-plane text-sm"></i>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </section>
@@ -201,7 +462,7 @@
                         <h5 class="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-8">Platform</h5>
                         <ul class="space-y-4 text-sm font-bold text-rose-950/70">
                             <li><a href="#" class="hover:text-rose-600 transition-colors">How it works</a></li>
-                            <li><a href="#" class="hover:text-rose-600 transition-colors">Privacy Policy</a></li>
+                            <li><a href="#" class="hover:text-rose-600 transition-colors">Security</a></li>
                             <li><a href="#" class="hover:text-rose-600 transition-colors">Whitepapers</a></li>
                         </ul>
                     </div>
@@ -209,7 +470,7 @@
                         <h5 class="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-8">Support</h5>
                         <ul class="space-y-4 text-sm font-bold text-rose-950/70">
                             <li><a href="#" class="hover:text-rose-600 transition-colors">Help Center</a></li>
-                            <li><a href="#" class="hover:text-rose-600 transition-colors">Developer API</a></li>
+                            <li><a href="#" class="hover:text-rose-600 transition-colors">API Docs</a></li>
                             <li><a href="#" class="hover:text-rose-600 transition-colors">Contact</a></li>
                         </ul>
                     </div>
@@ -217,14 +478,132 @@
             </div>
             
             <div class="pt-8 border-t border-rose-50 flex flex-col md:flex-row justify-between items-center gap-6">
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">© 2026 Mediwise Core Systems. Built with passion.</p>
-                <div class="flex space-x-6">
-                    <a href="#" class="text-slate-400 hover:text-rose-600 transition-colors"><i class="fab fa-linkedin-in"></i></a>
-                    <a href="#" class="text-slate-400 hover:text-rose-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">© 2026 Mediwise Core Systems. Built for better health.</p>
+                <div class="flex space-x-6 text-slate-400">
+                    <a href="#" class="hover:text-rose-600 transition-colors"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="hover:text-rose-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="hover:text-rose-600 transition-colors"><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
         </div>
     </footer>
+
+    <!-- Success/Error Modal -->
+    <div id="contactModal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-100">
+            <div id="modalContent" class="text-center">
+                <!-- Content will be injected by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle contact form submission via AJAX
+        document.getElementById('contactForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success modal
+                    showModal(
+                        'success',
+                        'Message Sent!',
+                        data.message || 'Thank you for contacting us. We will get back to you shortly.',
+                        'We appreciate your inquiry and will respond within 24 hours.'
+                    );
+                    form.reset();
+                } else {
+                    // Show error modal
+                    showModal(
+                        'error',
+                        'Oops! Something went wrong',
+                        data.error || 'Unable to send message. Please try again later or contact us directly via email.',
+                        null,
+                        data.email_link
+                    );
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showModal(
+                    'error',
+                    'Connection Error',
+                    'Unable to connect to our server. Please check your internet connection and try again.',
+                    null,
+                    'mailto:support@mediwise.com'
+                );
+            })
+            .finally(() => {
+                // Restore button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
+        });
+        
+        function showModal(type, title, message, subtitle = null, emailLink = null) {
+            const modal = document.getElementById('contactModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            const icon = type === 'success' ? 'fa-check-circle text-emerald-500' : 'fa-exclamation-circle text-rose-500';
+            const bgColor = type === 'success' ? 'bg-emerald-50' : 'bg-rose-50';
+            const textColor = type === 'success' ? 'text-emerald-600' : 'text-rose-600';
+            
+            let emailHtml = '';
+            if (emailLink) {
+                emailHtml = `
+                    <div class="mt-6">
+                        <a href="${emailLink}" class="inline-flex items-center gap-2 px-6 py-3 ${bgColor} ${textColor} rounded-xl font-bold hover:opacity-80 transition-opacity">
+                            <i class="fas fa-envelope"></i>
+                            <span>Email Us Directly</span>
+                        </a>
+                    </div>
+                `;
+            }
+            
+            modalContent.innerHTML = `
+                <div class="w-20 h-20 ${bgColor} rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas ${icon} text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 mb-3">${title}</h3>
+                <p class="text-slate-600 font-medium mb-3">${message}</p>
+                ${subtitle ? `<p class="text-slate-400 text-sm">${subtitle}</p>` : ''}
+                ${emailHtml}
+                <button onclick="closeModal()" class="mt-6 px-8 py-3 cherry-gradient text-white rounded-xl font-bold hover:opacity-90 transition-opacity">
+                    Close
+                </button>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            document.getElementById('contactModal').classList.add('hidden');
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('contactModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
 
 </body>
 </html>

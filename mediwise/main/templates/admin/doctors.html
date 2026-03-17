@@ -151,12 +151,12 @@
                 <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
             </a>
 
-            <a href="{% url 'medication_management' %}"
+            <a href="{% url 'manage_pharmacies' %}"
                 class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
-                    <i class="fas fa-pills text-lg"></i>
+                    <i class="fas fa-building-columns text-lg"></i>
                 </div>
-                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Pharmacies</span>
             </a>
 
             <a href="{% url 'generate_report' %}"
@@ -228,11 +228,9 @@
                         class="text-rose-600">Staff</span></h1>
                 <p class="text-slate-500 font-medium mt-1">Manage hospital doctors and specialists</p>
             </div>
-            <button onclick="openModal('addModal')"
-                class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-rose-600 hover:-translate-y-1 transition-all shadow-xl shadow-slate-200 flex items-center gap-3">
-                <i class="fas fa-plus"></i>
-                Add New Doctor
-            </button>
+            <div>
+                <!-- Add New Doctor button removed as per requirements -->
+            </div>
         </header>
 
         <!-- Messages -->
@@ -259,8 +257,7 @@
                 <!-- Quick Actions -->
                 <div
                     class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-300">
-                    <button
-                        onclick="openEditModal('{{ doctor.id }}', '{{ doctor.first_name }}', '{{ doctor.last_name }}', '{{ doctor.email }}', '{{ doctor.phone_number }}', '{{ doctor.speciality }}', '{{ doctor.qualification }}')"
+                    <button onclick="openEditModal('{{ doctor.id }}', '{{ doctor.first_name }}', '{{ doctor.last_name }}', '{{ doctor.email }}', '{{ doctor.phone_number }}', '{{ doctor.speciality }}', '{{ doctor.qualification }}', '{{ doctor.registration_status }}')"
                         class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center transition-colors">
                         <i class="fas fa-pen text-xs"></i>
                     </button>
@@ -303,12 +300,34 @@
                         <span class="font-bold text-rose-600">{{ appointment_count }} Appointments</span>
                     </div>
                     <div class="flex items-center gap-3 mt-2">
-                        <i class="fas fa-circle w-4 text-center text-slate-300"></i>
-                        <span class="font-bold {% if doctor.availability_status == 'active' %}text-green-600{% elif doctor.availability_status == 'inactive' %}text-slate-600{% else %}text-amber-600{% endif %}">
-                            {{ doctor.get_availability_status_display }}
+                        <i class="fas fa-id-badge w-4 text-center text-slate-300"></i>
+                        <span class="font-bold {% if doctor.registration_status == 'approved' %}text-emerald-600{% elif doctor.registration_status == 'pending' %}text-amber-600{% else %}text-rose-600{% endif %}">
+                            Status: {{ doctor.get_registration_status_display }}
                         </span>
                     </div>
                 </div>
+
+                <!-- Approval Actions for Pending Doctors -->
+                {% if doctor.registration_status == 'pending' %}
+                <div class="mt-6 flex gap-3">
+                    <form method="POST" class="flex-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve">
+                        <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                        <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100">
+                            Approve
+                        </button>
+                    </form>
+                    <form method="POST" class="flex-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                        <button type="submit" class="w-full py-2.5 bg-white text-rose-600 border border-rose-100 rounded-xl text-xs font-bold hover:bg-rose-50 transition-colors">
+                            Reject
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
             </div>
             {% endwith %}
             {% empty %}
@@ -316,118 +335,14 @@
                 <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-user-doctor text-2xl"></i>
                 </div>
-                <p>No doctors found in rule system.</p>
+                <p>No doctors found in the system.</p>
             </div>
             {% endfor %}
         </div>
 
     </main>
 
-    <!-- Add Doctor Modal -->
-    <div id="addModal" class="fixed inset-0 z-[100] hidden">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-            onclick="closeModal('addModal')"></div>
-        <div
-            class="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl p-8 overflow-y-auto modal-animate">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-extrabold text-slate-800">Add Doctor</h2>
-                <button onclick="closeModal('addModal')"
-                    class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <form method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="add">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="col-span-full">
-                        <div class="flex items-center gap-4 p-4 bg-rose-50 rounded-2xl mb-2">
-                            <div
-                                class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-rose-600 shadow-sm">
-                                <i class="fas fa-user-doctor"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-rose-900 text-sm">Professional Profile</h3>
-                                <p class="text-xs text-rose-700/70">Enter the doctor's key details below</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">First
-                            Name</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                            {{ form.first_name }}
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Last
-                            Name</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                            {{ form.last_name }}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Primary
-                            Email</label>
-                        <div class="relative">
-                            <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                            {{ form.email }}
-                        </div>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Phone</label>
-                        <div class="relative">
-                            <i class="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                            {{ form.phone_number }}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Specialty</label>
-                        <div class="relative">
-                            <i class="fas fa-stethoscope absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                            {{ form.speciality }}
-                        </div>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Qualification</label>
-                        <div class="relative">
-                            <i
-                                class="fas fa-graduation-cap absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                            {{ form.qualification }}
-                        </div>
-                    </div>
-
-                    <div class="col-span-full">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Secure
-                            Password</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                            {{ form.password }}
-                        </div>
-                        <p class="text-[10px] text-slate-400 mt-2 ml-1">Must be at least 8 characters long.</p>
-                    </div>
-                </div>
-
-                <div class="mt-8 pt-8 border-t border-slate-100">
-                    <button type="submit"
-                        class="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-slate-200 flex items-center justify-center gap-2">
-                        <i class="fas fa-check-circle"></i>
-                        Register New Doctor
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Add Doctor Modal removed as per requirements -->
 
     <!-- Edit Doctor Modal -->
     <div id="editModal" class="fixed inset-0 z-[100] hidden">
@@ -501,6 +416,18 @@
                             <input type="text" name="qualification" id="edit_qualification"
                                 class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-rose-500/20"
                                 required>
+                        </div>
+                    </div>
+
+                    <div class="col-span-full">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Registration Status</label>
+                        <div class="relative">
+                            <i class="fas fa-id-badge absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                            <select name="registration_status" id="edit_registration_status" required class="w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-rose-500/20 outline-none transition-all">
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
                         </div>
                     </div>
                     <div class="col-span-full">
@@ -578,7 +505,7 @@
             document.getElementById(modalId).classList.add('hidden');
         }
 
-        function openEditModal(id, first, last, email, phone, special, qual) {
+        function openEditModal(id, first, last, email, phone, special, qual, status) {
             document.getElementById('edit_doctor_id').value = id;
             document.getElementById('edit_first_name').value = first;
             document.getElementById('edit_last_name').value = last;
@@ -586,6 +513,7 @@
             document.getElementById('edit_phone').value = phone;
             document.getElementById('edit_speciality').value = special;
             document.getElementById('edit_qualification').value = qual;
+            document.getElementById('edit_registration_status').value = status;
             openModal('editModal');
         }
 

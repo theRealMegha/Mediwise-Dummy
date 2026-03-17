@@ -259,6 +259,7 @@
 
     <div id="error-tracker" data-patient-has-errors="{% if patient_form.errors %}true{% else %}false{% endif %}"
         data-pharmacist-has-errors="{% if pharmacist_form.errors %}true{% else %}false{% endif %}"
+        data-doctor-has-errors="{% if doctor_form.errors %}true{% else %}false{% endif %}"
         data-registered="{{ registered|yesno:'true,false' }}" style="display: none;">
     </div>
 
@@ -269,7 +270,15 @@
                 <i class="fas fa-check text-2xl"></i>
             </div>
             <h3 class="text-2xl font-bold text-rose-950 mb-2">Success!</h3>
-            <p class="text-rose-600/80 font-medium text-sm">Your account is ready.</p>
+            <p class="text-rose-600/80 font-medium text-sm">
+                {% if role == 'doctor' %}
+                Registered successfully! You can login after getting approval mail.
+                {% elif role == 'pharmacist' %}
+                Registration successful! Welcome to Mediwise.
+                {% else %}
+                Your account is ready.
+                {% endif %}
+            </p>
             <p class="text-rose-400 text-xs mt-1">Redirecting you shortly...</p>
         </div>
 
@@ -289,24 +298,30 @@
 
         <div class="p-8 pt-6">
             <div id="role-selection" class="form-section active">
-                <div class="grid grid-cols-2 gap-4 mb-8">
-                    <button onclick="showForm('patient')" class="role-card p-5 rounded-2xl text-left group">
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <button onclick="showForm('patient')" class="role-card p-4 rounded-2xl text-left group">
                         <div
                             class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-3 group-hover:bg-rose-600 group-hover:text-white transition-all shadow-sm">
                             <i class="fas fa-user-injured text-sm"></i>
                         </div>
-                        <h4 class="font-bold text-rose-950 text-sm mb-1">Patient</h4>
-                        <p class="text-[10px] text-rose-500 font-medium leading-relaxed">Book appointments & track your
-                            health history.</p>
+                        <h4 class="font-bold text-rose-950 text-[12px] mb-1">Patient</h4>
+                        <p class="text-[9px] text-rose-500 font-medium leading-relaxed">Book & track health.</p>
                     </button>
-                    <button onclick="showForm('pharmacist')" class="role-card p-5 rounded-2xl text-left group">
+                    <button onclick="showForm('doctor')" class="role-card p-4 rounded-2xl text-left group">
+                        <div
+                            class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-3 group-hover:bg-rose-600 group-hover:text-white transition-all shadow-sm">
+                            <i class="fas fa-user-md text-sm"></i>
+                        </div>
+                        <h4 class="font-bold text-rose-950 text-[12px] mb-1">Doctor</h4>
+                        <p class="text-[9px] text-rose-500 font-medium leading-relaxed">Join medical staff.</p>
+                    </button>
+                    <button onclick="showForm('pharmacist')" class="role-card p-4 rounded-2xl text-left group">
                         <div
                             class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-3 group-hover:bg-rose-600 group-hover:text-white transition-all shadow-sm">
                             <i class="fas fa-pills text-sm"></i>
                         </div>
-                        <h4 class="font-bold text-rose-950 text-sm mb-1">Pharmacist</h4>
-                        <p class="text-[10px] text-rose-500 font-medium leading-relaxed">Manage inventory & process
-                            prescriptions.</p>
+                        <h4 class="font-bold text-rose-950 text-[12px] mb-1">Pharmacist</h4>
+                        <p class="text-[9px] text-rose-500 font-medium leading-relaxed">Inventory & orders.</p>
                     </button>
                 </div>
                 <div class="text-center">
@@ -377,6 +392,93 @@
                             class="w-auto px-2 text-xs font-bold text-gray-400 hover:text-rose-600 transition-colors uppercase tracking-wider">Back</button>
                         <button type="submit" onclick="showLoading()" class="btn-cherry shadow-rose-200/50">Create
                             Account</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="doctor-form" class="form-section">
+                <form method="POST" class="book-layout">
+                    {% csrf_token %}
+                    <input type="hidden" name="role" value="doctor">
+
+                    <!-- Left Page: Personal -->
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="input-group">
+                                <label>First Name</label>
+                                <div class="input-wrapper">
+                                    <span class="field-icon"><i class="fas fa-user"></i></span>
+                                    {{ doctor_form.first_name }}
+                                </div>
+                                {% if doctor_form.first_name.errors %}<span class="error-text">
+                                   {{ doctor_form.first_name.errors.0 }}</span>{% endif %}
+                            </div>
+                            <div class="input-group">
+                                <label>Last Name</label>
+                                <div class="input-wrapper">
+                                    <span class="field-icon"><i class="fas fa-user"></i></span>
+                                    {{ doctor_form.last_name }}
+                                </div>
+                                {% if doctor_form.last_name.errors %}<span class="error-text">
+                                   {{ doctor_form.last_name.errors.0 }}</span>{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Email Address</label>
+                            <div class="input-wrapper">
+                                <span class="field-icon"><i class="fas fa-envelope"></i></span>
+                                {{ doctor_form.email }}
+                            </div>
+                            {% if doctor_form.email.errors %}<span class="error-text">{{ doctor_form.email.errors.0 }}</span>{% endif %}
+                        </div>
+
+                        <div class="input-group">
+                            <label>Phone Number</label>
+                            <div class="input-wrapper">
+                                <span class="field-icon"><i class="fas fa-phone"></i></span>
+                                {{ doctor_form.phone_number }}
+                            </div>
+                            {% if doctor_form.phone_number.errors %}<span class="error-text">{{ doctor_form.phone_number.errors.0 }}</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Right Page: Professional -->
+                    <div class="space-y-3 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="input-group">
+                                <label>Speciality</label>
+                                <div class="input-wrapper">
+                                    <span class="field-icon"><i class="fas fa-stethoscope"></i></span>
+                                    {{ doctor_form.speciality }}
+                                </div>
+                                {% if doctor_form.speciality.errors %}<span class="error-text">{{ doctor_form.speciality.errors.0 }}</span>{% endif %}
+                            </div>
+
+                            <div class="input-group">
+                                <label>Qualification</label>
+                                <div class="input-wrapper">
+                                    <span class="field-icon"><i class="fas fa-graduation-cap"></i></span>
+                                    {{ doctor_form.qualification }}
+                                </div>
+                                {% if doctor_form.qualification.errors %}<span class="error-text">{{ doctor_form.qualification.errors.0 }}</span>{% endif %}
+                            </div>
+
+                            <div class="input-group">
+                                <label>Password</label>
+                                <div class="input-wrapper">
+                                    <span class="field-icon"><i class="fas fa-lock"></i></span>
+                                    {{ doctor_form.password }}
+                                </div>
+                                {% if doctor_form.password.errors %}<span class="error-text">{{ doctor_form.password.errors.0 }}</span>{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4 pt-3 mt-auto">
+                            <button type="button" onclick="showForm('selection')"
+                                class="w-auto px-2 text-xs font-bold text-gray-400 hover:text-rose-600 transition-colors uppercase tracking-wider">Back</button>
+                            <button type="submit" onclick="showLoading()" class="btn-cherry shadow-rose-200/50">Register Doctor</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -497,9 +599,10 @@
                 document.getElementById('role-selection').classList.add('active');
                 subtitle.innerText = "Select account type";
                 card.classList.remove('wide-book');
-            } else if (role === 'pharmacist') {
-                document.getElementById('pharmacist-form').classList.add('active');
-                subtitle.innerText = "Pharmacy Setup";
+            } else if (role === 'pharmacist' || role === 'doctor') {
+                const formId = role === 'pharmacist' ? 'pharmacist-form' : 'doctor-form';
+                document.getElementById(formId).classList.add('active');
+                subtitle.innerText = role === 'pharmacist' ? "Pharmacy Setup" : "Doctor Onboarding";
                 card.classList.add('wide-book');
             } else {
                 document.getElementById('patient-form').classList.add('active');
@@ -520,12 +623,20 @@
             const tracker = document.getElementById('error-tracker');
             const patientErrors = tracker.getAttribute('data-patient-has-errors') === 'true';
             const pharmacistErrors = tracker.getAttribute('data-pharmacist-has-errors') === 'true';
+            const doctorErrors = tracker.getAttribute('data-doctor-has-errors') === 'true';
             const isRegistered = tracker.getAttribute('data-registered') === 'true';
 
             // Handle success
             if (isRegistered) {
                 document.getElementById('success-modal').style.display = 'flex';
-                setTimeout(() => { window.location.href = "{% url 'login' %}"; }, 2000);
+                // Find visible form and its role
+                const activeForm = document.querySelector('.form-section.active input[name="role"]');
+                const role = activeForm ? activeForm.value : '';
+                
+                // If doctor, don't auto-redirect to login yet as they need approval potentially 
+                // but the success modal already shows "redirecting".
+                // Actually views.py register view doesn't login the user, it just sets registered=True.
+                setTimeout(() => { window.location.href = "{% url 'login' %}"; }, 3000);
                 return;
             }
 
@@ -538,6 +649,7 @@
             // Persist the correct form view if errors exist
             if (patientErrors) showForm('patient');
             else if (pharmacistErrors) showForm('pharmacist');
+            else if (doctorErrors) showForm('doctor');
         }
     </script>
 </body>

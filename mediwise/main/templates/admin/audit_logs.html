@@ -15,77 +15,137 @@
             background-size: 24px 24px;
         }
 
-        /* Sidebar Transition Logic */
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #fda4af;
+            border-radius: 10px;
+        }
+
         .sidebar-transition {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #sidebar { width: 280px; }
-        #main-content { margin-left: 280px; transition: margin-left 0.4s ease; }
+        /* Fixed Sidebar Logic */
+        #sidebar {
+            width: 280px;
+        }
 
-        /* Collapsed States */
-        .sidebar-collapsed { width: 88px !important; }
-        .sidebar-collapsed .sidebar-text { display: none; }
-        .main-collapsed { margin-left: 88px !important; }
-        .rotate-180 { transform: rotate(180deg); }
+        #main-content { 
+            margin-left: 280px; 
+        }
 
-        /* Nav Item Styling */
+    /* Collapsed States */
+    .sidebar-collapsed {
+        width: 88px !important;
+    }
+
+    .sidebar-collapsed-margin {
+        margin-left: 88px !important;
+    }
+
+    .sidebar-collapsed .sidebar-text {
+        display: none;
+    }
+
+        /* Floating Nav Item Core */
         .nav-item {
             margin: 4px 12px;
-            border-radius: 12px;
+            border-radius: 14px;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            padding: 10px;
-            text-decoration: none;
+            padding: 12px;
         }
 
+        /* Active Link Styling - Expanded */
         .active-link {
-            background: linear-gradient(135deg, #fb7185 0%, #be123c 100%);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(190, 18, 60, 0.2);
+            background-color: #ffffff;
+            color: #be123c;
+            box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.1);
+            border: 1px solid rgba(225, 29, 72, 0.1);
         }
 
-        /* Custom Scrollbar for Sidebar */
-        #sidebar-nav::-webkit-scrollbar { width: 4px; }
-        #sidebar-nav::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        /* Logic to fix the "Out of Div" icon when collapsed */
+        .collapsed-active-fix {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            border-radius: 0 !important;
+            border-left: 4px solid #be123c;
+        }
 
-        /* Action Badge Colors */
-        .action-login { color: #22c55e; }
-        .action-logout { color: #ef4444; }
-        .action-prescription_created { color: #3b82f6; }
-        .action-prescription_edited { color: #f59e0b; }
-        .action-appointment_created { color: #8b5cf6; }
-        .action-other { color: #64748b; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(244, 63, 94, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-up {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .sidebar-text {
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .high-percentage-shadow {
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+        
+        .low-percentage-shadow {
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="text-slate-900 overflow-x-hidden">
 
-    <aside id="sidebar" class="sidebar-transition fixed top-0 left-0 h-screen bg-slate-50/80 backdrop-blur-xl border-r border-slate-200 z-50 flex flex-col">
+    <aside id="sidebar"
+        class="sidebar-transition fixed top-0 left-0 h-screen bg-slate-50/80 backdrop-blur-xl border-r border-slate-200 z-50 flex flex-col">
         <div class="p-6 mb-4">
             <div class="flex items-center">
-                <div class="min-w-[40px] h-10 bg-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                <div
+                    class="min-w-[40px] h-10 bg-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
                     <i class="fas fa-heart-pulse text-white text-lg"></i>
                 </div>
                 <span class="sidebar-text ml-4 font-extrabold text-xl tracking-tight text-slate-800">Mediwise</span>
             </div>
         </div>
 
-        <nav id="sidebar-nav" class="flex-1 space-y-1 overflow-y-auto">
-            <a href="{% url 'admin_dashboard' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+        <nav class="flex-1 space-y-1 overflow-y-auto">
+            <a href="{% url 'admin_dashboard' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-chart-pie text-lg"></i>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Dashboard</span>
             </a>
 
-            <a href="{% url 'manage_patients' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+            <a href="{% url 'manage_patients' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-address-card text-lg"></i>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Patient Registry</span>
             </a>
 
-            <a href="{% url 'manage_doctors' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+            <a href="{% url 'manage_doctors' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
                     <div class="relative">
                         <i class="fas fa-user-md text-lg"></i>
@@ -95,37 +155,66 @@
                 <span class="sidebar-text ml-3 font-semibold text-sm">Manage Doctors</span>
             </a>
 
-            <a href="{% url 'medication_management' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+            <a href="{% url 'manage_pharmacies' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
-                    <i class="fas fa-pills text-lg"></i>
+                    <i class="fas fa-building-columns text-lg"></i>
                 </div>
-                <span class="sidebar-text ml-3 font-semibold text-sm">Medications</span>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Pharmacies</span>
             </a>
 
-            <a href="{% url 'admin_audit_logs' %}" class="nav-item active-link transition-all group">
+            <a href="{% url 'generate_report' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Reports</span>
+            </a>
+
+            <a href="{% url 'admin_audit_logs' %}"
+                class="nav-item active-link group">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-clipboard-list text-lg"></i>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Audit Logs</span>
             </a>
 
-            <a href="{% url 'financial_oversight' %}" class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+            <a href="{% url 'admin_ratings_feedback' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-star text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Ratings & Feedback</span>
+            </a>
+
+            <a href="{% url 'financial_oversight' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-file-invoice-dollar text-lg"></i>
                 </div>
                 <span class="sidebar-text ml-3 font-semibold text-sm">Finance</span>
             </a>
+
+            <a href="{% url 'admin_profile' %}"
+                class="nav-item text-slate-500 hover:bg-white hover:text-slate-900 transition-all group">
+                <div class="min-w-[40px] flex justify-center">
+                    <i class="fas fa-gear text-lg"></i>
+                </div>
+                <span class="sidebar-text ml-3 font-semibold text-sm">Settings</span>
+            </a>
         </nav>
 
         <div class="p-3 border-t border-slate-200 bg-slate-100/50 space-y-1">
-            <button id="toggle-btn" class="w-full flex items-center p-3 rounded-xl text-slate-400 hover:text-slate-900 transition-all">
+            <button id="toggle-btn"
+                class="w-full flex items-center p-3 rounded-xl text-slate-400 hover:text-slate-900 transition-all">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-chevron-left sidebar-transition" id="toggle-icon"></i>
                 </div>
                 <span class="sidebar-text ml-3 font-bold text-xs uppercase tracking-widest">Collapse</span>
             </button>
 
-            <a href="{% url 'logout' %}" class="flex items-center p-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-all">
+            <a href="{% url 'logout' %}"
+                class="flex items-center p-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-all">
                 <div class="min-w-[40px] flex justify-center">
                     <i class="fas fa-right-from-bracket text-lg"></i>
                 </div>
@@ -137,7 +226,8 @@
     <main id="main-content" class="p-8">
         <div class="max-w-7xl mx-auto">
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-slate-800 mb-2">System Audit Logs</h1>
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Audit <span
+                        class="text-rose-600">Logs</span></h1>
                 <p class="text-slate-600">Monitor system activity and security events</p>
             </div>
 

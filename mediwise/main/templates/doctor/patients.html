@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <title>Mediwise | Doctor Portal - Patients</title>
+    {% load custom_filters %}
     <style>
         :root {
             --primary: #2563eb;
@@ -50,8 +51,8 @@
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
+            border: none;
+            box-shadow: 0 10px 30px 0 rgba(31, 38, 135, 0.05), 0 5px 15px 0 rgba(31, 38, 135, 0.03);
         }
 
         .glass-hover:hover {
@@ -87,14 +88,18 @@
             width: 80%;
         }
 
-        .health-card {
+        .patient-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
         }
 
-        .stat-ring circle {
-            transition: stroke-dashoffset 1s ease-in-out;
+        .patient-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.1), 0 15px 20px -5px rgba(0, 0, 0, 0.08);
         }
-        
+
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 999px;
@@ -103,20 +108,18 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
-        .status-completed { background-color: #dcfce7; color: #166534; }
-        .status-scheduled { background-color: #dbeafe; color: #1e40af; }
-        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
-        .status-confirmed { background-color: #d1fae5; color: #065f46; }
-        .status-rescheduled { background-color: #fef3c7; color: #92400e; }
+
+        .status-completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
     </style>
 </head>
 
 <body class="min-h-screen pb-20">
-
     <!-- Navbar -->
     <nav class="sticky top-0 z-50 px-4 py-4 md:px-8">
-        <div class="glass max-w-7xl mx-auto rounded-2xl px-6 py-4 flex justify-between items-center bg-white/80">
+        <div class="glass max-w-7xl mx-auto rounded-2xl px-6 py-4 flex justify-between items-center bg-white/80 shadow-sm">
             <div class="flex items-center gap-4">
                 <div
                     class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
@@ -131,8 +134,8 @@
             <!-- Desktop Menu -->
             <div
                 class="hidden md:flex items-center gap-8 bg-slate-100/50 px-6 py-2 rounded-full border border-slate-200/50">
-                <a href="{% url 'doctor_dashboard' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Dashboard</a>
-                <a href="#" class="nav-item active text-sm font-semibold text-blue-600">Patients</a>
+                <a href="{% url 'doctor_dashboard' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors">Dashboard</a>
+                <a href="{% url 'doctor_patients' %}" class="nav-item active text-sm font-semibold text-blue-600">Patients</a>
                 <a href="{% url 'doctor_appointments' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Appointments</a>
                 <a href="{% url 'doctor_ratings_feedback' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Ratings & Feedback</a>
             </div>
@@ -176,10 +179,6 @@
                             class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
                             <i class="fas fa-user-cog w-4"></i> Profile Settings
                         </a>
-                        <a href="#"
-                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
-                            <i class="fas fa-history w-4"></i> Activity Log
-                        </a>
                         <div class="h-px bg-slate-100 my-1"></div>
                         <a href="{% url 'logout' %}"
                             class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
@@ -192,83 +191,466 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-10">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="mb-6 p-4 rounded-xl {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-200{% else %}bg-green-100 text-green-700 border border-green-200{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <!-- Page Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
             <div>
-                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">My Patients</h2>
-                <p class="text-slate-500 text-lg font-medium">View patient cards and manage their medical history</p>
+                <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">My Patients</h2>
+                <p class="text-slate-500 text-lg font-medium">View all patients with completed appointments</p>
             </div>
-            <div class="w-full md:w-80">
-                <div class="relative">
-                    <input type="text" 
-                           id="patient-search" 
-                           placeholder="Search patients by name..." 
-                           value="{{ search_query|default:'' }}"
-                           class="w-full px-4 py-3 pl-12 pr-12 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-white/80 backdrop-blur-sm"
-                           oninput="searchPatients(this.value)">
-                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                    <button id="clear-search" 
-                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                            onclick="clearSearch()" 
-                            style="display: none;">
+            
+            <!-- Search Bar -->
+            <div class="w-full md:w-auto">
+                <form method="get" action="{% url 'doctor_patients' %}" class="relative">
+                    <input type="text" name="search" value="{{ search_query }}" 
+                           placeholder="Search by patient name or email..." 
+                           class="w-full md:w-80 pl-11 pr-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-md">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    {% if search_query %}
+                    <a href="{% url 'doctor_patients' %}" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                         <i class="fas fa-times"></i>
-                    </button>
-                </div>
+                    </a>
+                    {% endif %}
+                </form>
             </div>
         </div>
 
         <!-- Patient Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 patient-cards-container">
-            {% if completed_appointments %}
-                {% for appointment in completed_appointments %}
-                    <div class="glass rounded-2xl p-6 border border-white/60 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 patient-card">
-                        <!-- Patient Avatar and Name -->
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+        {% if completed_appointments %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for appointment in completed_appointments %}
+            <div class="patient-card overflow-hidden">
+                <!-- Card Header with Gradient -->
+                <div class="gradient-card p-5 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8"></div>
+                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-6 -mb-6"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-xl font-bold shadow-lg">
                                 {{ appointment.patient.first_name|slice:":1" }}{{ appointment.patient.last_name|slice:":1" }}
                             </div>
                             <div>
-                                <h3 class="font-bold text-slate-800 text-lg">{{ appointment.patient.first_name }} {{ appointment.patient.last_name }}</h3>
-                                <p class="text-sm text-slate-500">{{ appointment.patient.email }}</p>
+                                <h3 class="font-bold text-lg">{{ appointment.patient.first_name }} {{ appointment.patient.last_name }}</h3>
+                                <p class="text-xs text-blue-100">{{ appointment.patient.email }}</p>
                             </div>
                         </div>
                         
-                        <!-- Appointment Info -->
-                        <div class="mb-4 p-3 bg-slate-50 rounded-lg">
-                            <div class="flex items-center gap-2 text-sm text-slate-600 mb-1">
-                                <i class="fas fa-calendar text-blue-500"></i>
-                                <span>{{ appointment.appointment_date|date:"M d, Y" }}</span>
-                            </div>
-                            <div class="flex items-center gap-2 text-sm text-slate-600">
-                                <i class="fas fa-clock text-blue-500"></i>
-                                <span>{{ appointment.appointment_time|time:"H:i" }}</span>
-                            </div>
+                        <div class="flex items-center gap-2 text-xs text-blue-100">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Last Visit: {{ appointment.appointment_date|date:"M d, Y" }}</span>
                         </div>
-                        
-                        <!-- View Button -->
-                        <button onclick="showPatientHistory('{{ appointment.patient.id|escapejs }}', '{{ appointment.patient.first_name|escapejs }}', '{{ appointment.patient.last_name|escapejs }}')" 
-                                class="w-full py-2.5 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
-                            <i class="fas fa-eye"></i> View History
-                        </button>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-span-full text-center py-16">
-                    <i class="fas fa-user-injured text-5xl text-slate-300 mb-6"></i>
-                    <h3 class="text-2xl font-bold text-slate-700 mb-2">No Patients Found</h3>
-                    <p class="text-slate-500 max-w-md mx-auto">You haven't had any completed appointments yet. Patient cards will appear here once you complete appointments.</p>
                 </div>
+
+                <!-- Card Body -->
+                <div class="p-5 space-y-4">
+                    <!-- Patient Info Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Blood Group</p>
+                            <p class="text-sm font-bold text-blue-600">{{ appointment.patient.blood_group|default:"N/A" }}</p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Gender</p>
+                            <p class="text-sm font-bold text-slate-700">{{ appointment.patient.gender|default:"N/A" }}</p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Age</p>
+                            <p class="text-sm font-bold text-slate-700">
+                                {% if appointment.patient.date_of_birth %}
+                                    {{ appointment.patient.date_of_birth|age }} years
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Phone</p>
+                            <p class="text-sm font-bold text-slate-700">{{ appointment.patient.phone_number|default:"N/A" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Last Appointment Details -->
+                    <div class="border-t border-slate-100 pt-4">
+                        <div class="flex items-start gap-3 mb-3">
+                            <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-slate-400 uppercase mb-1">Last Visit Reason</p>
+                                <p class="text-sm text-slate-700">{{ appointment.reason_for_visit|default:"General Consultation"|truncatewords:5 }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="status-badge status-completed">
+                                <i class="fas fa-check mr-1"></i> Completed
+                            </span>
+                            <p class="text-xs text-slate-400">{{ appointment.appointment_time|time:"g:i A" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="openPatientRecordsModal({{ appointment.patient.id }})" 
+                           class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-600/30 transition-all">
+                            <i class="fas fa-file-medical mr-2"></i>Records
+                        </button>
+                        <a href="tel:{{ appointment.patient.phone_number }}" 
+                           class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all text-center">
+                            <i class="fas fa-phone"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination info -->
+        <div class="mt-10 text-center">
+            <p class="text-sm text-slate-500">
+                <i class="fas fa-users mr-2"></i>
+                Showing {{ completed_appointments|length }} patient{% if completed_appointments|length != 1 %}s{% endif %}
+            </p>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-20">
+            <div class="mx-auto w-40 h-40 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-6">
+                <i class="fas fa-user-injured text-5xl text-blue-400"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800 mb-3">No Patients Yet</h3>
+            <p class="text-slate-500 mb-6 max-w-md mx-auto">
+                {% if search_query %}
+                    No patients found matching "{{ search_query }}". Try a different search term.
+                {% else %}
+                    You haven't had any completed appointments yet. Once you complete appointments, your patients will appear here.
+                {% endif %}
+            </p>
+            {% if search_query %}
+            <a href="{% url 'doctor_patients' %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all">
+                <i class="fas fa-redo"></i>
+                <span>Clear Search</span>
+            </a>
+            {% else %}
+            <a href="{% url 'doctor_appointments' %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all">
+                <i class="fas fa-calendar-alt"></i>
+                <span>View Appointments</span>
+            </a>
             {% endif %}
         </div>
+        {% endif %}
     </main>
+
+    <!-- Patient Records Modal -->
+    <div id="patientRecordsModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closePatientRecordsModal()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-4xl bg-white shadow-2xl overflow-y-auto modal-animate">
+            <!-- Modal Header -->
+            <div class="sticky top-0 bg-white border-b border-slate-200 px-8 py-6 flex justify-between items-center z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 gradient-card rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                        <span id="modalPatientInitials">P</span>
+                    </div>
+                    <div>
+                        <h2 id="modalPatientName" class="text-2xl font-bold text-slate-800">Patient Name</h2>
+                        <p id="modalPatientEmail" class="text-sm text-slate-500">patient@email.com</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="addPrescriptionBtn" onclick="openPrescriptionForm()" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg transition-all flex items-center gap-2">
+                        <i class="fas fa-file-prescription"></i>
+                        <span>Add Prescription</span>
+                    </button>
+                    <button id="addLabTestBtn" onclick="openLabTestForm()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold shadow-lg transition-all flex items-center gap-2">
+                        <i class="fas fa-flask"></i>
+                        <span>Lab Test</span>
+                    </button>
+                    <button onclick="closePatientRecordsModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-400 flex items-center justify-center transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-8 space-y-8">
+                <!-- Loading State -->
+                <div id="modalLoading" class="text-center py-20">
+                    <div class="relative w-16 h-16 mx-auto mb-4">
+                        <div class="absolute inset-0 rounded-full border-4 border-blue-100"></div>
+                        <div class="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+                    </div>
+                    <p class="font-bold text-slate-700">Loading Patient Records...</p>
+                </div>
+
+                <!-- Patient Details Section -->
+                <div id="patientDetailsSection" class="hidden">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-user text-blue-600"></i> Patient Information
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Blood Group</p>
+                            <p id="modalBloodGroup" class="text-lg font-bold text-blue-600">O+</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Gender</p>
+                            <p id="modalGender" class="text-lg font-bold text-slate-700">Male</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Age</p>
+                            <p id="modalAge" class="text-lg font-bold text-slate-700">35</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Phone</p>
+                            <p id="modalPhone" class="text-lg font-bold text-slate-700">+1234567890</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appointment History -->
+                <div id="appointmentHistorySection" class="hidden">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-calendar-check text-green-600"></i> Appointment History
+                    </h3>
+                    <div id="appointmentList" class="space-y-3">
+                        <!-- Appointments will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Medical Conditions -->
+                <div id="medicalConditionsSection" class="hidden">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-heart-pulse text-red-600"></i> Medical Conditions
+                    </h3>
+                    <div id="conditionsList" class="space-y-3">
+                        <!-- Conditions will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Prescribed Lab Tests -->
+                <div id="prescribedLabTestsSection" class="hidden">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-flask text-purple-600"></i> Prescribed Lab Tests
+                    </h3>
+                    <div id="labTestsList" class="space-y-3">
+                        <!-- Lab tests will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Lab Reports -->
+                <div id="labReportsSection" class="hidden">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-file-medical-alt text-purple-600"></i> Lab Reports
+                    </h3>
+                    <div id="labReportsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Lab reports will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Prescriptions -->
+                <div id="prescriptionsSection" class="hidden">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-file-prescription text-green-600"></i> Prescriptions
+                    </h3>
+                    <div id="prescriptionsList" class="space-y-4">
+                        <!-- Prescriptions will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Empty States -->
+                <div id="noRecordsMessage" class="hidden text-center py-12">
+                    <div class="mx-auto w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-folder-open text-3xl text-slate-400"></i>
+                    </div>
+                    <p class="text-slate-500 font-medium">No medical records found for this patient.</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-6 border-t border-slate-200">
+                    <a id="viewFullRecordsBtn" href="#" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all text-center">
+                        <i class="fas fa-eye mr-2"></i>View Full Records
+                    </a>
+                    <button onclick="closePatientRecordsModal()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prescription Form Modal -->
+    <div id="prescriptionModal" class="fixed inset-0 z-[110] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closePrescriptionForm()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl overflow-y-auto modal-animate">
+            <!-- Modal Header -->
+            <div class="sticky top-0 bg-white border-b border-slate-200 px-8 py-6 flex justify-between items-center z-10">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Add Prescription</h2>
+                    <p class="text-sm text-slate-500" id="prescriptionPatientName">For Patient</p>
+                </div>
+                <button onclick="closePrescriptionForm()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-400 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-8">
+                <form id="prescriptionForm" method="post" onsubmit="submitPrescription(event)">
+                    {% csrf_token %}
+                    <input type="hidden" id="prescription_patient_id" name="patient_id">
+                    
+                    <div class="space-y-6">
+                        <!-- Medicine Name (Generic) -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                Medicine Name (Generic) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="drug_name_generic" 
+                                   name="drug_name_generic" 
+                                   required
+                                   placeholder="e.g., Paracetamol, Amoxicillin"
+                                   class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white">
+                            <p class="text-xs text-slate-500 mt-1">Generic name of the medicine</p>
+                        </div>
+
+                        <!-- Brand Name (Optional) -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                Brand Name <span class="text-slate-400">(Optional)</span>
+                            </label>
+                            <input type="text" 
+                                   id="drug_name_brand" 
+                                   name="drug_name_brand"
+                                   placeholder="e.g., Tylenol, Augmentin"
+                                   class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white">
+                        </div>
+
+                        <!-- Dosage Frequency -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                Dosage & Frequency <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="dosage_frequency" 
+                                   name="dosage_frequency" 
+                                   required
+                                   placeholder="e.g., 1 tablet twice a day, Every 6 hours"
+                                   class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white">
+                            <div class="flex gap-2 mt-2">
+                                <button type="button" onclick="setDosageSuggestion('1 tablet twice daily')" class="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">1 tablet twice daily</button>
+                                <button type="button" onclick="setDosageSuggestion('1 tablet three times daily')" class="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">1 tablet three times daily</button>
+                                <button type="button" onclick="setDosageSuggestion('As needed')" class="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">As needed</button>
+                            </div>
+                        </div>
+
+                        <!-- Instructions (The "Sig") -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                Instructions <span class="text-red-500">*</span>
+                            </label>
+                            <textarea id="instructions" 
+                                      name="instructions"
+                                      rows="3"
+                                      required
+                                      placeholder="e.g., Take with food, Avoid dairy products, Take after meals, etc."
+                                      class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white resize-none"></textarea>
+                            <p class="text-xs text-slate-500 mt-1">Include relation to food and specific timing</p>
+                        </div>
+
+                        <!-- Duration in Days -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                Duration (Number of Days) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" 
+                                   id="duration_days" 
+                                   name="duration_days" 
+                                   required
+                                   min="1"
+                                   max="365"
+                                   placeholder="e.g., 7, 14, 30"
+                                   class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3 mt-8 pt-6 border-t border-slate-200">
+                        <button type="submit" 
+                                class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+                            <i class="fas fa-save mr-2"></i>Save Prescription
+                        </button>
+                        <button type="button" 
+                                onclick="closePrescriptionForm()" 
+                                class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lab Test Modal (Side Slide) -->
+    <div id="labTestModal" class="fixed inset-0 z-[150] hidden overflow-hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeLabTestForm()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-xl w-full flex shadow-2xl transition-transform duration-300">
+            <div class="w-full bg-white h-full flex flex-col">
+                <!-- Modal Header -->
+                <div class="px-6 py-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
+                            <i class="fas fa-flask text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-extrabold text-slate-900">Add Lab Test</h2>
+                            <p id="labTestPatientName" class="text-sm text-slate-500 font-medium">For Patient</p>
+                        </div>
+                    </div>
+                    <button onclick="closeLabTestForm()" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body (Scrollable) -->
+                <div class="flex-1 overflow-y-auto p-6 scroll-smooth">
+                    <form id="labTestForm" onsubmit="submitLabTests(event)">
+                        <input type="hidden" id="lab_test_patient_id" name="patient_id">
+                        
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800">Prescribe Tests</p>
+                                    <p class="text-xs text-slate-500 mt-0.5" id="lab-test-count-label">0 tests added</p>
+                                </div>
+                                <button type="button" onclick="addLabTestRow()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Add Test
+                                </button>
+                            </div>
+
+                            <!-- Lab Tests Container -->
+                            <div id="labTestsContainer" class="space-y-4">
+                                <!-- Dynamic rows will be added here -->
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3 mt-8 pt-6 border-t border-slate-200">
+                            <button type="submit" id="saveLabTestsBtn" class="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+                                <i class="fas fa-save mr-2"></i>Save Lab Tests
+                            </button>
+                            <button type="button" onclick="closeLabTestForm()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Mobile Bottom Nav -->
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%]">
@@ -277,7 +659,7 @@
                 class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
                 <i class="fas fa-home"></i>
             </a>
-            <a href="#"
+            <a href="{% url 'doctor_patients' %}"
                 class="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <i class="fas fa-user-injured"></i>
             </a>
@@ -293,340 +675,513 @@
     </div>
 
     <script>
-        // Store all patient cards for search functionality
-        let allPatientCards = [];
-        
-        // Initialize patient cards storage
+        // Auto-hide any alerts after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
-            // Store all patient cards after page loads
-            storePatientCards();
-            
-            // Add escape key listener for search input
-            const searchInput = document.getElementById('patient-search');
-            searchInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    clearSearch();
-                }
+            const alerts = document.querySelectorAll('[role="alert"]');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }, 5000);
             });
         });
-        
-        // Store all patient cards in memory
-        function storePatientCards() {
-            const cards = document.querySelectorAll('.patient-card');
-            allPatientCards = Array.from(cards).map(card => {
-                const nameElement = card.querySelector('h3');
-                const name = nameElement ? nameElement.textContent.toLowerCase() : '';
-                return {
-                    element: card,
-                    name: name
-                };
-            });
-        }
-        
-        // Search patients by name
-        function searchPatients(searchTerm) {
-            const searchTermLower = searchTerm.toLowerCase().trim();
-            
-            // Show/hide clear button
-            const clearButton = document.getElementById('clear-search');
-            if (searchTermLower === '') {
-                clearButton.style.display = 'none';
-            } else {
-                clearButton.style.display = 'block';
-            }
-            
-            allPatientCards.forEach(cardObj => {
-                const card = cardObj.element;
-                const nameMatch = cardObj.name.includes(searchTermLower);
-                
-                if (searchTermLower === '' || nameMatch) {
-                    card.style.display = 'block';
-                    card.style.opacity = '1';
-                } else {
-                    card.style.display = 'none';
-                    card.style.opacity = '0.5';
-                }
-            });
-            
-            // Show "no results" message if needed
-            updateNoResultsMessage(searchTermLower);
-        }
-        
-        // Clear search
-        function clearSearch() {
-            const searchInput = document.getElementById('patient-search');
-            searchInput.value = '';
-            searchPatients('');
-            searchInput.focus();
-        }
-        
-        // Update no results message
-        function updateNoResultsMessage(searchTerm) {
-            const container = document.querySelector('.patient-cards-container');
-            const noResultsElement = document.getElementById('no-results-message');
-            
-            // Count visible cards
-            const visibleCards = document.querySelectorAll('.patient-card:not([style*="display: none"]):not([style*="display:none"])'
-            ).length;
-            
-            if (searchTerm && visibleCards === 0) {
-                // Show no results message
-                if (!noResultsElement) {
-                    const message = document.createElement('div');
-                    message.id = 'no-results-message';
-                    message.className = 'col-span-full text-center py-16';
-                    message.innerHTML = `
-                        <i class="fas fa-search text-5xl text-slate-300 mb-6"></i>
-                        <h3 class="text-2xl font-bold text-slate-700 mb-2">No patients found</h3>
-                        <p class="text-slate-500 max-w-md mx-auto">No patients match your search for "<strong>${searchTerm}</strong>". Try a different name.</p>
-                    `;
-                    container.appendChild(message);
-                }
-            } else {
-                // Remove no results message
-                if (noResultsElement) {
-                    noResultsElement.remove();
-                }
-            }
-        }
-        
-        // Show comprehensive patient history modal
-        function showPatientHistory(patientId, firstName, lastName) {
-            // Create modal container
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
-            modal.innerHTML = `
-                <div class="glass rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-white/60">
-                    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
-                        <div>
-                            <h3 class="text-2xl font-extrabold text-slate-800">Patient History</h3>
-                            <p class="text-slate-600">${firstName} ${lastName}</p>
+
+        // Patient Records Modal Functions
+        let currentPatientId = null;
+
+        async function openPatientRecordsModal(patientId) {
+            currentPatientId = patientId;
+            const modal = document.getElementById('patientRecordsModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Show loading state
+            document.getElementById('modalLoading').classList.remove('hidden');
+            hideAllSections();
+
+            try {
+                // Load patient records
+                await loadPatientRecords(patientId);
+            } catch (error) {
+                console.error('Error loading patient records:', error);
+                document.getElementById('modalLoading').innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
                         </div>
-                        <button onclick="closePatientHistoryModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100">
-                            <i class="fas fa-times text-xl"></i>
+                        <p class="text-red-600 font-bold">Error loading records. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function closePatientRecordsModal() {
+            const modal = document.getElementById('patientRecordsModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            currentPatientId = null;
+        }
+
+        function openLabTestForm() {
+            if (!currentPatientId) {
+                alert('Patient information not loaded.');
+                return;
+            }
+
+            const modal = document.getElementById('labTestModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Set patient ID and name
+            document.getElementById('lab_test_patient_id').value = currentPatientId;
+            const patientName = document.getElementById('modalPatientName').textContent;
+            document.getElementById('labTestPatientName').textContent = `For ${patientName}`;
+
+            // Reset and add first row
+            document.getElementById('labTestsContainer').innerHTML = '';
+            addLabTestRow();
+        }
+
+        function closeLabTestForm() {
+            const modal = document.getElementById('labTestModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        let testRowCounter = 0;
+
+        function addLabTestRow() {
+            const container = document.getElementById('labTestsContainer');
+            const rowId = `test-row-${testRowCounter++}`;
+            
+            const rowHtml = `
+                <div id="${rowId}" class="bg-slate-50 rounded-xl p-4 border border-slate-100 group">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Test Details</span>
+                        <button type="button" onclick="removeLabTestRow('${rowId}')" class="text-slate-400 hover:text-red-500 transition-colors">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
-                    
-                    <div id="patient-history-content">
-                        <div class="text-center py-12">
-                            <i class="fas fa-spinner fa-spin text-4xl text-slate-400 mb-4"></i>
-                            <p class="text-slate-500">Loading patient history...</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Test Name *</label>
+                            <input type="text" name="name" required placeholder="e.g. Complete Blood Count" 
+                                   class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all bg-white text-sm">
                         </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            
-            // Load patient history via AJAX
-            loadPatientHistory(patientId, firstName, lastName);
-        }
-        
-        // Load comprehensive patient history
-        function loadPatientHistory(patientId, firstName, lastName) {
-            // In a real implementation, this would make multiple API calls
-            // For now, I'll create a mock structure that would be populated by actual data
-            
-            const content = document.getElementById('patient-history-content');
-            
-            content.innerHTML = `
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                    <a href="/doctor/patient/${patientId}/prescribe/" 
-                       class="flex items-center justify-center gap-3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5">
-                        <i class="fas fa-file-medical text-xl"></i>
-                        <span>Add Prescription</span>
-                    </a>
-                    <a href="/doctor/patient/${patientId}/lab-test/" 
-                       class="flex items-center justify-center gap-3 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5">
-                        <i class="fas fa-flask text-xl"></i>
-                        <span>Add Lab Test</span>
-                    </a>
-                </div>
-                
-                <!-- Appointment History -->
-                <div class="mb-8">
-                    <h4 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-calendar-check text-blue-500"></i>
-                        Appointment History
-                    </h4>
-                    <div id="appointments-history" class="space-y-3">
-                        <div class="text-center py-8 text-slate-500">
-                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                            <p>Loading appointments...</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                                <select name="category" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all bg-white text-sm">
+                                    <option value="blood">Blood Test</option>
+                                    <option value="urine">Urine Test</option>
+                                    <option value="imaging">Imaging/Radiology</option>
+                                    <option value="pathology">Pathology</option>
+                                    <option value="other" selected>Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Priority</label>
+                                <select name="priority" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all bg-white text-sm">
+                                    <option value="routine" selected>Routine</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Prescription History -->
-                <div class="mb-8">
-                    <h4 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-prescription-bottle text-blue-500"></i>
-                        Prescription History
-                    </h4>
-                    <div id="prescriptions-history" class="space-y-3">
-                        <div class="text-center py-8 text-slate-500">
-                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                            <p>Loading prescriptions...</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Lab Test History -->
-                <div>
-                    <h4 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-flask text-blue-500"></i>
-                        Lab Test History
-                    </h4>
-                    <div id="lab-tests-history" class="space-y-3">
-                        <div class="text-center py-8 text-slate-500">
-                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                            <p>Loading lab tests...</p>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Instructions</label>
+                            <textarea name="instructions" rows="2" placeholder="e.g. 12-hour fasting required" 
+                                      class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all bg-white text-sm resize-none"></textarea>
                         </div>
                     </div>
                 </div>
             `;
             
-            // Load individual sections
-            loadAppointmentsHistory(patientId);
-            loadPrescriptionsHistory(patientId);
-            loadLabTestsHistory(patientId);
+            container.insertAdjacentHTML('beforeend', rowHtml);
+            updateLabTestCountLabel();
         }
-        
-        // Load appointment history
-        function loadAppointmentsHistory(patientId) {
-            fetch(`/api/patient/${patientId}/appointments/`)
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('appointments-history');
-                    if (data.appointments && data.appointments.length > 0) {
-                        container.innerHTML = data.appointments.map(app => `
-                            <div class="p-4 bg-white rounded-xl border border-slate-200">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="font-bold text-slate-800">${app.date}</div>
-                                        <div class="text-sm text-slate-600">${app.time}</div>
-                                        <div class="text-sm text-slate-500 mt-1">${app.reason || 'No reason provided'}</div>
-                                    </div>
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                                        ${app.status}
-                                    </span>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        container.innerHTML = `
-                            <div class="text-center py-6 text-slate-500">
-                                <i class="fas fa-calendar-times text-2xl mb-2"></i>
-                                <p>No appointment history found</p>
-                            </div>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('appointments-history').innerHTML = `
-                        <div class="text-center py-6 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                            <p>Error loading appointment history</p>
-                        </div>
-                    `;
+
+        function removeLabTestRow(rowId) {
+            const row = document.getElementById(rowId);
+            const container = document.getElementById('labTestsContainer');
+            if (container.children.length > 1) {
+                row.remove();
+                updateLabTestCountLabel();
+            } else {
+                alert('At least one test is required.');
+            }
+        }
+
+        function updateLabTestCountLabel() {
+            const count = document.getElementById('labTestsContainer').children.length;
+            document.getElementById('lab-test-count-label').textContent = `${count} test${count !== 1 ? 's' : ''} added`;
+        }
+
+        async function submitLabTests(event) {
+            event.preventDefault();
+            
+            const container = document.getElementById('labTestsContainer');
+            const rows = container.querySelectorAll('.bg-slate-50');
+            const tests = [];
+            
+            rows.forEach(row => {
+                tests.push({
+                    name: row.querySelector('[name="name"]').value,
+                    category: row.querySelector('[name="category"]').value,
+                    priority: row.querySelector('[name="priority"]').value,
+                    instructions: row.querySelector('[name="instructions"]').value
                 });
-        }
-        
-        // Load prescription history
-        function loadPrescriptionsHistory(patientId) {
-            fetch(`/api/patient/${patientId}/prescriptions/`)
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('prescriptions-history');
-                    if (data.prescriptions && data.prescriptions.length > 0) {
-                        container.innerHTML = data.prescriptions.map(presc => `
-                            <div class="p-4 bg-white rounded-xl border border-slate-200">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="font-bold text-slate-800">${presc.date}</div>
-                                    <div class="text-xs text-slate-500">${presc.medicines.length} medicine(s)</div>
-                                </div>
-                                <div class="text-sm text-slate-600">
-                                    ${presc.medicines.slice(0, 2).map(med => med.name).join(', ')}
-                                    ${presc.medicines.length > 2 ? ' +' + (presc.medicines.length - 2) + ' more' : ''}
-                                </div>
-                                <div class="flex gap-2 mt-3">
-                                    <a href="/doctor/prescription/${presc.id}/download/" 
-                                       class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
-                                        <i class="fas fa-download mr-1"></i>PDF
-                                    </a>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        container.innerHTML = `
-                            <div class="text-center py-6 text-slate-500">
-                                <i class="fas fa-prescription-bottle text-2xl mb-2"></i>
-                                <p>No prescription history found</p>
-                            </div>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('prescriptions-history').innerHTML = `
-                        <div class="text-center py-6 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                            <p>Error loading prescription history</p>
-                        </div>
-                    `;
+            });
+
+            if (tests.length === 0) {
+                alert('Please add at least one test.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('saveLabTestsBtn');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/doctor/patient/${currentPatientId}/lab-test/add/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({ tests })
                 });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message || 'Lab tests saved successfully!');
+                    closeLabTestForm();
+                    if (currentPatientId) {
+                        await loadPatientRecords(currentPatientId);
+                    }
+                } else {
+                    alert(result.error || 'Failed to save lab tests.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while saving lab tests.');
+            } finally {
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }
         }
-        
-        // Load lab test history
-        function loadLabTestsHistory(patientId) {
-            fetch(`/api/patient/${patientId}/lab-tests/`)
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('lab-tests-history');
-                    if (data.lab_tests && data.lab_tests.length > 0) {
-                        container.innerHTML = data.lab_tests.map(test => `
-                            <div class="p-4 bg-white rounded-xl border border-slate-200">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="font-bold text-slate-800">${test.name}</div>
-                                        <div class="text-sm text-slate-600">${test.category}</div>
-                                        <div class="text-xs text-slate-500 mt-1">${test.date}</div>
-                                    </div>
-                                    <span class="px-2 py-1 bg-${test.priority === 'urgent' ? 'red' : 'blue'}-100 text-${test.priority === 'urgent' ? 'red' : 'blue'}-700 text-xs font-medium rounded-full">
+
+
+        function hideAllSections() {
+            document.getElementById('patientDetailsSection').classList.add('hidden');
+            document.getElementById('appointmentHistorySection').classList.add('hidden');
+            document.getElementById('medicalConditionsSection').classList.add('hidden');
+            document.getElementById('prescribedLabTestsSection').classList.add('hidden');
+            document.getElementById('labReportsSection').classList.add('hidden');
+            document.getElementById('prescriptionsSection').classList.add('hidden');
+            document.getElementById('noRecordsMessage').classList.add('hidden');
+        }
+
+        async function loadPatientRecords(patientId) {
+            // Fetch patient data from API endpoint
+            const response = await fetch(`/api/doctor/patient/${patientId}/records/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch patient records');
+            }
+
+            const data = await response.json();
+
+            // Hide loading
+            document.getElementById('modalLoading').classList.add('hidden');
+
+            // Update patient info
+            updatePatientInfo(data.patient);
+
+            // Update appointments
+            updateAppointments(data.appointments);
+
+            // Update medical conditions
+            updateMedicalConditions(data.medical_conditions);
+
+            // Update prescribed lab tests
+            updatePrescribedLabTests(data.prescribed_lab_tests);
+
+            // Update lab reports
+            updateLabReports(data.lab_reports);
+
+            // Update prescriptions
+            updatePrescriptions(data.prescriptions);
+
+            // Update full records button
+            document.getElementById('viewFullRecordsBtn').href = `/doctor/patient/${patientId}/records/`;
+
+            // Show appropriate sections
+            showRelevantSections(data);
+        }
+
+        function updatePatientInfo(patient) {
+            document.getElementById('modalPatientName').textContent = `${patient.first_name} ${patient.last_name}`;
+            document.getElementById('modalPatientEmail').textContent = patient.email || 'N/A';
+            document.getElementById('modalPatientInitials').textContent = `${patient.first_name[0]}${patient.last_name[0]}`;
+            document.getElementById('modalBloodGroup').textContent = patient.blood_group || 'N/A';
+            document.getElementById('modalGender').textContent = patient.gender || 'N/A';
+            
+            // Calculate age
+            if (patient.date_of_birth) {
+                const today = new Date();
+                const birthDate = new Date(patient.date_of_birth);
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                document.getElementById('modalAge').textContent = `${age} years`;
+            } else {
+                document.getElementById('modalAge').textContent = 'N/A';
+            }
+            
+            document.getElementById('modalPhone').textContent = patient.phone_number || 'N/A';
+            document.getElementById('patientDetailsSection').classList.remove('hidden');
+        }
+
+        function updateAppointments(appointments) {
+            const appointmentList = document.getElementById('appointmentList');
+            
+            if (!appointments || appointments.length === 0) {
+                appointmentList.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                        <p>No appointment history</p>
+                    </div>
+                `;
+            } else {
+                appointmentList.innerHTML = appointments.map(apt => `
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800">${new Date(apt.appointment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                <p class="text-xs text-slate-500">${apt.appointment_time || ''} • ${apt.reason_for_visit || 'Consultation'}</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusBadgeClass(apt.status)}">
+                            ${apt.status}
+                        </span>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('appointmentHistorySection').classList.remove('hidden');
+        }
+
+        function updateMedicalConditions(conditions) {
+            const conditionsList = document.getElementById('conditionsList');
+            
+            if (!conditions || conditions.length === 0) {
+                conditionsList.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fas fa-heartbeat text-3xl mb-2"></i>
+                        <p>No medical conditions recorded</p>
+                    </div>
+                `;
+            } else {
+                conditionsList.innerHTML = conditions.map(condition => `
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <div class="flex items-start justify-between mb-2">
+                            <h4 class="font-bold text-slate-800">${condition.condition_name}</h4>
+                            <span class="px-2 py-1 rounded-md text-xs font-bold uppercase ${condition.status === 'active' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}">
+                                ${condition.status}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-2">Diagnosed: ${new Date(condition.diagnosis_date).toLocaleDateString()}</p>
+                        ${condition.description ? `<p class="text-sm text-slate-600 italic">${condition.description}</p>` : ''}
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('medicalConditionsSection').classList.remove('hidden');
+        }
+
+        function updatePrescribedLabTests(tests) {
+            const labTestsList = document.getElementById('labTestsList');
+            
+            if (!tests || tests.length === 0) {
+                labTestsList.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fas fa-flask text-3xl mb-2"></i>
+                        <p>No lab tests prescribed</p>
+                    </div>
+                `;
+            } else {
+                labTestsList.innerHTML = tests.map(test => `
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h4 class="font-bold text-slate-800">${test.name}</h4>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${test.priority === 'urgent' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">
                                         ${test.priority}
                                     </span>
                                 </div>
-                                ${test.instructions ? `<div class="text-sm text-slate-600 mt-2 italic">"${test.instructions}"</div>` : ''}
+                                <p class="text-xs text-slate-500 mb-2">Category: ${test.category} • Date: ${test.date}</p>
+                                ${test.instructions ? `<p class="text-sm text-slate-600 italic">Instructions: ${test.instructions}</p>` : ''}
                             </div>
-                        `).join('');
-                    } else {
-                        container.innerHTML = `
-                            <div class="text-center py-6 text-slate-500">
-                                <i class="fas fa-flask text-2xl mb-2"></i>
-                                <p>No lab test history found</p>
-                            </div>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('lab-tests-history').innerHTML = `
-                        <div class="text-center py-6 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                            <p>Error loading lab test history</p>
                         </div>
-                    `;
-                });
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('prescribedLabTestsSection').classList.remove('hidden');
         }
-        
-        // Close patient history modal
-        function closePatientHistoryModal() {
-            const modal = document.querySelector('.fixed.inset-0');
-            if (modal) {
-                modal.remove();
+
+        function updateLabReports(reports) {
+            const labReportsList = document.getElementById('labReportsList');
+            
+            if (!reports || reports.length === 0) {
+                labReportsList.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-slate-400">
+                        <i class="fas fa-file-medical text-3xl mb-2"></i>
+                        <p>No lab reports uploaded</p>
+                    </div>
+                `;
+            } else {
+                labReportsList.innerHTML = reports.map(report => `
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
+                                <i class="fas fa-file-${report.file_extension === '.pdf' ? 'pdf' : 'image'} text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-slate-800 text-sm truncate">${report.report_name}</h4>
+                                <p class="text-xs text-slate-500 mt-1">Uploaded: ${new Date(report.uploaded_at).toLocaleDateString()}</p>
+                                <a href="/media/${report.image}" class="text-xs text-blue-600 font-bold mt-2 inline-block hover:underline">
+                                    <i class="fas fa-eye mr-1"></i>View Report
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('labReportsSection').classList.remove('hidden');
+        }
+
+        function updatePrescriptions(prescriptions) {
+            const prescriptionsList = document.getElementById('prescriptionsList');
+            
+            if (!prescriptions || prescriptions.length === 0) {
+                prescriptionsList.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fas fa-file-prescription text-3xl mb-2"></i>
+                        <p>No prescriptions recorded</p>
+                    </div>
+                `;
+            } else {
+                prescriptionsList.innerHTML = prescriptions.map(rx => `
+                    <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0">
+                                    <i class="fas fa-file-prescription text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800">Prescription #${rx.id}</h4>
+                                    <p class="text-xs text-slate-500">${rx.created_at_formatted || new Date(rx.date).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            ${rx.next_appointment_date ? `
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600">
+                                    <i class="fas fa-calendar mr-1"></i>Next: ${new Date(rx.next_appointment_date).toLocaleDateString()}
+                                </span>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="border-t border-slate-100 pt-3 mt-3">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-2">Medicines (${rx.medicines.length})</p>
+                            <div class="space-y-2">
+                                ${rx.medicines.map(med => `
+                                    <div class="bg-slate-50 p-3 rounded-lg">
+                                        <div class="flex items-start justify-between mb-1">
+                                            <div class="flex-1">
+                                                <p class="text-sm font-bold text-slate-800">
+                                                    ${med.drug_name_generic}
+                                                    ${med.drug_name_brand ? `<span class="text-slate-500 text-xs">(${med.drug_name_brand})</span>` : ''}
+                                                </p>
+                                                <p class="text-xs text-slate-500 mt-0.5">
+                                                    <i class="fas fa-pills mr-1"></i>${med.strength} • ${med.route_administration}
+                                                </p>
+                                            </div>
+                                            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                                Qty: ${med.total_quantity}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-slate-600 mt-2">
+                                            <i class="fas fa-clock mr-1"></i><span class="font-medium">${med.dosage_frequency}</span>
+                                        </p>
+                                        ${med.instructions ? `
+                                            <p class="text-xs text-slate-500 mt-1 italic">
+                                                <i class="fas fa-info-circle mr-1"></i>${med.instructions}
+                                            </p>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 mt-4 pt-4 border-t border-slate-100">
+                            <button onclick="viewPrescriptionDetails(${rx.id})" class="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors">
+                                <i class="fas fa-eye mr-1"></i>View Details
+                            </button>
+                            
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('prescriptionsSection').classList.remove('hidden');
+        }
+
+        function showRelevantSections(data) {
+            let hasRecords = false;
+            
+            if (data.appointments && data.appointments.length > 0) hasRecords = true;
+            if (data.medical_conditions && data.medical_conditions.length > 0) hasRecords = true;
+            if (data.prescribed_lab_tests && data.prescribed_lab_tests.length > 0) hasRecords = true;
+            if (data.lab_reports && data.lab_reports.length > 0) hasRecords = true;
+            if (data.prescriptions && data.prescriptions.length > 0) hasRecords = true;
+            
+            if (!hasRecords) {
+                document.getElementById('noRecordsMessage').classList.remove('hidden');
             }
         }
-        
-        // Utility function to get CSRF token
-        function getCookie(name) {
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'completed': return 'bg-green-50 text-green-600';
+                case 'scheduled': return 'bg-blue-50 text-blue-600';
+                case 'cancelled': return 'bg-red-50 text-red-600';
+                case 'confirmed': return 'bg-emerald-50 text-emerald-600';
+                default: return 'bg-slate-50 text-slate-600';
+            }
+        }
+
+        function getCSRFToken() {
+            const name = 'csrftoken';
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
                 const cookies = document.cookie.split(';');
@@ -640,8 +1195,95 @@
             }
             return cookieValue;
         }
+
+        // Prescription Form Functions
+        function openPrescriptionForm() {
+            if (!currentPatientId) {
+                alert('Patient information not loaded. Please try again.');
+                return;
+            }
+
+            const modal = document.getElementById('prescriptionModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Set patient ID and name
+            document.getElementById('prescription_patient_id').value = currentPatientId;
+            const patientName = document.getElementById('modalPatientName').textContent;
+            document.getElementById('prescriptionPatientName').textContent = `For ${patientName}`;
+
+            // Reset form
+            document.getElementById('prescriptionForm').reset();
+        }
+
+        function closePrescriptionForm() {
+            const modal = document.getElementById('prescriptionModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function setDosageSuggestion(suggestion) {
+            document.getElementById('dosage_frequency').value = suggestion;
+        }
+
+        function viewPrescriptionDetails(prescriptionId) {
+            // Open prescription details in a new page or modal
+window.location.href = `/doctor/prescription/${prescriptionId}/details/`;        }
+
+
+        async function submitPrescription(event) {
+            event.preventDefault();
+
+            const formData = new FormData(document.getElementById('prescriptionForm'));
+            const data = Object.fromEntries(formData.entries());
+
+            // Validate required fields
+            if (!data.drug_name_generic || !data.dosage_frequency || !data.instructions || !data.duration_days) {
+                alert('Please fill in all required fields marked with *');
+                return;
+            }
+
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/doctor/prescription/add/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success message
+                    alert('Prescription added successfully!');
+                    
+                    // Close modal
+                    closePrescriptionForm();
+                    
+                    // Reload patient records to show updated data
+                    if (currentPatientId) {
+                        await loadPatientRecords(currentPatientId);
+                    }
+                } else {
+                    alert(result.error || 'Failed to add prescription. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error saving prescription:', error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
     </script>
-    
 </body>
 
 </html>

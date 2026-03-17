@@ -50,7 +50,7 @@
 
     <!-- Navbar -->
     <nav class="sticky top-0 z-50 px-4 py-4 md:px-8">
-        <div class="glass max-w-7xl mx-auto rounded-2xl px-6 py-4 flex justify-between items-center bg-white/80">
+        <div class="glass max-w-7xl mx-auto rounded-2xl px-6 py-4 flex justify-between items-center bg-white/80 shadow-sm">
             <div class="flex items-center gap-4">
                 <div
                     class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
@@ -110,10 +110,7 @@
                             class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
                             <i class="fas fa-user-cog w-4"></i> Profile Settings
                         </a>
-                        <a href="#"
-                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
-                            <i class="fas fa-history w-4"></i> Activity Log
-                        </a>
+        
                         <div class="h-px bg-slate-100 my-1"></div>
                         <a href="{% url 'logout' %}"
                             class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
@@ -155,98 +152,116 @@
 
         <div class="glass rounded-[2.5rem] p-8 border border-white/60">
             <div class="flex justify-between items-center mb-8">
-                <h3 class="text-xl font-extrabold text-slate-800">Patient Appointments</h3>
-                <div class="text-sm text-slate-500">
-                    Showing {{ appointments.count }} appointment{{ appointments.count|pluralize }}
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-calendar-check text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-800">Patient Appointments</h3>
+                        <p class="text-sm text-slate-500">Manage your scheduled patient consultations</p>
+                    </div>
+                </div>
+                <div class="text-sm text-slate-500 bg-white/50 px-4 py-2 rounded-xl border border-slate-100">
+                    <i class="fas fa-users mr-2"></i>{{ appointments.count }} appointment{{ appointments.count|pluralize }}
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b border-slate-100">
-                            <th class="pb-4 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">Patient</th>
-                            <th class="pb-4 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">Date & Time</th>
-                            <th class="pb-4 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">Reason</th>
-                            <th class="pb-4 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th class="pb-4 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for appointment in appointments %}
-                        <tr class="hover:bg-white/50 transition-colors">
-                            <td class="py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
-                                        {{ appointment.patient.first_name|slice:":1" }}{{ appointment.patient.last_name|slice:":1" }}
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-slate-800">{{ appointment.patient.first_name }} {{ appointment.patient.last_name }}</p>
-                                        <p class="text-xs text-slate-500">{{ appointment.patient.email }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-4">
-                                <div class="font-medium text-slate-800">{{ appointment.appointment_date|date:"M d, Y" }}</div>
-                                <div class="text-sm text-slate-500">{{ appointment.appointment_time|time:"H:i A" }}</div>
-                            </td>
-                            <td class="py-4">
-                                <div class="max-w-xs">
-                                    <p class="text-sm text-slate-700">{{ appointment.reason_for_visit|truncatewords:10|default:"No reason provided" }}</p>
-                                </div>
-                            </td>
-                            <td class="py-4">
-                                <span class="status-{{ appointment.status }} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                                    {{ appointment.get_status_display }}
-                                </span>
-                            </td>
-                            <td class="py-4">
-                                <div class="flex gap-2">
-                                    <!-- Status Update Dropdown -->
-                                    <div class="relative">
-                                        <button type="button" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors dropdown-toggle">
-                                            <i class="fas fa-sync-alt mr-1"></i> Update
-                                        </button>
-                                        <div class="dropdown-menu absolute left-0 mt-2 w-48 glass rounded-xl p-2 hidden transition-all shadow-lg z-10">
-                                            <form method="post" action="{% url 'update_appointment_status' appointment.id %}">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="redirect_url" value="{% url 'doctor_appointments' %}">
-                                                <button type="submit" name="status" value="scheduled" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg mb-1">Schedule</button>
-                                                <button type="submit" name="status" value="confirmed" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg mb-1">Confirm</button>
-                                                <button type="submit" name="status" value="completed" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg mb-1">Complete</button>
-                                                <button type="submit" name="status" value="rescheduled" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg mb-1">Reschedule</button>
-                                                <button type="submit" name="status" value="cancelled" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg">Cancel</button>
-                                            </form>
-                                        </div>
-                                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for appointment in appointments %}
+                <div class="glass rounded-2xl p-5 border border-white/60 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+                    <!-- Patient Info -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm shadow-md">
+                                {{ appointment.patient.first_name|slice:":1" }}{{ appointment.patient.last_name|slice:":1" }}
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800 text-sm">{{ appointment.patient.first_name }} {{ appointment.patient.last_name }}</p>
+                                <p class="text-xs text-slate-500">{{ appointment.patient.email }}</p>
+                            </div>
+                        </div>
+                        <span class="status-{{ appointment.status }} px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                            {{ appointment.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <!-- Appointment Details -->
+                    <div class="space-y-3 mb-4">
+                        <div class="flex items-center gap-2 text-sm">
+                            <i class="fas fa-calendar text-blue-500 w-4"></i>
+                            <span class="text-slate-700 font-medium">{{ appointment.appointment_date|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm">
+                            <i class="fas fa-clock text-blue-500 w-4"></i>
+                            <span class="text-slate-700">{{ appointment.appointment_time|time:"H:i A" }}</span>
+                        </div>
+                        <div class="flex items-start gap-2 text-sm">
+                            <i class="fas fa-comment-medical text-blue-500 w-4 mt-0.5"></i>
+                            <div class="flex-1">
+                                <p class="text-slate-600 line-clamp-2">{{ appointment.reason_for_visit|truncatewords:8|default:"No reason provided" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex gap-2 pt-3 border-t border-slate-100">
+                        <!-- View Records Button -->
+                        <a href="{% url 'doctor_view_patient_records' appointment.patient.id %}" 
+                           class="flex-1 px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-all text-center"
+                           title="View Patient Records">
+                            <i class="fas fa-folder-open mr-1"></i>Records
+                        </a>
+                        
+                        <!-- Status Update Dropdown -->
+                        <div class="relative flex-1">
+                            <button type="button" class="w-full px-3 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all dropdown-toggle">
+                                <i class="fas fa-sync-alt mr-1"></i>Update
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-2 w-full glass rounded-xl p-2 hidden transition-all shadow-lg z-10">
+                                <form method="post" action="{% url 'update_appointment_status' appointment.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="redirect_url" value="{% url 'doctor_appointments' %}">
                                     
-                                    <!-- Reschedule Button (for rescheduled appointments) -->
-                                    {% if appointment.status == 'rescheduled' %}
-                                    <button onclick="prepareRescheduleModal(this)" 
-                                        class="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-200 transition-colors"
-                                        data-appointment-id="{{ appointment.id }}"
-                                        data-patient-name="{{ appointment.patient.first_name|escapejs }} {{ appointment.patient.last_name|escapejs }}"
-                                        data-date="{{ appointment.appointment_date|date:"Y-m-d" }}"
-                                        data-time="{{ appointment.appointment_time|time:"H:i" }}">
-                                        <i class="fas fa-calendar-plus mr-1"></i> Set New Time
+                                    <button type="submit" name="status" value="confirmed" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg mb-1">
+                                        <i class="fas fa-check-circle w-4 mr-1 text-blue-500"></i>Confirm
                                     </button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="py-12 text-center">
-                                <div class="flex flex-col items-center">
-                                    <i class="fas fa-calendar-check text-4xl text-slate-300 mb-4"></i>
-                                    <h3 class="text-lg font-bold text-slate-500 mb-2">No Appointments</h3>
-                                    <p class="text-slate-400">There are no appointments scheduled yet.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                    <button type="submit" name="status" value="completed" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg mb-1">
+                                        <i class="fas fa-check-double w-4 mr-1 text-emerald-500"></i>Complete
+                                    </button>
+                                    <button type="submit" name="status" value="rescheduled" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg mb-1">
+                                        <i class="fas fa-calendar-alt w-4 mr-1 text-purple-500"></i>Reschedule
+                                    </button>
+                                    <button type="submit" name="status" value="cancelled" class="block w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-white rounded-lg">
+                                        <i class="fas fa-times-circle w-4 mr-1 text-red-500"></i>Cancel
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Reschedule Button (for rescheduled appointments) -->
+                        {% if appointment.status == 'rescheduled' %}
+                        <button onclick="prepareRescheduleModal(this)" 
+                            class="flex-1 px-3 py-2 bg-purple-100 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-200 transition-all"
+                            data-appointment-id="{{ appointment.id }}"
+                            data-patient-name="{{ appointment.patient.first_name|escapejs }} {{ appointment.patient.last_name|escapejs }}"
+                            data-date="{{ appointment.appointment_date|date:"Y-m-d" }}"
+                            data-time="{{ appointment.appointment_time|time:"H:i" }}">
+                            <i class="fas fa-calendar-plus mr-1"></i>Set Time
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full">
+                    <div class="bg-white/50 rounded-[2.5rem] p-20 text-center border-2 border-dashed border-slate-200">
+                        <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-calendar-check text-4xl text-slate-300"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">No Appointments</h3>
+                        <p class="text-slate-500">There are no appointments scheduled yet.</p>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </main>

@@ -6,185 +6,192 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <title>Mediwise | Secure Payment</title>
     <style>
         ::-webkit-scrollbar { display: none; }
         body { -ms-overflow-style: none; scrollbar-width: none; overflow-x: hidden; }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+        body, html {
+            background-color: #F8F9FA;
+            font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
         }
 
-        .cherry-gradient {
-            background: linear-gradient(135deg, #be123c 0%, #fb7185 100%);
-        }
-
-        .bg-mesh {
-            background-color: #fff1f2;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(251, 113, 133, 0.15) 0, transparent 50%), 
-                radial-gradient(at 100% 100%, rgba(190, 18, 60, 0.1) 0, transparent 50%);
-        }
-
-        .payment-card {
-            transition: all 0.4s ease;
-        }
-        .payment-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px -12px rgba(190, 18, 60, 0.1);
-        }
-
-        .card-input {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(225, 29, 72, 0.1);
-        }
-
-        .card-input:focus {
-            border-color: #be123c;
-            box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.1);
-        }
-        
-        /* Enhanced card visualization */
-        .card-preview {
-            width: 100%;
-            max-width: 350px;
-            height: 200px;
-            margin: 0 auto 24px;
-            padding: 24px;
-            border-radius: 16px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-        }
-        
-        .card-preview::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(
-                transparent,
-                rgba(255,255,255,0.1),
-                transparent
-            );
-            animation: rotate 6s linear infinite;
-        }
-        
-        .card-content {
-            position: relative;
-            z-index: 2;
-        }
-        
-        .chip {
-            width: 50px;
-            height: 40px;
-            background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .card-number-display {
-            letter-spacing: 3px;
-            font-size: 1.2rem;
-            font-family: monospace;
-        }
-        
-        .card-details {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 16px;
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .progress-bar {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: #be123c;
-            width: 50%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-        
-        .payment-method {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        
-        .payment-option {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
             transition: all 0.3s ease;
         }
         
-        .payment-option.active {
-            border-color: #be123c;
-            background: rgba(190, 18, 60, 0.1);
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background-color: #880E4F;
+            color: white;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5D0038;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(136, 14, 79, 0.25);
+        }
+
+        .outline-btn {
+            background: transparent;
+            border: 2px solid #880E4F;
+            color: #880E4F;
+            transition: all 0.3s ease;
+        }
+        
+        .outline-btn:hover {
+            background: #880E4F;
+            color: white;
+        }
+        
+        .lucide-icon {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2;
         }
     </style>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Initialize lucide icons
+        lucide.createIcons();
+    </script>
 </head>
-<body class="bg-mesh min-h-screen text-slate-900 pb-20">
+<body class="min-h-screen text-slate-900 pb-20">
     {% csrf_token %}
     <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl">
-    <div class="glass rounded-[2rem] px-5 py-3 flex justify-between items-center shadow-2xl shadow-rose-900/5">
+    <div class="rounded-3xl px-5 py-3 flex justify-between items-center shadow-lg bg-white" 
+         style="border-radius: 24px;">
         
         <div class="flex items-center space-x-4">
-            <div class="w-10 h-10 cherry-gradient rounded-xl flex items-center justify-center shadow-lg shadow-rose-200 flex-shrink-0">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0" 
+                 style="background: linear-gradient(135deg, #880E4F 0%, #BF386F 100%);">
                 <i class="fas fa-heart-pulse text-white text-lg"></i>
             </div>
             <div class="block">
-                <p class="text-[8px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest leading-none mb-1">Patient Portal</p>
-                <p class="font-black text-rose-950 tracking-tighter text-sm md:text-base">
+                <p class="text-[8px] md:text-[10px] font-bold text-[#880E4F] uppercase tracking-widest leading-none mb-1">Patient Portal</p>
+                <p class="font-bold text-gray-800 tracking-tighter text-sm md:text-base">
                     Hi, {{ user.first_name|default:"Alex" }}
                 </p>
             </div>
         </div>
 
+        <div class="hidden lg:flex items-center space-x-1 p-1 rounded-2xl" 
+             style="background-color: #f8f9fa;">
+            
+            <a href="{% url 'patient_dashboard' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_dashboard' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+               Overview
+            </a>
+
+            <a href="{% url 'patient_records' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_records' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+               Records
+            </a>
+
+            <a href="{% url 'patient_prescriptions' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_prescriptions' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+               Prescriptions
+            </a>
+
+            <a href="{% url 'registered_pharmacies' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'registered_pharmacies' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+               Pharmacy
+            </a>
+
+            <a href="{% url 'view_doctors' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'view_doctors' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+               Doctors
+            </a>
+
+            <a href="{% url 'patient_appointments' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_appointments' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+               My Appointments
+            </a>
+
+            <a href="{% url 'patient_orders' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all
+               {% if request.resolver_match.url_name == 'patient_orders' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+               Orders
+            </a>
+            
+            <a href="{% url 'patient_notifications' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center relative transition-all
+               {% if request.resolver_match.url_name == 'patient_notifications' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+                <span>Notifications</span>
+                {% if notifications %}
+                <span class="ml-2 w-5 h-5 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[10px] shadow-lg">{{ notifications|length }}</span>
+                {% endif %}
+            </a>
+
+            <a href="{% url 'view_cart' %}" 
+               class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center relative transition-all
+               {% if request.resolver_match.url_name == 'view_cart' %} bg-white text-gray-900 shadow-sm {% else %} text-slate-500 hover:text-[#880E4F] {% endif %}">
+                <span>Cart</span>
+                {% if cart_count > 0 %}
+                <span class="ml-2 w-5 h-5 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[10px] shadow-lg">{{ cart_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+
         <div class="flex items-center space-x-3">
+            <a href="{% url 'view_cart' %}" class="lg:hidden w-10 h-10 rounded-xl bg-[#FCE4EC] flex items-center justify-center text-[#880E4F] relative">
+                <i class="fas fa-shopping-cart"></i>
+                {% if cart_count > 0 %}
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[8px]">{{ cart_count }}</span>
+                {% endif %}
+            </a>
+
             <div class="group relative">
-                <div class="w-10 h-10 rounded-full border-2 border-rose-200 overflow-hidden shadow-sm cursor-pointer transition-transform group-hover:scale-105 active:scale-95">
-                    <img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'Alex' }}+{{ user.last_name|default:'Smith' }}&background=fff1f2&color=be123c" alt="Profile" class="w-full h-full object-cover">
+                <div class="w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm cursor-pointer transition-transform group-hover:scale-105 active:scale-95">
+                    <img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'Alex' }}+{{ user.last_name|default:'Smith' }}&background=FCE4EC&color=880E4F" alt="Profile" class="w-full h-full object-cover">
+                </div>
+
+                <div class="absolute right-0 mt-4 w-52 rounded-2xl p-2 opacity-0 invisible translate-y-3 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 shadow-xl z-50 border border-gray-100" 
+                     style="background: rgba(255, 255, 255, 0.95);">
+                    <div class="px-4 py-2 mb-1">
+                        <p class="text-[9px] font-bold text-[#880E4F] uppercase tracking-widest">Account Settings</p>
+                    </div>
+                    <a href="{% url 'update_profile' %}" class="flex items-center space-x-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-[#FCE4EC] hover:text-[#880E4F] rounded-xl transition-colors">
+                        <i class="fas fa-user-circle opacity-50"></i>
+                        <span>Profile Management</span>
+                    </a>
+                    <hr class="my-2 border-gray-100">
+                    <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-2 text-xs font-bold text-[#880E4F] hover:bg-[#FCE4EC] rounded-xl transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-    </nav>
+</nav>
 
-    <main class="max-w-6xl mx-auto pt-32 px-6">
+    <main class="max-w-6xl mx-auto pt-28 md:pt-36 px-4 md:px-6">
         {% if messages %}
         <div class="mb-8 space-y-4">
             {% for message in messages %}
             <div class="p-4 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% else %}bg-rose-50 text-rose-600 border border-rose-100{% endif %} flex items-center justify-between shadow-sm animate-fade-in">
                 <div class="flex items-center space-x-3">
                     <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
-                    <p class="text-xs font-black uppercase tracking-widest">{{ message }}</p>
+                    <p class="text-xs font-bold uppercase tracking-widest">{{ message }}</p>
                 </div>
                 <button onclick="this.parentElement.remove()" class="text-current opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
             </div>
@@ -192,15 +199,20 @@
         </div>
         {% endif %}
 
-        <div class="mb-12 text-center">
-            <h2 class="text-4xl md:text-5xl font-black text-rose-950 tracking-tighter mb-2">Secure Payment</h2>
-            <p class="text-slate-500 font-medium">Complete your purchase with our secure payment gateway</p>
+        <div class="mb-10 md:mb-14">
+            <div class="relative">
+                <div class="absolute -top-4 -left-2 w-24 h-24 bg-gradient-to-br from-[#D7CCC8] to-[#BDBDBD] rounded-full opacity-30 blur-2xl"></div>
+                <span class="text-[#880E4F] font-bold text-[12px] md:text-sm tracking-widest uppercase relative z-10">Secure Checkout</span>
+                <h2 class="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#880E4F] via-[#6A0D3F] to-[#4E0D3A] tracking-tight mt-2 relative z-10">Secure Payment</h2>
+                <div class="w-20 h-1 bg-gradient-to-r from-[#880E4F] to-[#6A0D3F] rounded-full mt-3 relative z-10"></div>
+            </div>
+            <p class="text-slate-600 mt-6 text-base md:text-lg max-w-2xl">Complete your purchase with our secure payment gateway. Your information is encrypted and securely processed.</p>
         </div>
         
         <!-- Progress Bar -->
         <div class="mb-8">
             <div class="progress-bar">
-                <div class="progress-fill" style="width: 50%"></div>
+                <div class="progress-fill" style="width: 50%; background: #880E4F;"></div>
             </div>
             <div class="flex justify-between text-xs text-slate-600 mt-2">
                 <span>Cart</span>
@@ -209,226 +221,259 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Payment Preview Card -->
-            <div class="lg:col-span-1 glass rounded-[2.5rem] p-8 border border-white">
-                <h3 class="text-xl font-black text-rose-950 mb-6 text-center">Payment Method</h3>
-                
-                <div class="payment-method">
-                    <div class="payment-option active">
-                        <i class="fas fa-credit-card text-2xl mb-2"></i>
-                        <div class="text-sm font-bold">Credit Card</div>
-                    </div>
-                    <div class="payment-option">
-                        <i class="fas fa-mobile-alt text-2xl mb-2"></i>
-                        <div class="text-sm font-bold">UPI</div>
-                    </div>
-                    <div class="payment-option">
-                        <i class="fas fa-university text-2xl mb-2"></i>
-                        <div class="text-sm font-bold">Net Banking</div>
-                    </div>
-                </div>
-                
-                <div class="card-preview">
-                    <div class="card-content">
-                        <div class="flex justify-between items-start mb-8">
-                            <div class="chip">
-                                <i class="fas fa-microchip"></i>
-                            </div>
-                            <div class="text-right">
-                                <i class="fab fa-cc-visa text-4xl"></i>
-                            </div>
-                        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-8">
+                <!-- Payment Form -->
+                <div class="card rounded-3xl p-8 border border-gray-200">
+                    <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#880E4F] to-[#6A0D3F] mb-6">Payment Details</h3>
+                    
+                    <form method="POST" action="{% url 'process_payment' %}" id="payment-form">
+                        {% csrf_token %}
                         
-                        <div class="card-number-display" id="card-preview">
-                            •••• •••• •••• ••••
-                        </div>
-                        
-                        <div class="card-details">
-                            <div>
-                                <div class="text-xs opacity-75">CARD HOLDER</div>
-                                <div class="text-sm" id="card-holder-preview">JOHN DOE</div>
-                            </div>
-                            <div>
-                                <div class="text-xs opacity-75">EXPIRES</div>
-                                <div class="text-sm" id="expiry-preview">MM/YY</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Payment Form -->
-            <div class="lg:col-span-2 glass rounded-[2.5rem] p-8 border border-white payment-card">
-                <h3 class="text-xl font-black text-rose-950 mb-6">Payment Details</h3>
-                
-                <form method="POST" action="{% url 'process_payment' %}" id="payment-form">
-                    {% csrf_token %}
-                    
-                    <!-- Card Name -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">
-                            <i class="fas fa-user mr-2 text-rose-500"></i>Cardholder Name
-                        </label>
-                        <input type="text" 
-                               name="card_name" 
-                               id="card_name"
-                               class="w-full px-4 py-3 card-input rounded-xl focus:outline-none transition-all"
-                               placeholder="John Doe"
-                               required>
-                    </div>
-                    
-                    <!-- Card Number -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">
-                            <i class="fas fa-credit-card mr-2 text-rose-500"></i>Card Number
-                        </label>
-                        <input type="text" 
-                               name="card_number" 
-                               id="card_number"
-                               class="w-full px-4 py-3 card-input rounded-xl focus:outline-none transition-all"
-                               placeholder="1234 5678 9012 3456"
-                               maxlength="19"
-                               required>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <!-- Expiry Date -->
-                        <div>
+                        <!-- Card Name -->
+                        <div class="mb-6">
                             <label class="block text-sm font-bold text-slate-700 mb-2">
-                                <i class="fas fa-calendar mr-2 text-rose-500"></i>Expiry Date
+                                <i class="fas fa-user mr-2 text-[#880E4F]"></i>Cardholder Name
                             </label>
                             <input type="text" 
-                                   name="expiry_date" 
-                                   id="expiry_date"
-                                   class="w-full px-4 py-3 card-input rounded-xl focus:outline-none transition-all"
-                                   placeholder="MM/YY"
-                                   maxlength="5"
+                                   name="card_name" 
+                                   id="card_name"
+                                   class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#880E4F]/30 focus:border-[#880E4F] transition-all duration-300 shadow-sm outline-none"
+                                   placeholder="John Doe"
                                    required>
                         </div>
                         
-                        <!-- CVV -->
-                        <div>
+                        <!-- Card Number -->
+                        <div class="mb-6">
                             <label class="block text-sm font-bold text-slate-700 mb-2">
-                                <i class="fas fa-lock mr-2 text-rose-500"></i>CVV
+                                <i class="fas fa-credit-card mr-2 text-[#880E4F]"></i>Card Number
                             </label>
                             <input type="text" 
-                                   name="card_cvv" 
-                                   id="card_cvv"
-                                   class="w-full px-4 py-3 card-input rounded-xl focus:outline-none transition-all"
-                                   placeholder="123"
-                                   maxlength="4"
+                                   name="card_number" 
+                                   id="card_number"
+                                   class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#880E4F]/30 focus:border-[#880E4F] transition-all duration-300 shadow-sm outline-none"
+                                   placeholder="1234 5678 9012 3456"
+                                   maxlength="19"
                                    required>
                         </div>
-                    </div>
-                    
-                    <!-- Payment Button -->
-                    <button type="submit" 
-                            class="w-full py-4 cherry-gradient text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-rose-200 hover:scale-[1.02] transition-all">
-                        <i class="fas fa-lock mr-2"></i>Pay ${{ total_amount|floatformat:2 }}
-                    </button>
-                </form>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <!-- Expiry Date -->
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">
+                                    <i class="fas fa-calendar mr-2 text-[#880E4F]"></i>Expiry Date
+                                </label>
+                                <input type="text" 
+                                       name="expiry_date" 
+                                       id="expiry_date"
+                                       class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#880E4F]/30 focus:border-[#880E4F] transition-all duration-300 shadow-sm outline-none"
+                                       placeholder="MM/YY"
+                                       maxlength="5"
+                                       required>
+                            </div>
+                            
+                            <!-- CVV -->
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">
+                                    <i class="fas fa-lock mr-2 text-[#880E4F]"></i>CVV
+                                </label>
+                                <input type="text" 
+                                       name="card_cvv" 
+                                       id="card_cvv"
+                                       class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#880E4F]/30 focus:border-[#880E4F] transition-all duration-300 shadow-sm outline-none"
+                                       placeholder="123"
+                                       maxlength="4"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery Mode Selection -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                <i class="fas fa-shipping-fast mr-2 text-[#880E4F]"></i>Delivery Mode
+                            </label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" name="delivery_mode" value="home_delivery" class="form-radio text-[#880E4F] h-4 w-4" checked onchange="toggleAddressField()">
+                                    <span class="text-slate-700">Home Delivery</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" name="delivery_mode" value="in_store_pickup" class="form-radio text-[#880E4F] h-4 w-4" onchange="toggleAddressField()">
+                                    <span class="text-slate-700">In-Store Pickup</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Shop Location (shown only for in-store pickup) -->
+                        <div class="mb-6 hidden" id="shop-location-field">
+                            <label class="block text-sm font-bold text-slate-700 mb-3">
+                                <i class="fas fa-store mr-2 text-[#880E4F]"></i>Pickup Location
+                            </label>
+                            {% if shop_location %}
+                            <div class="bg-gradient-to-br from-[#FCE4EC] to-[#F8BBD0] rounded-2xl p-5 border border-[#F48FB1]">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md flex-shrink-0">
+                                        <i class="fas fa-clinic-medical text-[#880E4F] text-xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-[#880E4F] text-lg mb-2">{{ shop_location.pharmacy_name }}</h4>
+                                        <div class="space-y-2">
+                                            <p class="text-slate-700 text-sm">
+                                                <i class="fas fa-map-marker-alt mr-2 text-[#880E4F]"></i>
+                                                {{ shop_location.address }}
+                                            </p>
+                                            <p class="text-slate-700 text-sm">
+                                                <i class="fas fa-phone mr-2 text-[#880E4F]"></i>
+                                                {{ shop_location.phone_number }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                                <p class="text-amber-800 text-sm">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    Pharmacy location information is not available.
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Address Field (shown only for home delivery) -->
+                        <div class="mb-6" id="address-field">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2 text-[#880E4F]"></i>Delivery Address
+                            </label>
+                            <textarea 
+                                name="delivery_address" 
+                                id="delivery_address"
+                                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#880E4F]/30 focus:border-[#880E4F] transition-all duration-300 shadow-sm outline-none"
+                                rows="3"
+                                placeholder="Enter your complete delivery address"
+                                required></textarea>
+                        </div>
+                        
+                        <!-- Payment Button -->
+                        <button type="submit" 
+                                class="w-full py-4 bg-gradient-to-r from-[#880E4F] to-[#6A0D3F] text-white rounded-2xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-[#880E4F]/20 hover:shadow-xl hover:shadow-[#880E4F]/30 hover:from-[#6A0D3F] hover:to-[#4E0D3A] transition-all duration-300 transform hover:scale-[1.02]">
+                            <i class="fas fa-lock mr-2"></i>Pay {{ total_amount|floatformat:2 }}
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <!-- Order Summary -->
-            <div class="glass rounded-[2.5rem] p-8 border border-white sticky top-32">
-                <h3 class="text-xl font-black text-rose-950 mb-6">Order Summary</h3>
-                
-                <div class="space-y-4 mb-6">
-                    <div class="flex justify-between text-sm font-bold text-slate-500">
-                        <span>Total Items</span>
-                        <span>{{ cart_items.count }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm font-bold text-slate-500">
-                        <span>Subtotal</span>
-                        <span>${{ subtotal|floatformat:2 }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm font-bold text-slate-500">
-                        <span>GST (18%)</span>
-                        <span>${{ gst_amount|floatformat:2 }}</span>
-                    </div>
-                    <div class="flex justify-between text-lg font-black text-rose-950 pt-2 border-t border-rose-100">
-                        <span>Total</span>
-                        <span>${{ total_amount|floatformat:2 }}</span>
-                    </div>
-                </div>
-                
-                <div class="bg-rose-50 rounded-xl p-4 mb-6">
-                    <div class="flex items-start">
-                        <i class="fas fa-shield-alt text-rose-600 text-lg mt-1 mr-3"></i>
-                        <div>
-                            <h4 class="font-bold text-rose-800 mb-1">Secure Payment</h4>
-                            <p class="text-sm text-rose-700">Your payment information is encrypted and securely processed.</p>
+            <div class="lg:col-span-4">
+                <div class="card rounded-3xl p-8 border border-gray-200 sticky top-32">
+                    <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#880E4F] to-[#6A0D3F] mb-6">Order Summary</h3>
+                    
+                    <div class="space-y-5 mb-8">
+                        <div class="flex justify-between text-base font-bold text-slate-600 border-b border-gray-100 pb-3">
+                            <span>Total Items</span>
+                            <span>{{ cart_items.count }}</span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold text-slate-600 border-b border-gray-100 pb-3">
+                            <span>Subtotal</span>
+                            <span>{{ subtotal|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold text-slate-600 border-b border-gray-100 pb-3">
+                            <span>GST (18%)</span>
+                            <span>{{ gst_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#880E4F] to-[#6A0D3F] pt-3">
+                            <span>Total</span>
+                            <span>{{ total_amount|floatformat:2 }}</span>
                         </div>
                     </div>
-                </div>
-                
-                <div class="text-[10px] text-center text-slate-400 font-medium leading-relaxed">
-                    By completing this payment, you agree to our terms of service and medical privacy policy.
+                    
+                    <div class="bg-[#FCE4EC] rounded-xl p-4 mb-6">
+                        <div class="flex items-start">
+                            <svg class="lucide-icon text-[#880E4F] text-lg mt-1 mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                                <path d="M12 8v4"/>
+                                <path d="M12 16h.01"/>
+                            </svg>
+                            <div>
+                                <h4 class="font-bold text-[#880E4F] mb-1">Secure Payment</h4>
+                                <p class="text-sm text-[#880E4F]/80">Your payment information is encrypted and securely processed.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-xs text-center text-slate-500 font-medium leading-relaxed">
+                        By completing this payment, you agree to our terms of service and medical privacy policy.
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <script>
-        // Payment method selection
-        const paymentOptions = document.querySelectorAll('.payment-option');
-        paymentOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                paymentOptions.forEach(opt => opt.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
 
-        // Format card number with spaces and update preview
+    <script>
+        // Format card number with spaces
         document.getElementById('card_number').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
             let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
             e.target.value = formattedValue;
-            
-            // Update card preview
-            const cardPreview = document.getElementById('card-preview');
-            if (value.length > 0) {
-                let maskedValue = '•••• •••• •••• ••••';
-                if (value.length >= 4) {
-                    maskedValue = '•••• •••• •••• ' + value.slice(-4);
-                }
-                cardPreview.textContent = maskedValue;
-            } else {
-                cardPreview.textContent = '•••• •••• •••• ••••';
-            }
         });
 
-        // Format expiry date and update preview
+        // Format expiry date
         document.getElementById('expiry_date').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length >= 2) {
                 value = value.substring(0, 2) + '/' + value.substring(2, 4);
             }
             e.target.value = value;
-            
-            // Update expiry preview
-            const expiryPreview = document.getElementById('expiry-preview');
-            expiryPreview.textContent = value || 'MM/YY';
         });
 
         // Only allow numbers for CVV
         document.getElementById('card_cvv').addEventListener('input', function(e) {
             e.target.value = e.target.value.replace(/[^0-9]/g, '');
         });
-        
-        // Update card holder name preview
-        document.getElementById('card_name').addEventListener('input', function(e) {
-            const cardHolderPreview = document.getElementById('card-holder-preview');
-            cardHolderPreview.textContent = e.target.value.toUpperCase() || 'JOHN DOE';
-        });
 
+        // Toggle address field based on delivery mode
+        function toggleAddressField() {
+            const deliveryMode = document.querySelector('input[name="delivery_mode"]:checked').value;
+            const addressField = document.getElementById('address-field');
+            const addressTextarea = document.getElementById('delivery_address');
+            const shopLocationField = document.getElementById('shop-location-field');
+            
+            if (deliveryMode === 'home_delivery') {
+                addressField.style.display = 'block';
+                addressTextarea.required = true;
+                shopLocationField.classList.add('hidden');
+            } else if (deliveryMode === 'in_store_pickup') {
+                addressField.style.display = 'none';
+                addressTextarea.required = false;
+                shopLocationField.classList.remove('hidden');
+            }
+        }
+        
+        // Initialize the address field visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleAddressField();
+        });
+        
         // Form validation
         document.getElementById('payment-form').addEventListener('submit', function(e) {
             const cardName = document.getElementById('card_name').value.trim();
             const cardNumber = document.getElementById('card_number').value.replace(/\s/g, '');
             const expiryDate = document.getElementById('expiry_date').value;
             const cvv = document.getElementById('card_cvv').value;
+            
+            // Check delivery mode
+            const deliveryMode = document.querySelector('input[name="delivery_mode"]:checked').value;
+            let deliveryAddress = '';
+            
+            if (deliveryMode === 'home_delivery') {
+                deliveryAddress = document.getElementById('delivery_address').value.trim();
+                if (!deliveryAddress) {
+                    e.preventDefault();
+                    alert('Please enter a delivery address for home delivery.');
+                    return;
+                }
+            }
 
             if (!cardName) {
                 e.preventDefault();
@@ -436,21 +481,21 @@
                 return;
             }
 
-            if (cardNumber.length < 16) {
+            if (cardNumber.length !== 16) {
                 e.preventDefault();
                 alert('Please enter a valid 16-digit card number');
                 return;
             }
 
-            if (!expiryDate || expiryDate.length < 5) {
+            if (!expiryDate || expiryDate.length !== 5) {
                 e.preventDefault();
                 alert('Please enter a valid expiry date (MM/YY)');
                 return;
             }
 
-            if (cvv.length < 3) {
+            if (cvv.length < 3 || cvv.length > 4) {
                 e.preventDefault();
-                alert('Please enter a valid CVV');
+                alert('Please enter a valid CVV (3-4 digits)');
                 return;
             }
 
@@ -460,5 +505,18 @@
             submitButton.disabled = true;
         });
     </script>
+    <div class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] bg-white rounded-2xl p-2 flex justify-around items-center shadow-xl border border-gray-200">
+        <a href="{% url 'patient_dashboard' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-home"></i></a>
+        <a href="{% url 'view_doctors' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-user-md"></i></a>
+        <a href="{% url 'patient_appointments' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-calendar"></i></a>
+        <a href="{% url 'patient_orders' %}" class="w-12 h-12 rounded-xl text-slate-400 transition-all flex items-center justify-center"><i class="fas fa-box"></i></a>
+        <a href="{% url 'view_cart' %}" class="w-12 h-12 rounded-xl bg-[#FCE4EC] text-[#880E4F] transition-all flex items-center justify-center relative">
+            <i class="fas fa-shopping-cart"></i>
+            {% if cart_count > 0 %}
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-[#880E4F] text-white rounded-full flex items-center justify-center text-[10px] border border-white">{{ cart_count }}</span>
+            {% endif %}
+        </a>
+        
+    </div>
 </body>
 </html>

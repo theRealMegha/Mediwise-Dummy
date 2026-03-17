@@ -30,16 +30,67 @@
         }
 
         .active-link {
-            background: linear-gradient(90deg, #fee2e2 0%, #fef2f2 100%);
-            color: #be123c;
-            border-left: 3px solid #be123c;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-left: 3px solid #10b981;
+            border-radius: 12px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(16, 185, 129, 0.08);
+            color: #10b981;
         }
 
         .sidebar-transition { 
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
         }
-        .expanded-sidebar { width: 280px; }
-        .collapsed-sidebar { width: 100px; }
+        .expanded-sidebar { 
+            width: 280px; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .collapsed-sidebar { 
+            width: 100px; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav { 
+            flex: 1; 
+            overflow-y: hidden; 
+            padding: 12px 0; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-footer {
+            flex-shrink: 0;
+            border-top: 1px solid #ffebee;
+            padding: 12px;
+        }
+        
+        .nav-item-compact {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
 
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.98) translateY(10px); }
@@ -119,8 +170,8 @@
 </head>
 <body class="text-slate-900">
 
-    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 h-screen sidebar-gradient border-r border-rose-100 z-50 flex flex-col">
-        <div class="p-8">
+    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 sidebar-gradient border-r border-rose-100 z-50">
+        <div class="sidebar-header p-8">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
                     <i class="fas fa-prescription-bottle text-white text-lg"></i>
@@ -129,47 +180,49 @@
             </div>
         </div>
 
-        <nav class="flex-1 px-4 space-y-2">
-            <a href="{% url 'pharmacist_dashboard' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-chart-line text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Dashboard</span>
-            </a>
-            <a href="{% url 'pharmacist_profile' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-shield-halved text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
-            </a>
-            <a href="{% url 'pharmacist_inventory' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-pills text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
-            </a>
-            <a href="{% url 'pharmacist_restock' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-sync text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Restock</span>
-            </a>
-            <a href="{% url 'pharmacist_orders' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-box-open text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
-            </a>
-            <a href="{% url 'pharmacist_customers' %}" class="active-link flex items-center p-4 rounded-2xl">
-                <i class="fas fa-users text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
-            </a>
-            <a href="{% url 'pharmacist_ratings_feedback' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-star text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
-            </a>
-            <a href="{% url 'pharmacist_earnings' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-money-bill-wave text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Earnings</span>
-            </a>
+        <nav class="sidebar-nav">
+            <div class="px-4 flex flex-col gap-2 flex-1">
+                <a href="{% url 'pharmacist_dashboard' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-chart-line text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Dashboard</span>
+                </a>
+                <a href="{% url 'pharmacist_profile' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-shield-halved text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
+                </a>
+                <a href="{% url 'pharmacist_inventory' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-pills text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
+                </a>
+                <a href="{% url 'pharmacist_restock' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-sync text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Restock</span>
+                </a>
+                <a href="{% url 'pharmacist_orders' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-box-open text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
+                </a>
+                <a href="{% url 'pharmacist_customers' %}" class="active-link nav-item-compact">
+                    <i class="fas fa-users text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
+                </a>
+                <a href="{% url 'pharmacist_ratings_feedback' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-star text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
+                </a>
+                <a href="{% url 'pharmacist_earnings' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-money-bill-wave text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Earnings</span>
+                </a>
+            </div>
         </nav>
 
-        <div class="p-4 border-t border-rose-50 space-y-2">
-            <button id="toggle-btn" class="w-full flex items-center p-4 rounded-2xl text-slate-400 hover:text-rose-600 transition-all">
-                <i class="fas fa-indent text-lg w-6" id="toggle-icon"></i>
+        <div class="sidebar-footer">
+            <button id="toggle-btn" class="w-full nav-item-compact text-slate-400 hover:text-slate-600 transition-all mb-2">
+                <i class="fas fa-indent text-lg w-6 transition-transform duration-300" id="toggle-icon"></i>
                 <span class="sidebar-text ml-4 font-bold text-xs uppercase tracking-widest">Collapse</span>
             </button>
-            <a href="{% url 'logout' %}" class="flex items-center p-4 rounded-2xl text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+            <a href="{% url 'logout' %}" class="nav-item-compact text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all">
                 <i class="fas fa-sign-out-alt text-lg w-6"></i>
                 <span class="sidebar-text ml-4 font-bold text-sm">Logout</span>
             </a>
@@ -183,10 +236,32 @@
                 <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight">Customer <span class="gradient-text">Management</span></h1>
                 <p class="text-slate-500 font-medium mt-2 text-lg">View all customers who have purchased medicines from your pharmacy.</p>
             </div>
+            
+            <div class="flex items-center gap-4">
+                <!-- Notification Bell -->
+                <a href="{% url 'pharmacist_notifications' %}" class="relative p-2 text-slate-600 hover:text-emerald-600 transition-colors">
+                    <i class="fas fa-bell text-xl"></i>
+                    {% if pharmacist_notification_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {{ pharmacist_notification_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                
+                <div class="flex items-center gap-4 bg-white/80 backdrop-blur-lg p-4 rounded-2xl shadow-sm border border-white">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-200">
+                        PH
+                    </div>
+                    <div class="pr-2">
+                        <p class="text-xs font-bold text-slate-800 leading-tight">{{ pharmacist.first_name|default:"Pharmacist" }}</p>
+                        <p class="text-[10px] text-slate-500">{{ pharmacist.email|default:"pharmacist@mediwise.com" }}</p>
+                    </div>
+                </div>
+            </div>
         </header>
 
         {% if messages %}
-        <div class="mb-8 space-y-4">
+        <div class="mb-8 space-y-2">
             {% for message in messages %}
             <div class="p-4 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% else %}bg-rose-50 text-rose-600 border border-rose-100{% endif %} flex items-center justify-between shadow-sm animate-fade-in">
                 <div class="flex items-center space-x-3">
@@ -202,7 +277,7 @@
         {% if patient_data %}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for pdata in patient_data %}
-                <div class="glass-card rounded-[2rem] p-6 animate-entrance customer-card cursor-pointer" onclick="toggleCustomerDetails(this)">
+                <div class="glass-card rounded-[2rem] p-6 animate-entrance customer-card">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
@@ -235,144 +310,36 @@
                                 {% endif %}
                             </span>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Prescriptions:</span>
-                            <span class="font-semibold">{{ pdata.prescriptions|length }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Toggle Button -->
-                    <div class="flex justify-center mt-2">
-                        <button class="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition-colors flex items-center gap-1">
-                            <span>View Details</span>
-                            <i class="fas fa-chevron-down text-xs ml-1"></i>
-                        </button>
-                    </div>
-
-                    <!-- Detailed Customer Information (Initially Hidden) -->
-                    <div class="customer-details mt-6 hidden">
-                        <!-- Customer Details -->
-                        <div class="p-4 bg-white/50 rounded-2xl mb-4">
-                            <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center">
-                                <i class="fas fa-info-circle mr-2 text-sm"></i> Personal Details
-                            </h4>
-                            <div class="grid grid-cols-1 gap-2 text-xs">
-                                <div class="flex justify-between"><span class="font-bold text-slate-700">Address:</span> <span class="text-slate-600">{{ pdata.patient.address|default:'N/A' }}</span></div>
-                                <div class="flex justify-between"><span class="font-bold text-slate-700">Blood Group:</span> <span class="text-slate-600">{{ pdata.patient.blood_group|default:'N/A' }}</span></div>
-                                <div class="flex justify-between"><span class="font-bold text-slate-700">Height:</span> <span class="text-slate-600">{{ pdata.patient.height|default:'N/A' }} cm</span></div>
-                                <div class="flex justify-between"><span class="font-bold text-slate-700">Weight:</span> <span class="text-slate-600">{{ pdata.patient.weight|default:'N/A' }} kg</span></div>
-                            </div>
-                        </div>
-
-                        <!-- Order Items Section with Refill Reminders -->
-                        <div class="mb-4">
-                            <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center">
-                                <i class="fas fa-file-prescription mr-2 text-sm"></i> Order History
-                            </h4>
-                            
-                            {% if pdata.order_items %}
-                                <div class="space-y-3">
-                                    {% for order_item in pdata.order_items %}
-                                    <div class="order-item-card glass-card rounded-xl p-4 shine-effect">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
-                                                    <i class="fas fa-pills text-sm"></i>
-                                                </div>
-                                                <div>
-                                                    <h5 class="font-bold text-slate-900 text-sm">{{ order_item.medicine.brand_name }}</h5>
-                                                    <p class="text-xs text-slate-500">Ordered: {{ order_item.order.created_at|date:"M d, Y" }}</p>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                {% if order_item.reminder_sent_at %}
-                                                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[0.6rem] font-bold">Sent</span>
-                                                <span class="text-[0.6rem] text-slate-400">{{ order_item.reminder_sent_at|date:"M d" }}</span>
-                                                {% else %}
-                                                <a href="{% url 'send_refill_reminder' order_item.id %}" class="px-3 py-1 bg-rose-600 text-white rounded-lg text-[0.6rem] font-bold hover:bg-rose-700 transition-colors">
-                                                    Send Reminder
-                                                </a>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mt-2">
-                                            <div><span class="font-semibold text-slate-600">Drug:</span> {{ order_item.medicine.generic_name }} {% if order_item.medicine.brand_name %}({{ order_item.medicine.brand_name }}){% endif %}</div>
-                                            <div><span class="font-semibold text-slate-600">Strength:</span> {{ order_item.medicine.strength }}</div>
-                                            <div><span class="font-semibold text-slate-600">Qty:</span> {{ order_item.quantity }}</div>
-                                            <div><span class="font-semibold text-slate-600">Duration:</span> {{ order_item.course_duration }}</div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="text-center py-4 bg-white/30 rounded-xl text-xs">
-                                    <i class="fas fa-file-prescription text-xl text-slate-300 mb-2"></i>
-                                    <h5 class="text-sm font-bold text-slate-500">No Orders</h5>
-                                    <p class="text-slate-400 mt-1">No order history available.</p>
-                                </div>
-                            {% endif %}
-                        </div>
                         
-                        <!-- Prescription History Section -->
-                        <div class="mb-4">
-                            <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center">
-                                <i class="fas fa-stethoscope mr-2 text-sm"></i> Prescriptions
-                            </h4>
-                            
-                            {% if pdata.prescriptions %}
-                                <div class="space-y-3">
-                                    {% for prescription in pdata.prescriptions %}
-                                    <div class="order-item-card glass-card rounded-xl p-4 shine-effect">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
-                                                    <i class="fas fa-user-md text-sm"></i>
-                                                </div>
-                                                <div>
-                                                    <h5 class="font-bold text-slate-900 text-sm">Dr. {{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</h5>
-                                                    <p class="text-xs text-slate-500">{{ prescription.doctor.speciality }}</p>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                <a href="{% url 'download_prescription_pdf' prescription.id %}" 
-                                                   class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[0.6rem] font-bold rounded transition-all flex items-center gap-1"
-                                                   title="Download Prescription PDF">
-                                                    <i class="fas fa-download text-xs"></i> PDF
-                                                </a>
-                                                <span class="text-[0.6rem] text-slate-400">{{ prescription.created_at|date:"M d, Y" }}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Display all medicines for this prescription -->
-                                        {% for medicine in prescription.medicines.all %}
-                                        <div class="mb-2 {% if not forloop.first %}pt-2 mt-2 border-t border-slate-200{% endif %}">
-                                            <div class="grid grid-cols-1 gap-1 text-xs">
-                                                <div><span class="font-semibold text-slate-600">Drug:</span> {{ medicine.drug_name_generic }} {% if medicine.drug_name_brand %}({{ medicine.drug_name_brand }}){% endif %}</div>
-                                                <div><span class="font-semibold text-slate-600">Strength:</span> {{ medicine.strength }}</div>
-                                                <div><span class="font-semibold text-slate-600">Dosage:</span> {{ medicine.dosage_frequency }}</div>
-                                                <div><span class="font-semibold text-slate-600">Duration:</span> {{ medicine.duration_course }}</div>
-                                            </div>
-                                        </div>
-                                        {% empty %}
-                                        <div class="text-center py-2 text-slate-500 text-xs">
-                                            <p>No medicines recorded</p>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="text-center py-4 bg-white/30 rounded-xl text-xs">
-                                    <i class="fas fa-stethoscope text-xl text-slate-300 mb-2"></i>
-                                    <h5 class="text-sm font-bold text-slate-500">No Prescriptions</h5>
-                                    <p class="text-slate-400 mt-1">No prescription history available.</p>
-                                </div>
-                            {% endif %}
-                        </div>
+                    </div>
+
+                    <!-- View Details Button (opens modal) -->
+                    <div class="flex justify-center mt-2">
+                        <button onclick="openCustomerModal('{{ pdata.patient.id }}')" class="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition-colors flex items-center gap-1">
+                            <span>View Details</span>
+                            <i class="fas fa-eye text-xs ml-1"></i>
+                        </button>
                     </div>
                 </div>
                 {% endfor %}
+            </div>
+            
+            <!-- Modal for Customer Details -->
+            <div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4 backdrop-blur-sm" onclick="closeCustomerModal(event)">
+                <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl transform transition-all" onclick="event.stopPropagation()">
+                    <!-- Modal Header -->
+                    <div class="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-3xl">
+                        <h2 class="text-2xl font-bold text-slate-900">Customer Details</h2>
+                        <button onclick="closeCustomerModal()" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                            <i class="fas fa-times text-slate-500"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Modal Content Container -->
+                    <div id="modalContent" class="p-6">
+                        <!-- Content will be dynamically inserted -->
+                    </div>
+                </div>
             </div>
         {% else %}
             <div class="glass-card rounded-[2rem] p-16 text-center animate-entrance">
@@ -395,36 +362,79 @@
 
         let isExpanded = true;
 
-        toggleBtn.addEventListener('click', () => {
+       toggleBtn.addEventListener('click', () => {
             isExpanded = !isExpanded;
             if (isExpanded) {
                 sidebar.classList.replace('collapsed-sidebar', 'expanded-sidebar');
                 mainContent.style.marginLeft = '280px';
-                toggleIcon.style.transform = 'rotate(0deg)';
+               toggleIcon.style.transform = 'rotate(0deg)';
                 sidebarTexts.forEach(el => el.style.display = 'inline');
             } else {
                 sidebar.classList.replace('expanded-sidebar', 'collapsed-sidebar');
                 mainContent.style.marginLeft = '100px';
-                toggleIcon.style.transform = 'rotate(180deg)';
+               toggleIcon.style.transform = 'rotate(180deg)';
                 sidebarTexts.forEach(el => el.style.display = 'none');
             }
         });
         
-        // Function to toggle customer details
-        function toggleCustomerDetails(cardElement) {
-            const details = cardElement.querySelector('.customer-details');
-            const chevron = cardElement.querySelector('i.fa-chevron-down');
+        // Function to open customer modal with AJAX
+        function openCustomerModal(patientId) {
+            const modal = document.getElementById('customerModal');
+            const modalContent = document.getElementById('modalContent');
             
-            if (details.classList.contains('hidden')) {
-                details.classList.remove('hidden');
-                chevron.classList.remove('fa-chevron-down');
-                chevron.classList.add('fa-chevron-up');
-            } else {
-                details.classList.add('hidden');
-                chevron.classList.remove('fa-chevron-up');
-                chevron.classList.add('fa-chevron-down');
+            // Show loading state
+            modalContent.innerHTML = `
+                <div class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-rose-600"></div>
+                    <span class="ml-4 text-slate-600 font-semibold">Loading customer details...</span>
+                </div>
+            `;
+            
+            // Remove hidden class to show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Fetch customer details via AJAX
+            fetch(`/pharmacist/customer-details/${patientId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        modalContent.innerHTML = data.html;
+                    } else {
+                        modalContent.innerHTML = `
+                            <div class="text-center py-12">
+                                <i class="fas fa-exclamation-circle text-5xl text-rose-300 mb-4"></i>
+                                <p class="text-slate-600 font-semibold">Failed to load customer details</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalContent.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-exclamation-triangle text-5xl text-rose-300 mb-4"></i>
+                            <p class="text-slate-600 font-semibold">An error occurred while loading details</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Function to close customer modal
+        function closeCustomerModal(event) {
+            const modal = document.getElementById('customerModal');
+            if (!event || event.target === modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }
         }
+        
+        // Close modal on ESC key press
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCustomerModal();
+            }
+        });
     </script>
 </body>
 </html>

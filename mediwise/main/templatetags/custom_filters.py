@@ -1,4 +1,5 @@
 from django import template
+from datetime import date
 
 register = template.Library()
 
@@ -75,3 +76,21 @@ def make_list(value):
     Usage: {{ 'SMTWTFS'|make_list }}
     """
     return list(value)
+
+@register.filter
+def age(date_of_birth):
+    """
+    Custom template filter to calculate age from date of birth
+    Usage: {{ patient.date_of_birth|age }}
+    """
+    if not date_of_birth:
+        return 'N/A'
+    
+    today = date.today()
+    age_years = today.year - date_of_birth.year
+    
+    # Adjust age if birthday hasn't occurred yet this year
+    if (today.month, today.day) < (date_of_birth.month, date_of_birth.day):
+        age_years -= 1
+    
+    return age_years

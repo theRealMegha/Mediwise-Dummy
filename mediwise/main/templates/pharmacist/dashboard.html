@@ -29,16 +29,67 @@
         }
 
         .active-link {
-            background: linear-gradient(90deg, #fee2e2 0%, #fef2f2 100%);
-            color: #be123c;
-            border-left: 3px solid #be123c;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-left: 3px solid #10b981;
+            border-radius: 12px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(16, 185, 129, 0.08);
+            color: #10b981;
         }
 
         .sidebar-transition { 
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
         }
-        .expanded-sidebar { width: 280px; }
-        .collapsed-sidebar { width: 100px; }
+        .expanded-sidebar { 
+            width: 280px; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .collapsed-sidebar { 
+            width: 100px; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav { 
+            flex: 1; 
+            overflow-y: hidden; 
+            padding: 12px 0; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-footer {
+            flex-shrink: 0;
+            border-top: 1px solid #ffebee;
+            padding: 12px;
+        }
+        
+        .nav-item-compact {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
 
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.98) translateY(10px); }
@@ -50,14 +101,12 @@
         }
         
         .gradient-text {
-    background: linear-gradient(135deg, #be123c 0%, #ea4335 100%);
-    -webkit-background-clip: text;
-    background-clip: text; /* Standard property for better browser support */
-    -webkit-text-fill-color: transparent;
-    
-    /* The Fix: Ensures the background has dimensions to clip to */
-    display: inline-block; 
-}
+            background: linear-gradient(135deg, #be123c 0%, #ea4335 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
 
         .shine-effect {
             position: relative;
@@ -67,7 +116,10 @@
         .shine-effect:hover::after {
             content: '';
             position: absolute;
-            top: -50%; left: -60%; width: 20%; height: 200%;
+            top: -50%;
+            left: -60%;
+            width: 20%;
+            height: 200%;
             background: rgba(255, 255, 255, 0.2);
             transform: rotate(25deg);
             transition: all 0.6s;
@@ -82,12 +134,35 @@
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .sparkline {
+            height: 30px;
+            position: relative;
+        }
+        
+        .transition-transform {
+            transition: transform 0.3s ease;
+        }
+        
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="text-slate-900">
 
-    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 h-screen sidebar-gradient border-r border-rose-100 z-50 flex flex-col">
-        <div class="p-8">
+    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 sidebar-gradient border-r border-rose-100 z-50">
+        <div class="sidebar-header p-8">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
                     <i class="fas fa-prescription-bottle text-white text-lg"></i>
@@ -96,47 +171,54 @@
             </div>
         </div>
 
-        <nav class="flex-1 px-4 space-y-2">
-            <a href="{% url 'pharmacist_dashboard' %}" class="active-link flex items-center p-4 rounded-2xl">
-                <i class="fas fa-chart-line text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Dashboard</span>
-            </a>
-            <a href="{% url 'pharmacist_profile' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-shield-halved text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
-            </a>
-            <a href="{% url 'pharmacist_inventory' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-pills text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
-            </a>
-            <a href="{% url 'pharmacist_restock' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-sync text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Restock</span>
-            </a>
-            <a href="{% url 'pharmacist_orders' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-box-open text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
-            </a>
-            <a href="{% url 'pharmacist_customers' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-users text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
-            </a>
-            <a href="{% url 'pharmacist_ratings_feedback' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-star text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
-            </a>
-            <a href="{% url 'pharmacist_earnings' %}" class="flex items-center p-4 rounded-2xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
-                <i class="fas fa-money-bill-wave text-lg w-6"></i>
-                <span class="sidebar-text ml-4 font-bold text-sm">Earnings</span>
-            </a>
+        <nav class="sidebar-nav">
+            <div class="px-4 flex flex-col gap-2 flex-1">
+                <a href="{% url 'pharmacist_dashboard' %}" class="active-link nav-item-compact">
+                    <i class="fas fa-chart-line text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Dashboard</span>
+                    {% if data.clinical_insights.refill_reminders|length > 0 %}
+                    <span class="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {{ data.clinical_insights.refill_reminders|length }}
+                    </span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'pharmacist_profile' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-shield-halved text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Profile</span>
+                </a>
+                <a href="{% url 'pharmacist_inventory' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-pills text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Inventory</span>
+                </a>
+                <a href="{% url 'pharmacist_restock' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-sync text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Restock</span>
+                </a>
+                <a href="{% url 'pharmacist_orders' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-box-open text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Orders</span>
+                </a>
+                <a href="{% url 'pharmacist_customers' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-users text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Customers</span>
+                </a>
+                <a href="{% url 'pharmacist_ratings_feedback' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-star text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Ratings & Feedback</span>
+                </a>
+                <a href="{% url 'pharmacist_earnings' %}" class="nav-item-compact text-slate-500">
+                    <i class="fas fa-money-bill-wave text-lg w-6"></i>
+                    <span class="sidebar-text ml-4 font-bold text-sm">Earnings</span>
+                </a>
+            </div>
         </nav>
 
-        <div class="p-4 border-t border-rose-50 space-y-2">
-            <button id="toggle-btn" class="w-full flex items-center p-4 rounded-2xl text-slate-400 hover:text-rose-600 transition-all">
-                <i class="fas fa-indent text-lg w-6" id="toggle-icon"></i>
+        <div class="sidebar-footer">
+            <button id="toggle-btn" class="w-full nav-item-compact text-slate-400 hover:text-slate-600 transition-all mb-2">
+                <i class="fas fa-indent text-lg w-6 transition-transform duration-300" id="toggle-icon"></i>
                 <span class="sidebar-text ml-4 font-bold text-xs uppercase tracking-widest">Collapse</span>
             </button>
-            <a href="{% url 'logout' %}" class="flex items-center p-4 rounded-2xl text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+            <a href="{% url 'logout' %}" class="nav-item-compact text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all">
                 <i class="fas fa-sign-out-alt text-lg w-6"></i>
                 <span class="sidebar-text ml-4 font-bold text-sm">Logout</span>
             </a>
@@ -146,17 +228,29 @@
     <main id="main-content" class="sidebar-transition ml-[280px] p-8 lg:p-12">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
             <div>
-                <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight">Welcome Back, <span class="gradient-text">{{ pharmacist.first_name|default:"Alex" }} {{ pharmacist.last_name|default:"Pharmacist" }}</span></h1>
-                <p class="text-slate-500 font-medium mt-2 text-lg">Manage your pharmacy operations efficiently</p>
+                <h1 class="text-4xl font-bold text-slate-900 tracking-tight">Welcome Back, <span class="gradient-text">{{ pharmacist.first_name|default:"Alex" }} {{ pharmacist.last_name|default:"Pharmacist" }}</span></h1>
+                <p class="text-slate-500 font-normal mt-2 text-base">Manage your pharmacy operations efficiently</p>
             </div>
             
-            <div class="flex items-center gap-4 bg-white/80 backdrop-blur-lg p-2 rounded-2xl shadow-sm border border-white">
-                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-200">
-                    PH
-                </div>
-                <div class="pr-4">
-                    <p class="text-xs font-bold text-slate-800 leading-tight">{{ pharmacist.first_name|default:"Pharmacist" }}</p>
-                    <p class="text-[10px] text-slate-500">{{ pharmacist.email|default:"pharmacist@mediwise.com" }}</p>
+            <div class="flex items-center gap-4">
+                <!-- Notification Bell -->
+                <a href="{% url 'pharmacist_notifications' %}" class="relative p-2 text-slate-600 hover:text-emerald-600 transition-colors">
+                    <i class="fas fa-bell text-xl"></i>
+                    {% if pharmacist_notification_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {{ pharmacist_notification_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                
+                <div class="flex items-center gap-4 bg-white/80 backdrop-blur-lg p-4 rounded-2xl shadow-sm border border-white">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-200">
+                        PH
+                    </div>
+                    <div class="pr-2">
+                        <p class="text-xs font-bold text-slate-800 leading-tight">{{ pharmacist.first_name|default:"Pharmacist" }}</p>
+                        <p class="text-[10px] text-slate-500">{{ pharmacist.email|default:"pharmacist@mediwise.com" }}</p>
+                    </div>
                 </div>
             </div>
         </header>
@@ -209,6 +303,216 @@
             </div>
         </div>
 
+        <!-- Clinical Insights -->
+        <div class="glass-card rounded-[2rem] p-8 mb-8 animate-entrance">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                        <i class="fas fa-heartbeat text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-900">Clinical Insights</h3>
+                        <p class="text-slate-500 text-sm">Patient care analytics and safety monitoring</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="sparkline w-24 bg-white/50 rounded-lg p-2">
+                        <div class="flex items-end justify-between h-6">
+                            <div class="w-1 bg-blue-400 rounded-t" style="height: 40%;"></div>
+                            <div class="w-1 bg-blue-500 rounded-t" style="height: 60%;"></div>
+                            <div class="w-1 bg-blue-400 rounded-t" style="height: 30%;"></div>
+                            <div class="w-1 bg-blue-600 rounded-t" style="height: 80%;"></div>
+                            <div class="w-1 bg-blue-500 rounded-t" style="height: 50%;"></div>
+                            <div class="w-1 bg-blue-400 rounded-t" style="height: 70%;"></div>
+                            <div class="w-1 bg-blue-500 rounded-t" style="height: 60%;"></div>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-blue-600">4.2 ★</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Refill Reminders -->
+                <div class="bg-blue-50 rounded-2xl p-5">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                            <i class="fas fa-bell text-lg"></i>
+                        </div>
+                        <h4 class="font-bold text-blue-900">Refill Reminders</h4>
+                    </div>
+                    <div class="space-y-3 max-h-64 overflow-y-auto">
+                        {% for reminder in data.clinical_insights.refill_reminders %}
+                        <div class="bg-white rounded-xl p-3 border border-blue-100">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-slate-900 text-sm">{{ reminder.patient_name }}</p>
+                                    <p class="text-xs text-slate-600">{{ reminder.medication }}</p>
+                                </div>
+                                <span class="px-2 py-1 rounded-full text-xs font-bold {% if reminder.urgency == 'high' %}bg-red-100 text-red-700{% elif reminder.urgency == 'medium' %}bg-amber-100 text-amber-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                                    {{ reminder.days_until_refill }} days
+                                </span>
+                            </div>
+                            {% if reminder.urgency == 'high' %}
+                            <div class="mt-2 text-[10px] text-red-600 font-bold">⚠️ URGENT: Refill needed soon</div>
+                            {% elif reminder.urgency == 'medium' %}
+                            <div class="mt-2 text-[10px] text-amber-600 font-bold">🔔 Refill approaching</div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <div class="bg-white rounded-xl p-4 border border-blue-100 text-center">
+                            <p class="text-sm text-slate-500">No upcoming refills</p>
+                            <p class="text-xs text-slate-400 mt-1">All patients have sufficient medication supply</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Safety Alerts -->
+                <div class="bg-red-50 rounded-2xl p-5">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+                            <i class="fas fa-exclamation-triangle text-lg"></i>
+                        </div>
+                        <h4 class="font-bold text-red-900">Safety Alerts</h4>
+                    </div>
+                    <div class="space-y-3">
+                        {% for alert in data.clinical_insights.safety_alerts %}
+                            {% if alert.type == 'critical' %}
+                            <div class="bg-white rounded-xl p-4 border border-red-100 pulse-animation">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-bold text-red-800 text-sm">{{ alert.title }}</p>
+                                        <p class="text-xs text-red-600">{{ alert.message }}</p>
+                                        <p class="text-[10px] text-red-500 mt-1">{{ alert.priority }}</p>
+                                        {% if alert.order_ids %}
+                                        <p class="text-[10px] text-red-400 mt-1">Order IDs: {{ alert.order_ids|join:', ' }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% elif alert.type == 'warning' %}
+                            <div class="bg-white rounded-xl p-4 border border-amber-100">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-exclamation-circle text-amber-500 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-bold text-amber-800 text-sm">{{ alert.title }}</p>
+                                        <p class="text-xs text-amber-600">{{ alert.message }}</p>
+                                        <p class="text-[10px] text-amber-500 mt-1">{{ alert.priority }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="bg-green-50 rounded-xl p-4 border border-green-100">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-bold text-green-800 text-sm">{{ alert.title }}</p>
+                                        <p class="text-xs text-green-600">{{ alert.message }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                        <div class="bg-green-50 rounded-xl p-4 border border-green-100">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                                <div>
+                                    <p class="font-bold text-green-800 text-sm">All Clear</p>
+                                    <p class="text-xs text-green-600">No alerts at this time</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Patient Sentiment -->
+                <div class="bg-purple-50 rounded-2xl p-5">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                            <i class="fas fa-smile text-lg"></i>
+                        </div>
+                        <h4 class="font-bold text-purple-900">Patient Sentiment</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-xl p-4 border border-purple-100">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-sm font-bold text-purple-800">NPS Score</span>
+                                <span class="text-lg font-bold text-purple-600">+4.2</span>
+                            </div>
+                            <div class="h-20 flex items-end justify-between gap-1">
+                                <div class="flex-1 bg-purple-200 rounded-t flex flex-col items-center">
+                                    <div class="w-full bg-purple-500 rounded-t mb-1" style="height: 60%;"></div>
+                                    <span class="text-[8px] text-purple-700">Mon</span>
+                                </div>
+                                <div class="flex-1 bg-purple-200 rounded-t flex flex-col items-center">
+                                    <div class="w-full bg-purple-400 rounded-t mb-1" style="height: 40%;"></div>
+                                    <span class="text-[8px] text-purple-700">Tue</span>
+                                </div>
+                                <div class="flex-1 bg-purple-200 rounded-t flex flex-col items-center">
+                                    <div class="w-full bg-purple-600 rounded-t mb-1" style="height: 80%;"></div>
+                                    <span class="text-[8px] text-purple-700">Wed</span>
+                                </div>
+                                <div class="flex-1 bg-purple-200 rounded-t flex flex-col items-center">
+                                    <div class="w-full bg-purple-500 rounded-t mb-1" style="height: 70%;"></div>
+                                    <span class="text-[8px] text-purple-700">Thu</span>
+                                </div>
+                                <div class="flex-1 bg-purple-200 rounded-t flex flex-col items-center">
+                                    <div class="w-full bg-purple-400 rounded-t mb-1" style="height: 50%;"></div>
+                                    <span class="text-[8px] text-purple-700">Fri</span>
+                                </div>
+                                <div class="flex-1 bg-purple-200 rounded-t flex flex-col items-center">
+                                    <div class="w-full bg-purple-300 rounded-t mb-1" style="height: 30%;"></div>
+                                    <span class="text-[8px] text-purple-700">Sat</span>
+                                </div>
+                                <div class="flex-1 bg-purple-200 rounded-t flex flex-col items-center">
+                                    <div class="w-full bg-purple-500 rounded-t mb-1" style="height: 65%;"></div>
+                                    <span class="text-[8px] text-purple-700">Sun</span>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-center">
+                                <p class="text-xs text-purple-600">7-day trend: <span class="font-bold">Improving</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-3 border border-purple-100">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-700">Promoters</span>
+                                <span class="font-bold text-purple-900">{{ data.clinical_insights.sentiment_data.promoters_percentage }}%</span>
+                            </div>
+                            <div class="w-full bg-purple-100 rounded-full h-1.5 mt-1">
+                                <!--suppress ALL-->
+                                <div class="bg-purple-500 h-1.5 rounded-full" style="width: {{ data.clinical_insights.sentiment_data.promoters_percentage }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-3 border border-purple-100">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-700">Passives</span>
+                                <span class="font-bold text-purple-900">{{ data.clinical_insights.sentiment_data.passives_percentage }}%</span>
+                            </div>
+                            <div class="w-full bg-purple-100 rounded-full h-1.5 mt-1">
+                                <!--suppress ALL-->
+                                <div class="bg-purple-400 h-1.5 rounded-full" style="width: {{ data.clinical_insights.sentiment_data.passives_percentage }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-3 border border-purple-100">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-700">Detractors</span>
+                                <span class="font-bold text-purple-900">{{ data.clinical_insights.sentiment_data.detractors_percentage }}%</span>
+                            </div>
+                            <div class="w-full bg-purple-100 rounded-full h-1.5 mt-1">
+                                <!--suppress ALL-->
+                                <div class="bg-purple-300 h-1.5 rounded-full" style="width: {{ data.clinical_insights.sentiment_data.detractors_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Recent Customers and Low Stock Medications -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Recent Customers -->
@@ -292,12 +596,12 @@
             if (isExpanded) {
                 sidebar.classList.replace('collapsed-sidebar', 'expanded-sidebar');
                 mainContent.style.marginLeft = '280px';
-                toggleIcon.style.transform = 'rotate(0deg)';
+                toggleIcon.classList.remove('rotate-180'); // Remove rotation when expanded
                 sidebarTexts.forEach(el => el.style.display = 'inline');
             } else {
                 sidebar.classList.replace('expanded-sidebar', 'collapsed-sidebar');
                 mainContent.style.marginLeft = '100px';
-                toggleIcon.style.transform = 'rotate(180deg)';
+                toggleIcon.classList.add('rotate-180'); // Add rotation when collapsed
                 sidebarTexts.forEach(el => el.style.display = 'none');
             }
         });

@@ -226,7 +226,8 @@ class DoctorRegistrationForm(forms.ModelForm):
             'email', 
             'phone_number', 
             'speciality', 
-            'qualification'
+            'qualification',
+            'registration_status'
         ]
         
         widgets = {
@@ -236,6 +237,7 @@ class DoctorRegistrationForm(forms.ModelForm):
             'phone_number': forms.TextInput(attrs={'placeholder': '+1234567890', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-rose-500/20 outline-none transition-all'}),
             'speciality': forms.TextInput(attrs={'placeholder': 'e.g. Cardiology', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-rose-500/20 outline-none transition-all'}),
             'qualification': forms.TextInput(attrs={'placeholder': 'e.g. MBBS, MD', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-rose-500/20 outline-none transition-all'}),
+            'registration_status': forms.Select(attrs={'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-rose-500/20 outline-none transition-all'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -243,6 +245,10 @@ class DoctorRegistrationForm(forms.ModelForm):
         # If adding a new doctor (no PK), password is required
         if not self.instance.pk:
             self.fields['password'].required = True
+        
+        # registration_status is optional in the form because it's handled by the view for new registrations
+        if 'registration_status' in self.fields:
+            self.fields['registration_status'].required = False
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -363,6 +369,17 @@ class DoctorProfileUpdateForm(forms.ModelForm):
             'consulting_time_from': forms.TimeInput(attrs={'type': 'time', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all', 'placeholder': 'HH:MM'}),
             'consulting_time_to': forms.TimeInput(attrs={'type': 'time', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all', 'placeholder': 'HH:MM'}),
         }
+
+    def clean_license_number(self):
+        license_number = self.cleaned_data.get('license_number')
+        if license_number:
+            # Check if license number is already used by another doctor
+            existing = Doctor.objects.filter(license_number=license_number)
+            if self.instance.pk:  # If updating existing doctor
+                existing = existing.exclude(pk=self.instance.pk)  # Exclude current doctor
+            if existing.exists():
+                raise forms.ValidationError("This license number is already registered to another doctor.")
+        return license_number
 
     def save(self, commit=True):
         doctor = super().save(commit=False)

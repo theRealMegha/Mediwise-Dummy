@@ -135,25 +135,38 @@ class Cart(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='cart_items')
     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    course_duration = models.CharField(max_length=50, blank=True, null=True, help_text="Expected duration of medicine course")
+    # course_duration = models.CharField(max_length=50, blank=True, null=True, help_text="Expected duration of medicine course")  # Removed
     requires_prescription = models.BooleanField(default=False, help_text="Indicates if this medicine requires a prescription")
     added_from_prescription = models.BooleanField(default=False, help_text="Indicates if this medicine was added to cart from a prescription")
     added_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.patient.first_name}'s cart - {self.medicine.brand_name}"
+        
+    def get_total_price(self):
+        """Calculate total price for this cart item (price * quantity)"""
+        return self.medicine.price * self.quantity
 
 class Order(models.Model):
     ORDER_STATUS = (
         ('pending', 'Pending'),
-        ('successful', 'Successful'),
+        ('preparing', 'Preparing'),
+        ('out_for_delivery', 'Out for Delivery'),
+        ('completed', 'Completed'),
         ('failed', 'Failed'),
         ('delayed', 'Delayed'),
+    )
+    DELIVERY_MODES = (
+        ('home_delivery', 'Home Delivery'),
+        ('in_store_pickup', 'In-Store Pickup'),
     )
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending')
+    delivery_mode = models.CharField(max_length=20, choices=DELIVERY_MODES, default='home_delivery')
+    delivery_address = models.TextField(null=True, blank=True)
+    scheduled_delivery_date = models.DateTimeField(null=True, blank=True, help_text="Scheduled delivery date set by pharmacist")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -165,7 +178,7 @@ class OrderItem(models.Model):
     medicine = models.ForeignKey(Medicine, on_delete=models.SET_NULL, null=True, related_name='purchase_items')
     quantity = models.PositiveIntegerField()
     price_at_order = models.DecimalField(max_digits=10, decimal_places=2) # Store price in case it changes later
-    course_duration = models.CharField(max_length=50, blank=True, null=True, help_text="Expected duration of medicine course")
+    # course_duration = models.CharField(max_length=50, blank=True, null=True, help_text="Expected duration of medicine course")  # Removed: course_duration is no longer used
     reminder_sent_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp when refill reminder was sent")
 
     def get_subtotal(self):
@@ -202,7 +215,14 @@ def doctor_profile_image_path(instance, filename):
 
 
 
+
 class Doctor(models.Model):
+    REGISTRATION_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
     id = models.BigAutoField(primary_key=True)
     user = models.OneToOneField(Users, on_delete=models.CASCADE, null=True, blank=True)
     first_name = models.CharField(max_length=100)
@@ -228,6 +248,7 @@ class Doctor(models.Model):
         ('leave', 'Leave'),
     ]
     availability_status = models.CharField(max_length=10, choices=AVAILABILITY_STATUS_CHOICES, default='inactive', help_text="Doctor's current availability status")
+    registration_status = models.CharField(max_length=10, choices=REGISTRATION_STATUS_CHOICES, default='pending', help_text="Doctor's registration approval status")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -380,8 +401,7 @@ class PrescriptionMedicine(models.Model):
     route_administration = models.CharField(max_length=50, help_text="Route of Administration (e.g., Oral, Topical, IV)")
     instructions = models.TextField(help_text="Instructions (The \"Sig\") Relation to food and specific timing")
     total_quantity = models.CharField(max_length=50, help_text="Total number of pills or bottles to be dispensed")
-    duration_course = models.CharField(max_length=100, help_text="Duration of Course (e.g., \"Take for 90 days\")")
-    
+   
     def __str__(self):
         return f"{self.drug_name_generic} - Prescription #{self.prescription.id}"
 
@@ -415,7 +435,8 @@ class Notification(models.Model):
         ('general', 'General'),
     ]
     
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='notifications')
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    pharmacist = models.ForeignKey(Pharmacist, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='general')
     title = models.CharField(max_length=200)
     message = models.TextField()
@@ -426,42 +447,12 @@ class Notification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.title} - {self.patient.first_name} {self.patient.last_name}"
+        if self.patient:
+            return f"{self.title} - {self.patient.first_name} {self.patient.last_name}"
+        elif self.pharmacist:
+            return f"{self.title} - Pharmacist"
+        return self.title
 
-
-class PrescriptionUpload(models.Model):
-    UPLOAD_STATUS_CHOICES = [
-        ('pending', 'Pending Review'),
-        ('processed', 'Processed'),
-        ('partially_available', 'Partially Available'),
-        ('not_available', 'Not Available'),
-    ]
-    
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='uploaded_prescriptions')
-    pharmacist = models.ForeignKey(Pharmacist, on_delete=models.CASCADE, related_name='received_prescriptions', null=True, blank=True, help_text="Pharmacy where prescription was uploaded. Null for common uploads.")
-    prescription_image = models.ImageField(upload_to='prescription_uploads/', help_text="Uploaded prescription image")
-    notes = models.TextField(blank=True, null=True, help_text="Patient notes about the prescription")
-    status = models.CharField(max_length=20, choices=UPLOAD_STATUS_CHOICES, default='pending')
-    
-    # Extracted medicine information from prescription
-    extracted_medicines = models.JSONField(default=list, blank=True, help_text="List of medicines extracted from prescription")
-    
-    # Availability information
-    available_medicines = models.JSONField(default=list, blank=True, help_text="List of available medicines with pharmacy info")
-    unavailable_medicines = models.JSONField(default=list, blank=True, help_text="List of unavailable medicines")
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        pharmacy_name = self.pharmacist.pharmacy_name if self.pharmacist else "All Pharmacies"
-        return f"Prescription Upload by {self.patient.first_name} {self.patient.last_name} - {pharmacy_name}"
-    
-    @property
-    def medicine_availability(self):
-        """Check availability of medicines mentioned in prescription"""
-        # This will be implemented in the view logic
-        return []
 
 def lab_report_image_path(instance, filename):
     # File will be uploaded to MEDIA_ROOT/lab_reports/patient_<id>/<filename>
@@ -512,3 +503,39 @@ class Review(models.Model):
             return f"Review by {self.patient.first_name} for Dr. {self.doctor.first_name} - {self.rating} stars"
         else:
             return f"Review by {self.patient.first_name} for Order #{self.order.id} - {self.rating} stars"
+
+
+class MedicalCondition(models.Model):
+    CONDITION_STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('resolved', 'Resolved'),
+        ('chronic', 'Chronic'),
+        ('remission', 'In Remission'),
+    ]
+    
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='medical_conditions')
+    condition_name = models.CharField(max_length=200, help_text="Name of the medical condition")
+    diagnosis_date = models.DateField(help_text="Date when the condition was diagnosed")
+    description = models.TextField(blank=True, null=True, help_text="Detailed description of the condition")
+    status = models.CharField(max_length=20, choices=CONDITION_STATUS_CHOICES, default='active', help_text="Current status of the condition")
+    notes = models.TextField(blank=True, null=True, help_text="Additional notes about the condition")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.condition_name} - {self.patient.first_name} {self.patient.last_name}"
+
+
+class PastOperation(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='past_operations')
+    operation_name = models.CharField(max_length=200, help_text="Name of the surgical operation/procedure")
+    operation_date = models.DateField(help_text="Date when the operation was performed")
+    surgeon = models.CharField(max_length=200, blank=True, null=True, help_text="Name of the surgeon who performed the operation")
+    hospital_clinic = models.CharField(max_length=200, blank=True, null=True, help_text="Name of the hospital or clinic where operation was performed")
+    description = models.TextField(blank=True, null=True, help_text="Detailed description of the operation")
+    notes = models.TextField(blank=True, null=True, help_text="Additional notes about the operation")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.operation_name} - {self.patient.first_name} {self.patient.last_name}"

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <title>Mediwise | Doctor Portal - Patient Records</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #60a5fa;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f0f4f8;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(96, 165, 250, 0.1) 0px, transparent 50%);
+            -webkit-font-smoothing: antialiased;
+            color: #1e293b;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 20px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-hover:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        .gradient-card {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+        }
+
+        .nav-item {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: #2563eb;
+            transition: width 0.3s ease;
+            border-radius: 99px;
+        }
+
+        .nav-item:hover::after,
+        .nav-item.active::after {
+            width: 80%;
+        }
+
+        .health-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-ring circle {
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-completed { background-color: #dcfce7; color: #166534; }
+        .status-scheduled { background-color: #dbeafe; color: #1e40af; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+        .status-confirmed { background-color: #d1fae5; color: #065f46; }
+        .status-rescheduled { background-color: #fef3c7; color: #92400e; }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            nav, button, .mobile-nav {
+                display: none !important;
+            }
+            
+            .glass {
+                background: white !important;
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #e2e8f0;
+            }
+            
+            .print-section {
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+            }
+            
+            .print-hide {
+                display: none !important;
+            }
+        }
+        
+        .print-header {
+            display: none;
+        }
+        
+        /* Enhanced Print/PDF Styles */
+        @media print {
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                font-size: 12pt;
+                line-height: 1.5;
+            }
+            
+            nav, button, .mobile-nav, .print-hide, .dropdown, #record-search {
+                display: none !important;
+            }
+            
+            .glass {
+                background: white !important;
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                break-inside: avoid;
+               page-break-inside: avoid;
+            }
+            
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 30px;
+               padding-bottom: 15px;
+                border-bottom: 3px solid #2563eb;
+            }
+            
+            .print-section {
+               page-break-inside: avoid;
+                margin-bottom: 25px;
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+               page-break-after: avoid;
+                color: #1e293b !important;
+            }
+            
+            img {
+                max-width: 100%;
+               page-break-inside: avoid;
+            }
+            
+            .card, .report-card {
+                break-inside: avoid;
+                border: 1px solid #e2e8f0 !important;
+                box-shadow: none !important;
+            }
+            
+            a {
+                text-decoration: none;
+                color: #1e293b;
+            }
+            
+            main {
+                max-width: 210mm;
+                margin: 0 auto;
+               padding: 20px;
+            }
+            
+            .status-badge {
+                border: 1px solid currentColor !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+        
+        /* PDF-optimized layout classes */
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .pdf-title {
+            font-size: 24pt;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .pdf-subtitle {
+            font-size: 11pt;
+            color: #64748b;
+        }
+        
+        .pdf-section {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .pdf-section-heading {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 15px;
+           padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .pdf-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .pdf-info-table td {
+           padding: 8px;
+            vertical-align: top;
+        }
+        
+        .pdf-label {
+            font-weight: 600;
+            color: #64748b;
+            font-size: 10pt;
+            text-transform: uppercase;
+            width: 140px;
+        }
+        
+        .pdf-value {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 11pt;
+        }
+        
+        .pdf-footer {
+            margin-top: 40px;
+           padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            font-size: 9pt;
+            color: #94a3b8;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1e40af;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .report-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (min-width: 1024px) {
+            .report-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+
+            .img-overlay {
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+
+            .report-card:hover .img-overlay {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .img-overlay {
+                opacity: 1;
+                background: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-900 pb-20">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 px-4 py-4 md:px-8">
+        <div class="glass max-w-7xl mx-auto rounded-2xl px-6 py-4 flex justify-between items-center bg-white/80">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-stethoscope text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 text-lg leading-tight">Mediwise</h1>
+                    <p class="text-xs text-slate-500 font-medium tracking-wide uppercase">Doctor Portal</p>
+                </div>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div
+                class="hidden md:flex items-center gap-8 bg-slate-100/50 px-6 py-2 rounded-full border border-slate-200/50">
+                <a href="{% url 'doctor_dashboard' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors">Dashboard</a>
+
+<a href="{% url 'doctor_patients' %}" class="nav-item active text-sm font-semibold text-blue-600">Patients</a>
+ <a href="{% url 'doctor_appointments' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Appointments</a>
+                <a href="{% url 'doctor_ratings_feedback' %}" class="nav-item text-sm font-semibold text-slate-500 hover:text-slate-800">Ratings & Feedback</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                </button>
+
+                <div class="relative group">
+                    <button
+                        class="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-bold text-slate-700 leading-none">Dr. {{ user.last_name }}</p>
+                            <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-0.5">
+                               {{ user.speciality|default:"General" }}</p>
+                        </div>
+                        <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-sm bg-blue-50">
+                            {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <div
+                                class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-xs">
+                                {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <i class="fas fa-chevron-down text-slate-400 text-xs mr-2"></i>
+                    </button>
+
+                    <!-- Dropdown -->
+                    <div
+                        class="absolute right-0 top-full mt-2 w-56 glass rounded-2xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right shadow-xl">
+                        <div class="px-4 py-3 border-b border-slate-100 mb-1">
+                            <p class="text-sm font-bold text-slate-800">My Account</p>
+                            <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                        </div>
+                        <a href="{% url 'doctor_profile' %}"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
+                            <i class="fas fa-user-cog w-4"></i> Profile Settings
+                        </a>
+                        <a href="#"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-colors">
+                            <i class="fas fa-history w-4"></i> Activity Log
+                        </a>
+                        <div class="h-px bg-slate-100 my-1"></div>
+                        <a href="{% url 'logout' %}"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                            <i class="fas fa-sign-out-alt w-4"></i> Sign Out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-10">
+    
+    <!-- Print Header - Only shown when printing -->
+    <div class="print-header" style="display: none;">
+        <div class="pdf-header">
+            <h1 class="pdf-title">Patient Medical Records</h1>
+            <p class="pdf-subtitle">Generated on: {% now "F d, Y \a\t H:i" %}</p>
+            <p class="pdf-subtitle">Mediwise Healthcare System</p>
+        </div>
+        
+        <table class="pdf-info-table">
+            <tr>
+                <td class="pdf-label">Patient Name:</td>
+                <td class="pdf-value">{{ patient_details.first_name }} {{ patient_details.last_name }}</td>
+                <td class="pdf-label">Date of Birth:</td>
+                <td class="pdf-value">{{ patient_details.date_of_birth|date:"M d, Y"|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <td class="pdf-label">Blood Group:</td>
+                <td class="pdf-value">{{ patient_details.blood_group|default:"N/A" }}</td>
+                <td class="pdf-label">Gender:</td>
+                <td class="pdf-value">{{ patient_details.gender|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <td class="pdf-label">Contact Number:</td>
+                <td class="pdf-value">{{ patient_details.phone_number|default:"N/A" }}</td>
+                <td class="pdf-label">Email:</td>
+                <td class="pdf-value">{{ patient_details.email }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    {% if messages %}
+        <div class="mb-8 space-y-4">
+            {% for message in messages %}
+            <div class="p-4 rounded-2xl flex items-center justify-between shadow-sm animate-fade-in border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-100{% else %}bg-green-50 text-green-700 border-green-100{% endif %}">
+                <div class="flex items-center gap-3">
+                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+                    <p class="text-xs font-bold uppercase tracking-wider">{{ message }}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="flex flex-col lg:flex-row justify-between items-end mb-10 gap-6 print-hide">
+        <div class="w-full">
+            <!-- Back Button -->
+            <a href="{% url 'doctor_patients' %}" class="inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-all font-semibold mb-3">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Patients</span>
+            </a>
+            
+            <span class="text-blue-600 font-bold text-xs uppercase tracking-widest mb-2 block">Clinical Overview</span>
+            <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight">Patient Records</h2>
+            <p class="text-slate-500 mt-1">Comprehensive medical history and diagnostic archives.</p>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
+            <div class="relative flex-grow">
+                <input type="text" id="record-search" placeholder="Search clinical records..." 
+                    class="w-full sm:w-72 pl-11 pr-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-md">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            </div>
+            <button onclick="window.print()" class="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition-all shadow-sm">
+                <i class="fas fa-print text-blue-500"></i>
+                <span>Export PDF</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- PDF Header (visible only in print) -->
+    <div class="print-only-header" style="display: none;" id="pdfHeaderVisible">
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">Patient Medical Records</h1>
+        <p class="text-slate-600 mb-4">Generated on: {% now "F d, Y" %}</p>
+        <hr style="border: 2px solid #2563eb; margin-bottom: 20px;">
+    </div>
+
+    {% if doctor_viewing %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="md:col-span-2 glass rounded-3xl p-8 border-white/40 flex flex-col md:flex-row gap-8 items-center md:items-start">
+            <div class="w-32 h-32 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-4xl font-bold shadow-xl shadow-blue-200">
+                {{ patient_details.first_name|slice:":1" }}{{ patient_details.last_name|slice:":1" }}
+            </div>
+            <div class="flex-grow text-center md:text-left">
+                <h3 class="text-2xl font-bold text-slate-800">{{ patient_details.first_name }} {{ patient_details.last_name }}</h3>
+                <p class="text-slate-500 font-medium mb-4">{{ patient_details.email }}</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">DOB</p>
+                        <p class="text-sm font-bold text-slate-700">{{ patient_details.date_of_birth|date:"M d, Y"|default:"N/A" }}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Gender</p>
+                        <p class="text-sm font-bold text-slate-700">{{ patient_details.gender|default:"N/A" }}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Blood Type</p>
+                        <p class="text-sm font-bold text-blue-600">{{ patient_details.blood_group|default:"N/A" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass rounded-3xl p-6 border-white/40 flex flex-col justify-center">
+            <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                <i class="fas fa-address-book text-blue-500"></i> Contact Info
+            </h4>
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 text-xs">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-700">{{ patient_details.phone_number|default:"N/A" }}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 text-xs">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-700 line-clamp-2">{{ patient_details.address|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div class="space-y-8">
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-calendar-check text-blue-500"></i> Visit History
+                    </h3>
+                </div>
+                <div class="space-y-3 border-l-2 border-slate-200 ml-2 pl-6">
+                    {% for appointment in appointments %}
+                    <div class="relative bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <div class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50"></div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-slate-800">{{ appointment.appointment_date|date:"M d, Y" }}</p>
+                                <p class="text-xs text-slate-500">{{ appointment.appointment_time|time:"g:i A" }}</p>
+                            </div>
+                            <span class="px-3 py-1 bg-blue-50 text-blue-700 text-[10px] font-black uppercase rounded-lg">
+                                {{ appointment.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-slate-400 italic">No historical visits recorded.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-syringe text-amber-500"></i> Past Operations
+                </h3>
+                <div class="grid grid-cols-1 gap-3">
+                    {% for operation in past_operations %}
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+                            <i class="fas fa-procedures"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-800">{{ operation.operation_name }}</p>
+                            <p class="text-xs text-slate-500 mb-1">{{ operation.operation_date|date:"Y" }} • {{ operation.surgeon|default:"General Staff" }}</p>
+                            <p class="text-xs text-slate-400 italic">{{ operation.description }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 text-sm">No surgical history</div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+
+        <section>
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-heart-pulse text-rose-500"></i> Clinical Conditions
+            </h3>
+            <div class="space-y-4">
+                {% for condition in medical_conditions %}
+                <div class="glass p-6 rounded-3xl border-white/60">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="text-xl font-bold text-slate-800">{{ condition.condition_name }}</h4>
+                        <span class="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-md">DIAGNOSED {{ condition.diagnosis_date|date:"Y" }}</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex gap-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase w-20">Status:</span>
+                            <span class="text-xs font-semibold text-slate-600">{{ condition.get_status_display }}</span>
+                        </div>
+                        {% if condition.description %}
+                        <p class="text-sm text-slate-500 leading-relaxed">{{ condition.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="h-full flex items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl p-12 text-slate-400">
+                    No active clinical conditions.
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
+    <div class="mt-12">
+        <div class="flex items-center justify-between mb-8">
+            <h3 class="text-2xl font-bold text-slate-800 tracking-tight">Diagnostic Archives</h3>
+            <span class="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">{{ lab_reports|length }} Records Total</span>
+        </div>
+
+        {% if lab_reports %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for report in lab_reports %}
+            <div class="group bg-white rounded-[2rem] overflow-hidden border border-slate-100 hover:shadow-2xl hover:shadow-blue-900/5 transition-all duration-500 flex flex-col">
+                <div class="relative h-56 bg-slate-50 overflow-hidden">
+                    {% if report.file_extension == '.pdf' %}
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+                        <div class="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-3">
+                            <i class="fas fa-file-pdf text-3xl text-red-500"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Document / PDF</span>
+                    </div>
+                    {% else %}
+                    <img src="{{ report.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    {% endif %}
+                    
+                    <div class="absolute top-4 right-4 flex flex-col gap-2 transform translate-x-12 group-hover:translate-x-0 transition-transform duration-300">
+                        <a href="{{ report.image.url }}" target="_blank" class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md text-slate-700 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-lg">
+                            <i class="fas fa-expand-alt text-sm"></i>
+                        </a>
+                        {% if not doctor_viewing %}
+                        <form method="post" action="{% url 'delete_lab_report' report.id %}" onsubmit="return confirm('Archive permanently?');">
+                            {% csrf_token %}
+                            <button type="submit" class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg">
+                                <i class="fas fa-trash-alt text-sm"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="p-6 flex-grow flex flex-col">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="max-w-[70%]">
+                            <h4 class="font-bold text-slate-800 text-lg leading-tight truncate">{{ report.report_name }}</h4>
+                            <p class="text-xs font-bold text-blue-500 mt-1 uppercase tracking-tighter">{{ report.uploaded_at|date:"M d, Y" }}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[9px] font-black uppercase">
+                            {{ report.file_extension|cut:"."|upper|default:"IMG" }}
+                        </span>
+                    </div>
+
+                    {% if report.notes %}
+                    <div class="mb-6 relative">
+                        <p class="text-sm text-slate-500 italic line-clamp-2 pl-4 border-l-2 border-blue-200">"{{ report.notes }}"</p>
+                    </div>
+                    {% endif %}
+
+                    {% if not doctor_viewing %}
+                    <button onclick="predictDisease('{{ report.id }}')" 
+                        class="mt-auto w-full py-3.5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-blue-600 transition-all active:scale-[0.98] shadow-lg shadow-slate-200">
+                        Launch AI Analysis
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-[3rem] p-20 text-center border border-slate-100 shadow-sm">
+            <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-box-open text-3xl text-blue-200"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Inventory Empty</h3>
+            <p class="text-slate-400 max-w-xs mx-auto">No medical documents have been indexed for this patient yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+    
+    <!-- Print Footer - Only shown when printing -->
+    <div class="print-footer" style="display: none;">
+        <p class="text-sm text-slate-600 text-center"><strong>This document was generated electronically and is valid without signature.</strong></p>
+        <p class="text-sm text-slate-600 text-center">For any queries, please contact the healthcare provider.</p>
+        <p class="text-xs text-slate-400 text-center mt-2">&copy; {% now "Y" %} Mediwise Healthcare System. All rights reserved.</p>
+    </div>
+
+    <div id="predictionModal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
+        <div
+            class="glass rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-xl relative border border-white/60">
+            <div
+                class="sticky top-0 glass px-6 py-5 flex justify-between items-center border-b border-white/60 z-10 rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-slate-900">Diagnosis Insights</h3>
+                </div>
+                <button onclick="closeModal()"
+                    class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="predictionResult" class="p-6"></div>
+        </div>
+    </div>
+
+    <script>
+        // NEW FUNCTION TO UPDATE FILE NAME DISPLAY
+        function updateFileName(input) {
+            const label = document.getElementById('file_name_label');
+            const icon = document.getElementById('file_icon');
+            const area = document.getElementById('file_display_area');
+
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                label.textContent = fileName;
+                label.classList.remove('italic', 'text-slate-500');
+                label.classList.add('font-bold', 'text-rose-700');
+
+                // Update icon to checkmark
+                icon.className = 'fas fa-check-circle text-emerald-500';
+
+                // Highlight the area
+                area.classList.remove('bg-rose-50/30', 'border-rose-200');
+                area.classList.add('bg-emerald-50/20', 'border-emerald-200');
+            } else {
+                label.textContent = "Click to upload image or PDF";
+                label.classList.add('italic', 'text-slate-500');
+                icon.className = 'fas fa-cloud-upload-alt text-rose-400';
+                area.classList.add('bg-rose-50/30', 'border-rose-200');
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function predictDisease(reportId) {
+            const resultDiv = document.getElementById('predictionResult');
+            resultDiv.innerHTML = `
+                <div class="text-center py-10">
+                    <div class="relative w-12 h-12 mx-auto mb-4">
+                        <div class="absolute inset-0 rounded-full border-4 border-indigo-100"></div>
+                        <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+                    </div>
+                    <p class="font-black text-slate-800">Analyzing Laboratory Metrics</p>
+                </div>`;
+            document.getElementById('predictionModal').classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/patient_records/predict/${reportId}/`, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayPredictionResult(data.result);
+                } else {
+                    resultDiv.innerHTML = `<div class="bg-rose-50 p-4 rounded-xl text-rose-600 text-sm font-bold">${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="bg-rose-50 p-4 rounded-xl text-rose-600 text-sm font-bold">Request failed. Try again.</div>`;
+            }
+        }
+
+        function displayPredictionResult(result) {
+            const resultDiv = document.getElementById('predictionResult');
+            resultDiv.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-5 rounded-2xl border border-indigo-100">
+                        <p class="text-[9px] font-black text-indigo-400 uppercase mb-1">Detected Condition</p>
+                        <h4 class="text-xl font-black text-indigo-900">${result.condition}</h4>
+                        <div class="mt-3 flex items-center space-x-2">
+                            <div class="flex-grow bg-white/50 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-indigo-600 h-full" style="width: ${result.confidence}%"></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-indigo-600">${result.confidence}%</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                            <h5 class="font-black text-emerald-800 text-[10px] uppercase mb-1">Nutrition</h5>
+                            <p class="text-xs text-emerald-700">${result.diet}</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-amber-50 border border-amber-100">
+                            <h5 class="font-black text-amber-800 text-[10px] uppercase mb-1">Exercise</h5>
+                            <p class="text-xs text-amber-700">${result.workout}</p>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-rose-50 border border-rose-100">
+                        <h5 class="font-black text-rose-800 text-[10px] uppercase mb-1">Precautions</h5>
+                        <p class="text-xs text-rose-700">${result.precautions}</p>
+                    </div>
+                </div>`;
+        }
+
+        function closeModal() { document.getElementById('predictionModal').classList.add('hidden'); }
+
+        // Add event listener after DOM loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('lab_report_input');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    updateFileName(this);
+                });
+            }
+        });
+    </script>
+    
+    <!-- Mobile Bottom Nav -->
+    <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] print-hide">
+        <div class="glass rounded-3xl p-2 flex justify-between items-center shadow-2xl bg-white/90 backdrop-blur-xl">
+            <a href="{% url 'doctor_dashboard' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'doctor_patients' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-user-injured"></i>
+            </a>
+            <a href="{% url 'doctor_appointments' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-calendar-alt"></i>
+            </a>
+            <a href="{% url 'doctor_ratings_feedback' %}"
+                class="w-12 h-12 text-slate-400 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition-colors">
+                <i class="fas fa-star"></i>
+            </a>
+        </div>
+    </div>
+    
+</body>
+
+</html>

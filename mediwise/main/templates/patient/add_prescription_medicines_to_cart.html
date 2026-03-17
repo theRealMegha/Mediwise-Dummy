@@ -113,23 +113,98 @@
 
                 <!-- Available Medicines Preview -->
                 {% if prescription.available_medicines %}
+                
+                <!-- Pharmacy Summary - Aggregated View -->
+                {% if prescription.pharmacy_summary %}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-blue-800 mb-3 text-lg">
+                        <i class="fas fa-store mr-2"></i>Pharmacy Availability Summary
+                    </h3>
+                    <p class="text-sm text-blue-700 mb-4">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Pharmacies are sorted by how many medicines from your prescription they have in stock.
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {% for pharmacy in prescription.pharmacy_summary %}
+                        <div class="bg-white rounded border {% if pharmacy.has_all_medicines %}border-green-300{% else %}border-blue-200{% endif %} p-3">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="font-bold text-gray-900">{{ pharmacy.pharmacy_name }}</div>
+                                {% if pharmacy.has_all_medicines %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">
+                                    <i class="fas fa-check mr-1"></i>Complete
+                                </span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
+                                    {{ pharmacy.completeness_percentage }}% Complete
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Medicines Available:</span>
+                                    <span class="font-semibold text-gray-900">{{ pharmacy.total_medicines_count }}/{{ prescription.extracted_medicines|length }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Estimated Total:</span>
+                                    <span class="font-bold text-green-700">₹{{ pharmacy.estimated_total_price }}</span>
+                                </div>
+                            </div>
+                            {% if not pharmacy.has_all_medicines %}
+                            <div class="mt-2 pt-2 border-t border-blue-100 text-xs text-blue-700">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Missing: {{ prescription.extracted_medicines|length|add:"-"|add:pharmacy.total_medicines_count }} medicine(s)
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
                 <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                     <h3 class="font-bold text-green-800 mb-3">
-                        <i class="fas fa-check-circle mr-2"></i>Available Medicines to Add ({{ prescription.available_medicines|length }})
+                        <i class="fas fa-list-check mr-2"></i>Medicine-by-Medicine Breakdown
                     </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {% for medicine in prescription.available_medicines %}
-                        <div class="bg-white rounded border border-green-100 p-3">
-                            <div class="font-bold text-green-900">{{ medicine.name }}</div>
-                            {% if medicine.brand %}
-                            <div class="text-sm text-green-700">{{ medicine.brand }}</div>
-                            {% endif %}
-                            <div class="text-xs text-green-600">{{ medicine.strength }}</div>
-                            <div class="text-xs text-green-600">Price: ₹{{ medicine.price }}</div>
-                            <div class="text-xs text-green-600">Stock: {{ medicine.stock }}</div>
-                            {% if medicine.extracted_info %}
-                            <div class="text-xs text-green-700 mt-1">
-                                <span class="font-semibold">Prescribed:</span> {{ medicine.extracted_info.dosage }} for {{ medicine.extracted_info.duration }}
+                    <div class="space-y-4">
+                        {% regroup prescription.available_medicines by name as medicines_by_name %}
+                        {% for medicine_group in medicines_by_name %}
+                        <div class="bg-white rounded border border-green-100 p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <div class="font-bold text-green-900 text-lg">{{ medicine_group.grouper }}</div>
+                                    {% if medicine_group.list.0.brand %}
+                                    <div class="text-sm text-green-700">{{ medicine_group.list.0.brand }}</div>
+                                    {% endif %}
+                                    <div class="text-xs text-green-600 mt-1">{{ medicine_group.list.0.strength }}</div>
+                                </div>
+                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">
+                                    Available at {{ medicine_group.list|length }} pharmacy/{{ medicine_group.list|pluralize }}
+                                </span>
+                            </div>
+                            
+                            <!-- Pharmacy List -->
+                            <div class="border-t border-green-100 pt-3 mt-3">
+                                <p class="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Available At:</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {% for med in medicine_group.list %}
+                                    <div class="flex justify-between items-center text-sm bg-green-50 rounded px-2 py-1">
+                                        <div>
+                                            <span class="font-semibold text-green-900">{{ med.pharmacy_name }}</span>
+                                        </div>
+                                        <div class="text-xs text-green-700">
+                                            <span>₹{{ med.price }}</span>
+                                            <span class="mx-1">•</span>
+                                            <span>Stock: {{ med.stock }}</span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            {% if medicine_group.list.0.extracted_info %}
+                            <div class="text-xs text-green-700 mt-3 pt-3 border-t border-green-100">
+                                <span class="font-semibold">Prescribed:</span> {{ medicine_group.list.0.extracted_info.dosage }} for {{ medicine_group.list.0.extracted_info.duration }}
                             </div>
                             {% endif %}
                         </div>
