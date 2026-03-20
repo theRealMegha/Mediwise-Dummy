@@ -859,7 +859,8 @@ def pharmacy_medicines(request, pk):
         'cart_count': cart_count,
         'search_term': request.GET.get('search', ''),
         'show_prescription_meds': bool(show_prescription_meds),
-        'unavailable_prescription_medicines': unavailable_prescription_medicines
+        'unavailable_prescription_medicines': unavailable_prescription_medicines,
+        'specific_prescription_id': request.GET.get('prescription_id')
     })
 
 
@@ -1013,6 +1014,27 @@ def add_to_cart(request, medicine_id):
         return redirect('pharmacy_medicines', pk=medicine.pharmacist.id)
     
     # Check if medicine is Rx (requires prescription)
+    prescription_id = request.POST.get('prescription_id')
+    is_from_prescription = False
+    if prescription_id and prescription_id != 'None':
+        # Verify if this prescription actually contains this medicine
+        try:
+            from .models import Prescription, PrescriptionMedicine
+            # Use flexible matching as in checkout
+            rx_medicine_name = medicine.generic_name.lower().strip()
+            pm_exists = PrescriptionMedicine.objects.filter(
+                prescription_id=prescription_id,
+                prescription__patient=patient
+            ).filter(
+                Q(drug_name_generic__icontains=rx_medicine_name) | 
+                Q(drug_name_brand__icontains=rx_medicine_name)
+            ).exists()
+            
+            if pm_exists:
+                is_from_prescription = True
+        except (ValueError, Prescription.DoesNotExist):
+            pass
+
     if medicine.medicine_type == 'Rx':
         # Check if the medicine is already in the cart
         existing_cart_item = Cart.objects.filter(patient=patient, medicine=medicine).first()
@@ -1031,9 +1053,14 @@ def add_to_cart(request, medicine_id):
             cart_item = Cart.objects.create(patient=patient, medicine=medicine, quantity=quantity_to_set, requires_prescription=True)
         
         cart_item.requires_prescription = True
+        if is_from_prescription:
+            cart_item.added_from_prescription = True
         cart_item.save()
         
-        messages.warning(request, f"{medicine.brand_name} is a prescription-only medicine. You will need to upload a prescription before checkout.")
+        if is_from_prescription:
+            messages.success(request, f"{medicine.brand_name} added from your prescription.")
+        else:
+            messages.warning(request, f"{medicine.brand_name} is a prescription-only medicine. You will need to upload a prescription before checkout.")
         return redirect('view_cart')
     
     # For OTC medicines, proceed normally
@@ -1213,43 +1240,11 @@ def checkout(request):
         return redirect('view_cart')
     
     # Check for Rx medicines that require prescriptions
-    rx_items = cart_items.filter(requires_prescription=True)
+    rx_items = cart_items.filter(requires_prescription=True, added_from_prescription=False)
     if rx_items.exists():
-        # Check each Rx medicine individually to see if it's covered by a prescription
-        uploaded_prescriptions = PrescriptionUpload.objects.filter(
-            patient=patient,
-            status__in=['processed', 'partially_available']
-        ).order_by('-created_at')  # Most recent first
-        
-        # Check each Rx item in the cart
-        for rx_item in rx_items:
-            # If the medicine was added directly from a prescription, skip the prescription check
-            if rx_item.added_from_prescription:
-                continue
-            
-            rx_medicine_name = rx_item.medicine.generic_name.lower().strip()
-            has_prescription_for_this_medicine = False
-            
-            # Look through all uploaded prescriptions to find one that contains this specific medicine
-            for uploaded_prescription in uploaded_prescriptions:
-                extracted_medicines = uploaded_prescription.extracted_medicines
-                for med in extracted_medicines:
-                    med_name = med.get('name', '').lower().strip()
-                    
-                    # Use flexible matching to find the medicine in the prescription
-                    if (med_name == rx_medicine_name or 
-                        rx_medicine_name in med_name or 
-                        med_name in rx_medicine_name):
-                        has_prescription_for_this_medicine = True
-                        break
-                
-                if has_prescription_for_this_medicine:
-                    break
-            
-            # If this Rx medicine doesn't have a matching prescription, block checkout
-            if not has_prescription_for_this_medicine:
-                messages.error(request, f"Prescription required for {rx_item.medicine.generic_name}. Please upload a prescription containing this medicine before proceeding to checkout.")
-                return redirect('view_cart')
+        first_rx_item = rx_items.first()
+        messages.error(request, f"Prescription required for {first_rx_item.medicine.generic_name}. Please add this medicine from a valid prescription before proceeding to checkout.")
+        return redirect('view_cart')
     
     # Calculate total amount and verify stock
     subtotal = 0

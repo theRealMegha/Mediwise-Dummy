@@ -262,7 +262,7 @@
                         <div class="flex flex-col items-center mb-8">
                             <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white/30 shadow-lg mb-4">
                                 {% if user.profile_picture %}
-                                <img src="{{ user.profile_picture.url }}" class="w-full h-full object-cover">
+                                <img id="card-profile-pic" src="{{ user.profile_picture.url }}" class="w-full h-full object-cover">
                                 {% else %}
                                 <div class="w-full h-full flex items-center justify-center bg-white/20 text-white font-bold text-2xl">
                                     {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
@@ -285,6 +285,22 @@
             <div class="lg:col-span-8 order-1 lg:order-2">
                 <form id="profile-form" method="POST" class="space-y-6" enctype="multipart/form-data">
                     {% csrf_token %}
+                    <div id="save-banner" class="hidden mb-6 p-4 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-500/20 animate-pulse">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-white/20 p-2 rounded-lg">
+                                    <i class="fas fa-save"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold">Changes waiting to be saved!</p>
+                                    <p class="text-xs text-blue-100">Click the "Save Changes" button at the bottom to update your profile permanently.</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="document.getElementById('save-banner').remove()" class="text-white/60 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="glass p-8 rounded-[2.5rem] border border-white/60">
                         <h3 class="text-slate-800 font-extrabold flex items-center text-lg mb-8">
                             <span class="bg-blue-100 text-blue-600 w-10 h-10 rounded-xl flex items-center justify-center mr-4">
@@ -503,14 +519,54 @@
             const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 });
             canvas.toBlob((blob) => {
                 const url = URL.createObjectURL(blob);
-                document.getElementById('profile-preview').src = url;
-                document.getElementById('navbar-profile-pic').src = url;
+                
+                // Update main preview
+                const profilePreview = document.getElementById('profile-preview');
+                if (profilePreview) {
+                    profilePreview.src = url;
+                } else {
+                    // Find the container (w-32 h-32) and replace placeholder with img
+                    const container = document.querySelector('.w-32.h-32');
+                    if (container) {
+                        container.innerHTML = `<img id="profile-preview" src="${url}" class="w-full h-full object-cover">`;
+                    }
+                }
+
+                // Update navbar preview
+                const navbarProfilePic = document.getElementById('navbar-profile-pic');
+                if (navbarProfilePic) {
+                    navbarProfilePic.src = url;
+                } else {
+                    // Find the navbar container (w-9 h-9) and replace placeholder with img
+                    const navContainer = document.querySelector('.w-9.h-9');
+                    if (navContainer) {
+                        navContainer.innerHTML = `<img id="navbar-profile-pic" src="${url}" class="w-full h-full object-cover">`;
+                    }
+                }
+
+                // Update Card preview
+                const cardProfilePic = document.getElementById('card-profile-pic');
+                if (cardProfilePic) {
+                    cardProfilePic.src = url;
+                } else {
+                    // Find the card container (w-24 h-24) and replace placeholder with img
+                    const cardContainer = document.querySelector('.w-24.h-24');
+                    if (cardContainer) {
+                        cardContainer.innerHTML = `<img id="card-profile-pic" src="${url}" class="w-full h-full object-cover">`;
+                    }
+                }
+
+                // Show Save Banner
+                const saveBanner = document.getElementById('save-banner');
+                if (saveBanner) {
+                    saveBanner.classList.remove('hidden');
+                }
 
                 // Set file to input for Django
                 const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-                const container = new DataTransfer();
-                container.items.add(file);
-                document.getElementById('profile-picture-input').files = container.files;
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                document.getElementById('profile-picture-input').files = dataTransfer.files;
 
                 closeCropper();
             }, 'image/jpeg');

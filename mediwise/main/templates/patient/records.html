@@ -319,15 +319,13 @@
                     {% endif %}
                 </a>
 
-                <div class="relative" id="profile-dropdown-container">
-                    <div id="profile-trigger"
-                        class="w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105 active:scale-95">
-                        <img src="https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=e0e7ff&color=6A0D3F"
+                <div class="group relative">
+                    <div class="w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden shadow-sm cursor-pointer transition-transform group-hover:scale-105 active:scale-95">
+                        <img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'Alex' }}+{{ user.last_name|default:'Smith' }}&background=e0e7ff&color=6A0D3F"
                             alt="Profile" class="w-full h-full object-cover">
                     </div>
 
-                    <div id="profile-dropdown-menu"
-                        class="absolute right-0 top-full w-52 pt-3 opacity-0 invisible translate-y-3 transition-all duration-300 shadow-xl z-[110]">
+                    <div class="absolute right-0 top-full w-52 pt-3 opacity-0 invisible translate-y-3 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 shadow-xl z-[110]">
 
                         <div class="rounded-xl p-2 border border-gray-100 bg-white">
                             <div class="px-4 py-2 mb-1">
@@ -420,8 +418,8 @@
 
         <!-- Upload Section -->
         {% if not doctor_viewing %}
-                {% if not search_query and lab_reports %}
-        <section class="mb-16">
+                {% if not search_query %}
+        <section id="upload-section" class="mb-16">
             <div class="card p-6 md:p-8">
                 <div class="text-center mb-8 md:mb-10">
                     <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-[#880E4F] to-[#6A0D3F] flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-xl">
@@ -703,6 +701,15 @@
                     {% endif %}
                 </p>
 
+                {% if not doctor_viewing %}
+                <div class="mt-8">
+                    <button onclick="document.getElementById('upload-section').scrollIntoView({behavior: 'smooth'});" 
+                            class="btn-primary px-8 py-3 text-sm font-black flex items-center justify-center space-x-2 mx-auto">
+                        <i class="fas fa-upload"></i>
+                        <span>Upload Your First Record</span>
+                    </button>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
         </section>
@@ -782,6 +789,16 @@
                     </div>
                     {% endfor %}
                 </div>
+                
+                {% if not doctor_viewing %}
+                <div class="mt-8 pb-10 border-t border-gray-100 pt-6">
+                    <button onclick="document.getElementById('upload-section').scrollIntoView({behavior: 'smooth'}); toggleRecordsPanel();"
+                        class="btn-primary w-full py-3 text-sm font-black flex items-center justify-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Add New Medical Record</span>
+                    </button>
+                </div>
+                {% endif %}
                 {% else %}
                 <div class="card py-8 px-4 text-center">
                     <div class="relative inline-block mb-4">
@@ -799,7 +816,7 @@
                     </p>
                     {% if not doctor_viewing %}
                     <div class="mt-4">
-                        <button onclick="document.querySelector('#lab_report_input').click(); toggleRecordsPanel();"
+                        <button onclick="document.getElementById('upload-section').scrollIntoView({behavior: 'smooth'}); toggleRecordsPanel();"
                             class="btn-primary px-4 py-2 text-sm font-black flex items-center justify-center space-x-2 mx-auto">
                             <i class="fas fa-upload"></i>
                             <span>Upload</span>
@@ -936,7 +953,7 @@
             
             if (panel.classList.contains('translate-x-full')) {
                 panel.classList.remove('translate-x-full');
-                panel.classList.add('-translate-x-0');
+                panel.classList.add('translate-x-0');
                 // Disable scrolling on main page when panel is open
                 document.body.style.overflow = 'hidden';
             } else {

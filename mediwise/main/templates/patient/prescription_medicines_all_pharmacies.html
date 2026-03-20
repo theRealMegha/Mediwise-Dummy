@@ -309,9 +309,15 @@
                             </div>
                             
                             {% if pharmacy.quantity > 0 %}
+                            {% if prescription %}
+                            <button onclick="openAddToCartModal('{{ pharmacy.medicine_id }}', '{{ medicine_data.generic_name }}', '{{ prescription.id }}')" class="w-full py-2 bg-[#FCE4EC] text-[#880E4F] rounded-lg text-xs font-bold group-hover:bg-[#880E4F] group-hover:text-white transition-all shadow-sm flex items-center justify-center gap-2">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                            {% else %}
                             <button onclick="openAddToCartModal('{{ pharmacy.medicine_id }}', '{{ medicine_data.generic_name }}')" class="w-full py-2 bg-[#FCE4EC] text-[#880E4F] rounded-lg text-xs font-bold group-hover:bg-[#880E4F] group-hover:text-white transition-all shadow-sm flex items-center justify-center gap-2">
                                 <i class="fas fa-cart-plus"></i> Add to Cart
                             </button>
+                            {% endif %}
                             {% else %}
                             <div class="w-full py-2 bg-gray-200 text-gray-500 rounded-lg text-xs font-bold flex items-center justify-center">
                                 Out of Stock
@@ -360,7 +366,7 @@
     </div>
 
     <script>
-        function openAddToCartModal(medicineId, medicineName) {
+        function openAddToCartModal(medicineId, medicineName, prescriptionId = null) {
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
             
@@ -382,7 +388,7 @@
                             <button onclick="closeAddToCartModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors">
                                 Cancel
                             </button>
-                            <button onclick="addToCart('${medicineId}')" class="flex-1 px-4 py-3 bg-[#880E4F] text-white rounded-xl font-bold hover:bg-[#6A0D3F] transition-colors">
+                            <button onclick="addToCart('${medicineId}', '${prescriptionId}')" class="flex-1 px-4 py-3 bg-[#880E4F] text-white rounded-xl font-bold hover:bg-[#6A0D3F] transition-colors">
                                 Add to Cart
                             </button>
                         </div>
@@ -393,13 +399,13 @@
         }
         
         function closeAddToCartModal() {
-            const modal = document.querySelector('.fixed.inset-0');
+            const modal = document.querySelector('.fixed.inset-0.bg-black');
             if (modal) {
                 modal.remove();
             }
         }
         
-        function addToCart(medicineId) {
+        function addToCart(medicineId, prescriptionId = null) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/patient/cart/add/' + medicineId + '/';
@@ -417,6 +423,15 @@
             csrfInput.name = 'csrfmiddlewaretoken';
             csrfInput.value = csrfToken;
             form.appendChild(csrfInput);
+            
+            // Add prescription ID if available
+            if (prescriptionId && prescriptionId !== 'null' && prescriptionId !== 'None') {
+                const prescriptionInput = document.createElement('input');
+                prescriptionInput.type = 'hidden';
+                prescriptionInput.name = 'prescription_id';
+                prescriptionInput.value = prescriptionId;
+                form.appendChild(prescriptionInput);
+            }
             
             document.body.appendChild(form);
             form.submit();

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <title>Mediwise | Pharmacist Orders</title>
     <style>
         body {
@@ -14,7 +16,10 @@
             overflow-x: hidden;
             min-height: 100vh;
         }
-        ::-webkit-scrollbar { display: none; }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
 
         .sidebar-gradient {
             background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
@@ -34,7 +39,7 @@
             border-left: 3px solid #10b981;
             border-radius: 12px;
         }
-        
+
         .nav-item {
             display: flex;
             align-items: center;
@@ -42,32 +47,41 @@
             border-radius: 12px;
             transition: all 0.2s ease;
         }
-        
+
         .nav-item:hover {
             background: rgba(16, 185, 129, 0.08);
             color: #10b981;
         }
 
-        .sidebar-transition { 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        .sidebar-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .expanded-sidebar { 
-            width: 280px; 
+
+        .expanded-sidebar {
+            width: 280px;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        .sidebar-header { flex-shrink: 0; }
-        .sidebar-nav { 
-            flex: 1; 
-            overflow-y: hidden; 
-            padding: 12px 0; 
+        .sidebar-header {
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: hidden;
+            padding: 12px 0;
             display: flex;
             flex-direction: column;
         }
-        .sidebar-footer { flex-shrink: 0; border-top: 1px solid #ffebee; padding: 12px; }
-        
+
+        .sidebar-footer {
+            flex-shrink: 0;
+            border-top: 1px solid #ffebee;
+            padding: 12px;
+        }
+
         .nav-item-compact {
             display: flex;
             align-items: center;
@@ -78,14 +92,21 @@
         }
 
         @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.98) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            from {
+                opacity: 0;
+                transform: scale(0.98) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         .animate-entrance {
             animation: fadeInScale 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards;
         }
-        
+
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -95,13 +116,36 @@
             font-weight: 600;
             text-transform: capitalize;
         }
-        
-        .status-pending { background: rgba(251, 191, 36, 0.15); color: #f59e0b; border: 1px solid rgba(251, 191, 36, 0.3); }
-        .status-out_for_delivery { background: rgba(147, 51, 234, 0.15); color: #9333ea; border: 1px solid rgba(147, 51, 234, 0.3); }
-        .status-completed { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .status-failed { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-        
-        .order-table { border-collapse: separate; border-spacing: 0; }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-out_for_delivery {
+            background: rgba(147, 51, 234, 0.15);
+            color: #9333ea;
+            border: 1px solid rgba(147, 51, 234, 0.3);
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-failed {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .order-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
         .order-table th {
             background: rgba(16, 185, 129, 0.05);
             padding: 16px;
@@ -110,16 +154,27 @@
             color: #374151;
             border-bottom: 2px solid rgba(16, 185, 129, 0.1);
         }
-        .order-table td { padding: 16px; border-bottom: 1px solid #f3f4f6; }
-        .modal-backdrop { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+        .order-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .modal-backdrop {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
     </style>
 </head>
+
 <body class="text-slate-900">
 
-    <aside id="sidebar" class="sidebar-transition expanded-sidebar fixed top-0 left-0 sidebar-gradient border-r border-rose-100 z-50">
+    <aside id="sidebar"
+        class="sidebar-transition expanded-sidebar fixed top-0 left-0 sidebar-gradient border-r border-rose-100 z-50">
         <div class="sidebar-header p-8">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                <div
+                    class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
                     <i class="fas fa-prescription-bottle text-white text-lg"></i>
                 </div>
                 <span class="sidebar-text font-black text-2xl tracking-tighter text-slate-800">Mediwise</span>
@@ -164,11 +219,13 @@
         </nav>
 
         <div class="sidebar-footer">
-            <button id="toggle-btn" class="w-full nav-item-compact text-slate-400 hover:text-slate-600 transition-all mb-2">
+            <button id="toggle-btn"
+                class="w-full nav-item-compact text-slate-400 hover:text-slate-600 transition-all mb-2">
                 <i class="fas fa-indent text-lg w-6 transition-transform duration-300" id="toggle-icon"></i>
                 <span class="sidebar-text ml-4 font-bold text-xs uppercase tracking-widest">Collapse</span>
             </button>
-            <a href="{% url 'logout' %}" class="nav-item-compact text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all">
+            <a href="{% url 'logout' %}"
+                class="nav-item-compact text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all">
                 <i class="fas fa-sign-out-alt text-lg w-6"></i>
                 <span class="sidebar-text ml-4 font-bold text-sm">Logout</span>
             </a>
@@ -183,20 +240,27 @@
             </div>
             <div class="flex items-center gap-4">
                 <!-- Notification Bell -->
-                <a href="{% url 'pharmacist_notifications' %}" class="relative p-2 text-slate-600 hover:text-emerald-600 transition-colors">
+                <a href="{% url 'pharmacist_notifications' %}"
+                    class="relative p-2 text-slate-600 hover:text-emerald-600 transition-colors">
                     <i class="fas fa-bell text-xl"></i>
                     {% if pharmacist_notification_count > 0 %}
-                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span
+                        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {{ pharmacist_notification_count }}
                     </span>
                     {% endif %}
                 </a>
-                
-                <div class="flex items-center gap-4 bg-white/80 backdrop-blur-lg p-4 rounded-2xl shadow-sm border border-white">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">PH</div>
+
+                <div
+                    class="flex items-center gap-4 bg-white/80 backdrop-blur-lg p-4 rounded-2xl shadow-sm border border-white">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                        PH</div>
                     <div class="pr-2">
-                        <p class="text-xs font-bold text-slate-800 leading-tight">{{ pharmacist.first_name|default:"Pharmacist" }}</p>
-                        <p class="text-[10px] text-slate-500">{{ pharmacist.email|default:"pharmacist@mediwise.com" }}</p>
+                        <p class="text-xs font-bold text-slate-800 leading-tight">{{
+                            pharmacist.first_name|default:"Pharmacist" }}</p>
+                        <p class="text-[10px] text-slate-500">{{ pharmacist.email|default:"pharmacist@mediwise.com" }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -208,7 +272,8 @@
                 <div class="flex items-center gap-4 w-full md:w-auto">
                     <!-- Status Filter -->
                     <div class="relative">
-                        <select id="statusFilter" onchange="filterByStatus()" class="appearance-none pl-12 pr-10 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 bg-white cursor-pointer min-w-[200px]">
+                        <select id="statusFilter" onchange="filterByStatus()"
+                            class="appearance-none pl-12 pr-10 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 bg-white cursor-pointer min-w-[200px]">
                             <option value="all">All Statuses</option>
                             <option value="pending">Pending</option>
                             <option value="preparing">Preparing</option>
@@ -218,17 +283,20 @@
                             <option value="failed">Failed</option>
                         </select>
                         <i class="fas fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                        <i
+                            class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                     </div>
                     <!-- Search Box -->
                     <div class="relative flex-1 md:w-64">
-                        <input type="text" id="searchInput" placeholder="Search by patient name..." class="pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 w-full" onkeyup="searchOrders()">
+                        <input type="text" id="searchInput" placeholder="Search by patient name..."
+                            class="pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 w-full"
+                            onkeyup="searchOrders()">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     </div>
                 </div>
             </div>
 
-            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+            <div class="overflow-visible rounded-2xl border border-slate-100">
                 <table class="order-table w-full">
                     <thead>
                         <tr>
@@ -243,7 +311,8 @@
                         {% for order in orders %}
                         <tr id="order-row-{{ order.id }}" class="border-b border-slate-100 hover:bg-slate-50">
                             <td>
-                                <p class="font-medium text-slate-900">{{ order.patient.first_name }} {{ order.patient.last_name }}</p>
+                                <p class="font-medium text-slate-900">{{ order.patient.first_name }} {{
+                                    order.patient.last_name }}</p>
                                 <p class="text-xs text-slate-500">{{ order.patient.phone_number }}</p>
                             </td>
                             <td class="font-bold text-emerald-600">₹{{ order.total_amount }}</td>
@@ -258,31 +327,41 @@
                             </td>
                             <td>
                                 <div class="flex gap-2">
-                                    <button onclick="viewOrderDetails('{{ order.id }}')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">
+                                    <button onclick="viewOrderDetails('{{ order.id }}')"
+                                        class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">
                                         <i class="fas fa-eye"></i>
                                     </button>
-                                    
+
                                     {% if order.status != 'completed' %}
                                     <div class="relative inline-block text-left dropdown-container">
-                                        <button onclick="toggleDropdown('{{ order.id }}')" class="update-btn-{{ order.id }} px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-emerald-700 shadow-md">
+                                        <button onclick="toggleDropdown('{{ order.id }}')"
+                                            class="update-btn-{{ order.id }} px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-emerald-700 shadow-md">
                                             Update <i class="fas fa-chevron-down text-[10px]"></i>
                                         </button>
-                                        
-                                        <div id="dropdown-{{ order.id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[60] overflow-hidden">
+
+                                        <div id="dropdown-{{ order.id }}"
+                                            class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[60]">
                                             <div class="py-1">
-                                                <button onclick="updateOrderStatus('{{ order.id }}', 'pending')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-amber-50 flex items-center">
+                                                <button onclick="updateOrderStatus('{{ order.id }}', 'pending')"
+                                                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-amber-50 flex items-center">
                                                     <i class="fas fa-clock w-5 text-amber-500"></i> Pending
                                                 </button>
-                                                <button onclick="updateOrderStatus('{{ order.id }}', 'out_for_delivery')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 flex items-center">
+                                                <button
+                                                    onclick="updateOrderStatus('{{ order.id }}', 'out_for_delivery')"
+                                                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 flex items-center">
                                                     <i class="fas fa-truck w-5 text-blue-500"></i> Out for Delivery
                                                 </button>
-                                                <button onclick="updateOrderStatus('{{ order.id }}', 'completed')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 flex items-center border-t">
+                                                <button onclick="updateOrderStatus('{{ order.id }}', 'completed')"
+                                                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 flex items-center border-t">
                                                     <i class="fas fa-check-circle w-5 text-emerald-500"></i> Successful
                                                 </button>
-                                                <button onclick="updateOrderStatus('{{ order.id }}', 'delayed')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-orange-50 flex items-center">
-                                                    <i class="fas fa-exclamation-triangle w-5 text-orange-500"></i> Delayed
+                                                <button onclick="updateOrderStatus('{{ order.id }}', 'delayed')"
+                                                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-orange-50 flex items-center">
+                                                    <i class="fas fa-exclamation-triangle w-5 text-orange-500"></i>
+                                                    Delayed
                                                 </button>
-                                                <button onclick="updateOrderStatus('{{ order.id }}', 'failed')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-rose-50 flex items-center border-t">
+                                                <button onclick="updateOrderStatus('{{ order.id }}', 'failed')"
+                                                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-rose-50 flex items-center border-t">
                                                     <i class="fas fa-times-circle w-5 text-rose-500"></i> Failed
                                                 </button>
                                             </div>
@@ -300,7 +379,8 @@
     </main>
 
     <!-- Order Details Modal -->
-    <div id="orderDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-[70] flex items-center justify-center p-4">
+    <div id="orderDetailsModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-[70] flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-8">
                 <div class="flex justify-between items-center mb-6">
@@ -309,7 +389,7 @@
                         <i class="fas fa-times text-2xl"></i>
                     </button>
                 </div>
-                
+
                 <div id="modalContent" class="space-y-6">
                     <div class="text-center py-8">
                         <i class="fas fa-circle-notch fa-spin text-4xl text-emerald-600"></i>
@@ -337,18 +417,18 @@
             try {
                 const modal = document.getElementById('orderDetailsModal');
                 const modalContent = document.getElementById('modalContent');
-                
+
                 modal.classList.remove('hidden');
-                
+
                 const response = await fetch(`/pharmacist/order/${orderId}/details/`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success && data.order) {
                     const order = data.order;
                     modalContent.innerHTML = `
@@ -466,19 +546,19 @@
                 `;
             }
         }
-        
+
         function closeOrderModal() {
             document.getElementById('orderDetailsModal').classList.add('hidden');
         }
-        
+
         // Close modal when clicking outside
-        document.getElementById('orderDetailsModal')?.addEventListener('click', function(e) {
+        document.getElementById('orderDetailsModal')?.addEventListener('click', function (e) {
             if (e.target === this) {
                 closeOrderModal();
             }
         });
 
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             if (!event.target.closest('.dropdown-container')) {
                 document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.classList.add('hidden'));
             }
@@ -489,10 +569,10 @@
                 const csrfToken = getCSRFToken();
                 console.log('Updating order:', orderId, 'to status:', status);
                 console.log('CSRF Token:', csrfToken ? 'Present' : 'Missing');
-                
+
                 // Remove any existing notifications before making new request
                 document.querySelectorAll('.fixed.top-10.right-10').forEach(n => n.remove());
-                
+
                 const response = await fetch(`/pharmacist/order/${orderId}/update-status/`, {
                     method: 'POST',
                     headers: {
@@ -504,7 +584,7 @@
                 });
 
                 console.log('Response status:', response.status);
-                
+
                 // Try to parse JSON response
                 let data;
                 try {
@@ -513,29 +593,29 @@
                     console.error('Failed to parse response:', e);
                     throw new Error('Invalid response from server');
                 }
-                
+
                 console.log('Response data:', data);
 
                 if (response.ok && data.success) {
                     // Update the status badge with animation
                     const badge = document.getElementById(`status-badge-${orderId}`);
                     const statusText = badge.querySelector('.status-text');
-                    
+
                     // Add fade-out effect
                     badge.style.transition = 'all 0.3s ease';
                     badge.style.opacity = '0';
                     badge.style.transform = 'scale(0.9)';
-                    
+
                     setTimeout(() => {
                         // Update classes and text
                         badge.className = `status-badge status-${data.status_code || status}`;
                         statusText.textContent = data.new_status || status.replace('_', ' ').toUpperCase();
-                        
+
                         // Fade in with new status
                         badge.style.opacity = '1';
                         badge.style.transform = 'scale(1)';
                     }, 300);
-                    
+
                     // Remove update button if order is completed or failed
                     if (status === 'completed' || status === 'failed') {
                         const btn = document.querySelector(`.update-btn-${orderId}`);
@@ -545,21 +625,21 @@
                             setTimeout(() => btn.parentElement.remove(), 300);
                         }
                     }
-                    
+
                     // Show success notification (green)
                     const message = data.message || 'Order updated successfully!';
                     showNotification(message, 'success');
-                    
+
                 } else {
                     // Show error notification (red) only if there's an actual error
                     const errorMsg = data.error || 'Update failed. Please try again.';
                     showNotification(errorMsg, 'error');
                 }
-                
+
                 // Close dropdown
                 const dropdown = document.getElementById(`dropdown-${orderId}`);
                 if (dropdown) dropdown.classList.add('hidden');
-                
+
             } catch (err) {
                 console.error('Error updating order:', err);
                 // Remove any existing notifications first
@@ -582,14 +662,14 @@
             const filter = input.value.toLowerCase();
             const tbody = document.querySelector('.order-table tbody');
             const rows = tbody.getElementsByTagName('tr');
-            
+
             let visibleCount = 0;
-            
+
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 // Skip "no results" message rows
                 if (row.id === 'no-results-message') continue;
-                
+
                 const patientCell = row.cells[0]; // First column contains patient name
                 if (patientCell) {
                     const text = patientCell.textContent || patientCell.innerText;
@@ -601,13 +681,13 @@
                     }
                 }
             }
-            
+
             // Remove existing "no results" message if any
             const existingMessage = document.getElementById('no-results-message');
             if (existingMessage) {
                 existingMessage.remove();
             }
-            
+
             // Show "no results found" message if no matches
             if (visibleCount === 0) {
                 const newRow = document.createElement('tr');
@@ -632,16 +712,16 @@
             const selectedStatus = statusSelect.value;
             const tbody = document.querySelector('.order-table tbody');
             const rows = tbody.getElementsByTagName('tr');
-            
+
             let visibleCount = 0;
-            
+
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 // Skip "no results" message rows
                 if (row.id === 'no-results-message') continue;
-                
+
                 const statusBadge = document.getElementById(`status-badge-${row.id.replace('order-row-', '')}`);
-                
+
                 if (selectedStatus === 'all') {
                     // Show all rows
                     row.style.display = '';
@@ -655,13 +735,13 @@
                     row.style.display = 'none';
                 }
             }
-            
+
             // Remove existing "no results" message if any
             const existingMessage = document.getElementById('no-results-message');
             if (existingMessage) {
                 existingMessage.remove();
             }
-            
+
             // Show "no results found" message if no matches
             if (visibleCount === 0) {
                 const newRow = document.createElement('tr');
@@ -683,4 +763,5 @@
     </script>
     {% csrf_token %}
 </body>
+
 </html>
