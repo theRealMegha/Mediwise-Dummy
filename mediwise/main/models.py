@@ -396,11 +396,10 @@ class PrescriptionMedicine(models.Model):
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name='medicines')
     drug_name_generic = models.CharField(max_length=200, help_text="Generic name (mandatory)")
     drug_name_brand = models.CharField(max_length=200, blank=True, null=True, help_text="Brand name (optional)")
-    strength = models.CharField(max_length=50, help_text="Strength/Potency (e.g., 500mg, 10ml)")
+    strength = models.CharField(max_length=50, blank=True, null=True, help_text="Strength/Potency (e.g., 500mg, 10ml)")
     dosage_frequency = models.CharField(max_length=100, help_text="Dosage & Frequency (e.g., 1 tablet twice a day)")
-    route_administration = models.CharField(max_length=50, help_text="Route of Administration (e.g., Oral, Topical, IV)")
     instructions = models.TextField(help_text="Instructions (The \"Sig\") Relation to food and specific timing")
-    total_quantity = models.CharField(max_length=50, help_text="Total number of pills or bottles to be dispensed")
+    duration_days = models.IntegerField(null=True, blank=True, help_text="Duration of medicine course in days")
    
     def __str__(self):
         return f"{self.drug_name_generic} - Prescription #{self.prescription.id}"

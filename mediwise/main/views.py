@@ -901,59 +901,52 @@ def prescription_medicines_all_pharmacies(request):
             prescription__patient=user
         ).select_related('prescription')
     
-    # Build list of unique medicine names (generic names prioritized)
-    medicine_names_to_search = set()
-    prescription_medicine_map = {}  # Map generic name to all related info
+    # Build list of unique medicine search criteria (name + strength)
+    search_criteria = []
+    seen_criteria = set()
     
     for pm in prescription_medicines:
         generic_name = pm.drug_name_generic.strip() if pm.drug_name_generic else None
         brand_name = pm.drug_name_brand.strip() if pm.drug_name_brand else None
+        strength = pm.strength.strip() if pm.strength else None
         
-        if generic_name:
-            generic_name_lower = generic_name.lower()
-            medicine_names_to_search.add(generic_name_lower)
+        # Use generic name if available, otherwise brand name
+        name_to_use = generic_name if generic_name else brand_name
+        if not name_to_use:
+            continue
             
-            # Store mapping
-            if generic_name_lower not in prescription_medicine_map:
-                prescription_medicine_map[generic_name_lower] = {
-                    'generic_name': generic_name,
-                    'brand_names': set(),
-                    'dosage_frequency': pm.dosage_frequency,
-                    'route_administration': pm.route_administration,
-                    'instructions': pm.instructions,
-                    'total_quantity': pm.total_quantity
-                }
-            if brand_name:
-                prescription_medicine_map[generic_name_lower]['brand_names'].add(brand_name)
-        
-        elif brand_name:
-            brand_name_lower = brand_name.lower()
-            medicine_names_to_search.add(brand_name_lower)
-            if brand_name_lower not in prescription_medicine_map:
-                prescription_medicine_map[brand_name_lower] = {
-                    'generic_name': None,
-                    'brand_names': {brand_name},
-                    'dosage_frequency': pm.dosage_frequency,
-                    'route_administration': pm.route_administration,
-                    'instructions': pm.instructions,
-                    'total_quantity': pm.total_quantity
-                }
+        criteria_key = (name_to_use.lower(), strength.lower() if strength else None)
+        if criteria_key not in seen_criteria:
+            seen_criteria.add(criteria_key)
+            search_criteria.append({
+                'name': name_to_use,
+                'strength': strength,
+                'dosage_frequency': pm.dosage_frequency,
+                'instructions': pm.instructions
+            })
     
     # Search for these medicines across ALL pharmacies
     medicines_with_pharmacies = []
     
-    for med_name_key in medicine_names_to_search:
-        med_info = prescription_medicine_map[med_name_key]
+    for criteria in search_criteria:
+        med_name = criteria['name']
+        prescribed_strength = criteria['strength']
         
-        # Find all medicines matching this name (generic or brand)
+        # Build query for name matching
+        name_query = Q(generic_name__icontains=med_name) | Q(brand_name__icontains=med_name)
+        
+        # Base results matching name and not expired
         matching_medicines = Medicine.objects.filter(
             expiry_date__gt=timezone.now().date()
-        ).filter(
-            Q(generic_name__icontains=med_name_key) |
-            Q(brand_name__icontains=med_name_key)
-        ).select_related('pharmacist').order_by('generic_name', 'brand_name')
+        ).filter(name_query)
         
-        # Group by unique medicine (generic + brand combination)
+        # Apply strength filter if prescribed
+        if prescribed_strength:
+            matching_medicines = matching_medicines.filter(strength__icontains=prescribed_strength)
+            
+        matching_medicines = matching_medicines.select_related('pharmacist').order_by('generic_name', 'brand_name')
+        
+        # Group by unique medicine (generic + brand + pharmacist combination)
         medicine_pharmacy_map = {}
         for med in matching_medicines:
             med_key = f"{med.generic_name.lower()}_{med.brand_name.lower()}_{med.pharmacist.id}"
@@ -979,10 +972,9 @@ def prescription_medicines_all_pharmacies(request):
                 medicines_with_pharmacies.append({
                     'generic_name': data['medicine'].generic_name,
                     'brand_name': data['medicine'].brand_name,
-                    'prescription_dosage_frequency': med_info['dosage_frequency'],
-                    'prescription_route_administration': med_info['route_administration'],
-                    'prescription_instructions': med_info['instructions'],
-                    'prescription_total_quantity': med_info['total_quantity'],
+                    'prescription_dosage_frequency': criteria['dosage_frequency'],
+                    'prescription_instructions': criteria['instructions'],
+                    'prescription_strength': prescribed_strength,
                     'pharmacies': data['pharmacies']
                 })
     
@@ -4236,9 +4228,8 @@ def doctor_patient_records_api(request, patient_id):
                 'drug_name_brand': medicine.drug_name_brand or '',
                 'strength': medicine.strength,
                 'dosage_frequency': medicine.dosage_frequency,
-                'route_administration': medicine.route_administration,
                 'instructions': medicine.instructions,
-                'total_quantity': medicine.total_quantity
+                'duration_days': medicine.duration_days
             })
         
         prescriptions_list.append({
@@ -4297,9 +4288,15 @@ def add_prescription(request):
             # PrescriptionMedicine model fields
             drug_name_generic = data.get('drug_name_generic', '').strip()
             drug_name_brand = data.get('drug_name_brand', '').strip()
+            strength = data.get('strength', '').strip()
             dosage_frequency = data.get('dosage_frequency', '').strip()
             instructions = data.get('instructions', '').strip()
             duration_days = data.get('duration_days')
+            if duration_days:
+                try:
+                    duration_days = int(duration_days)
+                except (ValueError, TypeError):
+                    duration_days = None
             
             # Validate required fields
             if not patient_id or not drug_name_generic or not dosage_frequency or not instructions or not duration_days:
@@ -4327,19 +4324,21 @@ def add_prescription(request):
             if not has_appointment:
                 return JsonResponse({'error': 'Access denied. You can only prescribe to your patients.'}, status=403)
             
-            # Create prescription (without appointment/next date as they're not in PrescriptionMedicine model)
+            # Create prescription
             prescription = Prescription.objects.create(
                 doctor=doctor,
                 patient=patient
             )
             
-            # Create prescription medicine with required fields only
+            # Create prescription medicine 
             PrescriptionMedicine.objects.create(
                 prescription=prescription,
                 drug_name_generic=drug_name_generic,
                 drug_name_brand=drug_name_brand if drug_name_brand else None,
+                strength=strength if strength else None,
                 dosage_frequency=dosage_frequency,
-                instructions=instructions
+                instructions=instructions,
+                duration_days=duration_days
             )
             
             # Log the action

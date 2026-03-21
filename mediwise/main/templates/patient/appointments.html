@@ -292,9 +292,9 @@
                             <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Rate this appointment</p>
                             <div class="flex items-center gap-2 mb-2">
                                 <div class="star-rating">
-                                    {% for i in "12345"|make_list %}
-                                    <input type="radio" id="star{{ forloop.counter }}_{{ appointment.id }}" name="rating" value="{{ forloop.counter }}" class="star-input hidden" />
-                                    <label for="star{{ forloop.counter }}_{{ appointment.id }}" class="star-label cursor-pointer text-lg">
+                                    {% for i in "54321"|make_list %}
+                                    <input type="radio" id="star{{ i }}_{{ appointment.id }}" name="rating" value="{{ i }}" class="star-input hidden" />
+                                    <label for="star{{ i }}_{{ appointment.id }}" class="star-label cursor-pointer text-lg">
                                         <i class="far fa-star text-yellow-400 hover:text-yellow-500 transition-colors"></i>
                                     </label>
                                     {% endfor %}
@@ -345,12 +345,17 @@
                 if (radio && radio.classList.contains('star-input')) {
                     radio.checked = true;
                                     
-                    // Update stars up to the selected value
-                    const selectedValue = parseInt(radio.value);
-                    const labels = this.closest('.star-rating').querySelectorAll('.star-label');
-                    for (let i = 0; i < labels.length; i++) {
-                        const icon = labels[i].querySelector('i');
-                        if (i >= labels.length - selectedValue) {
+                // Update stars up to the selected value
+                const selectedValue = parseInt(radio.value);
+                const labels = this.closest('.star-rating').querySelectorAll('.star-label');
+                for (let i = 0; i < labels.length; i++) {
+                    const icon = labels[i].querySelector('i');
+                    // In row-reverse, DOM order is 5, 4, 3, 2, 1.
+                    // Visual 1 is index 4, Visual 5 is index 0.
+                    // To light up visual 1 to N, we light up indices (length-1) down to (length-N).
+                    // Example: N=3 (visual 1,2,3). Light up indices 4, 3, 2.
+                    // Indices i where i >= 5 - 3 => i >= 2. (2, 3, 4). Correct.
+                    if (i >= labels.length - selectedValue) {
                             if (icon) {
                                 icon.style.color = 'transparent';
                                 icon.style.textShadow = '0 0 0 #fbbf24';

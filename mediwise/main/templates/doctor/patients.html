@@ -296,10 +296,7 @@
                            class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-600/30 transition-all">
                             <i class="fas fa-file-medical mr-2"></i>Records
                         </button>
-                        <a href="tel:{{ appointment.patient.phone_number }}" 
-                           class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all text-center">
-                            <i class="fas fa-phone"></i>
-                        </a>
+
                     </div>
                 </div>
             </div>
@@ -420,15 +417,7 @@
                     </div>
                 </div>
 
-                <!-- Medical Conditions -->
-                <div id="medicalConditionsSection" class="hidden">
-                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-heart-pulse text-red-600"></i> Medical Conditions
-                    </h3>
-                    <div id="conditionsList" class="space-y-3">
-                        <!-- Conditions will be loaded here -->
-                    </div>
-                </div>
+
 
                 <!-- Prescribed Lab Tests -->
                 <div id="prescribedLabTestsSection" class="hidden">
@@ -518,15 +507,27 @@
                         </div>
 
                         <!-- Brand Name (Optional) -->
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-2">
-                                Brand Name <span class="text-slate-400">(Optional)</span>
-                            </label>
-                            <input type="text" 
-                                   id="drug_name_brand" 
-                                   name="drug_name_brand"
-                                   placeholder="e.g., Tylenol, Augmentin"
-                                   class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">
+                                    Brand Name <span class="text-slate-400">(Optional)</span>
+                                </label>
+                                <input type="text" 
+                                       id="drug_name_brand" 
+                                       name="drug_name_brand"
+                                       placeholder="e.g., Tylenol, Augmentin"
+                                       class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">
+                                    Strength <span class="text-slate-400">(Optional)</span>
+                                </label>
+                                <input type="text" 
+                                       id="strength" 
+                                       name="strength"
+                                       placeholder="e.g., 500mg, 10ml"
+                                       class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all bg-white">
+                            </div>
                         </div>
 
                         <!-- Dosage Frequency -->
@@ -878,7 +879,7 @@
         function hideAllSections() {
             document.getElementById('patientDetailsSection').classList.add('hidden');
             document.getElementById('appointmentHistorySection').classList.add('hidden');
-            document.getElementById('medicalConditionsSection').classList.add('hidden');
+
             document.getElementById('prescribedLabTestsSection').classList.add('hidden');
             document.getElementById('labReportsSection').classList.add('hidden');
             document.getElementById('prescriptionsSection').classList.add('hidden');
@@ -911,7 +912,7 @@
             updateAppointments(data.appointments);
 
             // Update medical conditions
-            updateMedicalConditions(data.medical_conditions);
+
 
             // Update prescribed lab tests
             updatePrescribedLabTests(data.prescribed_lab_tests);
@@ -986,33 +987,7 @@
             document.getElementById('appointmentHistorySection').classList.remove('hidden');
         }
 
-        function updateMedicalConditions(conditions) {
-            const conditionsList = document.getElementById('conditionsList');
-            
-            if (!conditions || conditions.length === 0) {
-                conditionsList.innerHTML = `
-                    <div class="text-center py-8 text-slate-400">
-                        <i class="fas fa-heartbeat text-3xl mb-2"></i>
-                        <p>No medical conditions recorded</p>
-                    </div>
-                `;
-            } else {
-                conditionsList.innerHTML = conditions.map(condition => `
-                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                        <div class="flex items-start justify-between mb-2">
-                            <h4 class="font-bold text-slate-800">${condition.condition_name}</h4>
-                            <span class="px-2 py-1 rounded-md text-xs font-bold uppercase ${condition.status === 'active' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}">
-                                ${condition.status}
-                            </span>
-                        </div>
-                        <p class="text-xs text-slate-500 mb-2">Diagnosed: ${new Date(condition.diagnosis_date).toLocaleDateString()}</p>
-                        ${condition.description ? `<p class="text-sm text-slate-600 italic">${condition.description}</p>` : ''}
-                    </div>
-                `).join('');
-            }
-            
-            document.getElementById('medicalConditionsSection').classList.remove('hidden');
-        }
+
 
         function updatePrescribedLabTests(tests) {
             const labTestsList = document.getElementById('labTestsList');
@@ -1069,7 +1044,7 @@
                             <div class="flex-1">
                                 <h4 class="font-bold text-slate-800 text-sm truncate">${report.report_name}</h4>
                                 <p class="text-xs text-slate-500 mt-1">Uploaded: ${new Date(report.uploaded_at).toLocaleDateString()}</p>
-                                <a href="/media/${report.image}" class="text-xs text-blue-600 font-bold mt-2 inline-block hover:underline">
+                                <a href="/${report.image}" class="text-xs text-blue-600 font-bold mt-2 inline-block hover:underline">
                                     <i class="fas fa-eye mr-1"></i>View Report
                                 </a>
                             </div>
@@ -1123,12 +1098,14 @@
                                                     ${med.drug_name_brand ? `<span class="text-slate-500 text-xs">(${med.drug_name_brand})</span>` : ''}
                                                 </p>
                                                 <p class="text-xs text-slate-500 mt-0.5">
-                                                    <i class="fas fa-pills mr-1"></i>${med.strength} • ${med.route_administration}
+                                                    <i class="fas fa-pills mr-1"></i>${med.strength || 'No strength specified'}
                                                 </p>
                                             </div>
-                                            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                                Qty: ${med.total_quantity}
-                                            </span>
+                                            ${med.duration_days ? `
+                                                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                                                    ${med.duration_days} Days
+                                                </span>
+                                            ` : ''}
                                         </div>
                                         <p class="text-xs text-slate-600 mt-2">
                                             <i class="fas fa-clock mr-1"></i><span class="font-medium">${med.dosage_frequency}</span>
@@ -1160,7 +1137,7 @@
             let hasRecords = false;
             
             if (data.appointments && data.appointments.length > 0) hasRecords = true;
-            if (data.medical_conditions && data.medical_conditions.length > 0) hasRecords = true;
+
             if (data.prescribed_lab_tests && data.prescribed_lab_tests.length > 0) hasRecords = true;
             if (data.lab_reports && data.lab_reports.length > 0) hasRecords = true;
             if (data.prescriptions && data.prescriptions.length > 0) hasRecords = true;
@@ -1238,7 +1215,7 @@ window.location.href = `/doctor/prescription/${prescriptionId}/details/`;       
             const data = Object.fromEntries(formData.entries());
 
             // Validate required fields
-            if (!data.drug_name_generic || !data.dosage_frequency || !data.instructions || !data.duration_days) {
+            if (!data.drug_name_generic || !data.dosage_frequency || !data.instructions) {
                 alert('Please fill in all required fields marked with *');
                 return;
             }

@@ -524,10 +524,6 @@
             <!-- Sidebar Footer Actions -->
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex flex-col gap-3">
-                    <a href="{% url 'registered_pharmacies' %}?prescription_id={{ prescription.id }}" 
-                       class="w-full py-3 bg-[#880E4F] hover:bg-[#6A0D3F] text-white font-bold rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-2">
-                        <i class="fas fa-search"></i> Search Medicine
-                    </a>
                     <a href="{% url 'prescription_medicines_all_pharmacies' %}?prescription_id={{ prescription.id }}" 
                        class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-2">
                         <i class="fas fa-building"></i> View Medicines & All Pharmacies

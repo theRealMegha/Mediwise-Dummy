@@ -230,6 +230,12 @@
                             
                             <!-- Prescription Details -->
                             <div class="flex flex-wrap gap-3 mt-3">
+                                {% if medicine_data.prescription_strength %}
+                                <span class="pill-badge bg-[#880E4F] text-white">
+                                    <i class="fas fa-vial mr-1"></i>
+                                    {{ medicine_data.prescription_strength }}
+                                </span>
+                                {% endif %}
                                 {% if medicine_data.prescription_dosage_frequency %}
                                 <span class="pill-badge">
                                     <i class="fas fa-capsules mr-1"></i>
