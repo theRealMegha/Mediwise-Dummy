@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
+from datetime import datetime, timedelta
 from django.core.files.storage import default_storage
 from ml.predictDisease import run_medical_assistant
 from google import genai
@@ -2537,7 +2538,9 @@ def view_doctors(request):
         'cart_count': cart_count,
         'search_query': search_query,
         'specialization_filter': specialization_filter,
-        'specializations': specializations
+        'specializations': specializations,
+        'today_date': timezone.now().date(),
+        'tomorrow_date': (timezone.now() + timedelta(days=1)).date(),
     }
     return render(request, 'patient/doctors.html', context)
 
@@ -2549,8 +2552,8 @@ def book_appointment(request, doctor_id):
     patient = Patient.objects.get(id=user_id)
     doctor = Doctor.objects.get(id=doctor_id)
     
-    # Check if doctor is active and has a location
-    if doctor.availability_status == 'inactive' or not doctor.location:
+    # Check if doctor is on leave or lacks a location
+    if doctor.availability_status == 'leave' or not doctor.location:
         messages.error(request, f'Sorry, booking is currently unavailable for Dr. {doctor.first_name} {doctor.last_name}.')
         return redirect('view_doctors')
     
@@ -2563,8 +2566,18 @@ def book_appointment(request, doctor_id):
         reason = request.POST.get('reason')
         
         # Convert appointment_date to datetime.date object
-        from datetime import datetime
-        appointment_date_obj = datetime.strptime(appointment_date, '%Y-%m-%d').date()
+        from datetime import datetime as dt
+        appointment_date_obj = dt.strptime(appointment_date, '%Y-%m-%d').date()
+        
+        # Check if booking for today after consultation time
+        # Get current local time
+        now = timezone.localtime(timezone.now())
+        today_date = now.date()
+        
+        if appointment_date_obj == today_date and doctor.consulting_time_to:
+            if now.time() > doctor.consulting_time_to:
+                messages.error(request, f"Today's consultation time for Dr. {doctor.first_name} {doctor.last_name} is over. Please book for the upcoming days.")
+                return redirect('book_appointment', doctor_id=doctor_id)
         
         # Check if doctor is on leave on this date
         from .models import Leave
@@ -2591,12 +2604,24 @@ def book_appointment(request, doctor_id):
     # Get preferred date from query parameters
     preferred_date = request.GET.get('preferred_date')
 
+    # Get current local time and dates for restrictions
+    now = timezone.localtime(timezone.now())
+    today_date = now.date().strftime('%Y-%m-%d')
+    tomorrow_date = (now.date() + timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    today_time_over = False
+    if doctor.consulting_time_to:
+        if now.time() > doctor.consulting_time_to:
+            today_time_over = True
     
     context = {
         'user': patient,
         'doctor': doctor,
         'cart_count': cart_count,
-        'preferred_date': preferred_date
+        'preferred_date': preferred_date,
+        'today_time_over': today_time_over,
+        'today_date': today_date,
+        'tomorrow_date': tomorrow_date
     }
     return render(request, 'patient/book_appointment.html', context)
 
