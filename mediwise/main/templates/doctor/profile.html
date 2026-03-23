@@ -397,6 +397,13 @@
                                     {{ form.address }}
                                 </div>
                             </div>
+                            <div class="form-input-group relative md:col-span-2">
+                                <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1 block">Clinic Location</label>
+                                <div class="relative">
+                                    <i class="fas fa-location-dot form-icon"></i>
+                                    {{ form.location }}
+                                </div>
+                            </div>
                             <div class="form-input-group relative">
                                 <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1 block">Specialty</label>
                                 <div class="relative">
@@ -567,6 +574,10 @@
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 document.getElementById('profile-picture-input').files = dataTransfer.files;
+                
+                // Update profile picture status for progress bar
+                document.body.dataset.hasProfilePicture = 'true';
+                if (typeof updateUI === 'function') updateUI();
 
                 closeCropper();
             }, 'image/jpeg');
@@ -643,17 +654,23 @@
                 const license = document.querySelector('[name="license_number"]');
                 const hospital = document.querySelector('[name="cureentHospital"]');
                 const description = document.querySelector('[name="description"]');
+                const location = document.querySelector('[name="location"]');
+                const consultingFrom = document.querySelector('[name="consulting_time_from"]');
+                const consultingTo = document.querySelector('[name="consulting_time_to"]');
                 
                 // Count filled text fields
-                const textFieldCount = [firstName, lastName, email, phone, speciality, qualification, address, license, hospital, description]
-                    .filter(field => field && field.value.trim() !== "").length;
+                const textFieldCount = [
+                    firstName, lastName, email, phone, speciality, 
+                    qualification, address, hospital, description, 
+                    location, consultingFrom, consultingTo, license
+                ].filter(field => field && field.value.trim() !== "").length;
                 
                 // Check if profile picture is set (get from body data attribute)
                 const hasProfilePicture = document.body.dataset.hasProfilePicture === 'true';
                 const profilePicCount = hasProfilePicture ? 1 : 0;
                 
-                // Total fields: 10 text fields + 1 profile picture = 11
-                const totalFields = 11;
+                // Total fields: 13 text fields + 1 profile picture = 14
+                const totalFields = 14;
                 const filledFields = textFieldCount + profilePicCount;
                 const percent = Math.round((filledFields / totalFields) * 100);
                 
@@ -677,7 +694,7 @@
                 }
             }
 
-            form.querySelectorAll('input, select').forEach(i => i.addEventListener('input', updateUI));
+            form.querySelectorAll('input, select, textarea').forEach(i => i.addEventListener('input', updateUI));
             updateUI();
         });
     </script>

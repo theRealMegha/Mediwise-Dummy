@@ -2299,7 +2299,7 @@ def download_prescription_pdf(request, prescription_id):
     elements.append(Spacer(1, 10))
     
     # Medicines table header
-    medicine_header = ['Medicine', 'Strength', 'Dosage', 'Quantity']
+    medicine_header = ['Medicine', 'Strength', 'Dosage', 'Days']
     medicine_data = [medicine_header]
     
     # Add medicines data
@@ -2308,7 +2308,7 @@ def download_prescription_pdf(request, prescription_id):
             f"{medicine.drug_name_generic}{(' (' + medicine.drug_name_brand + ')') if medicine.drug_name_brand else ''}",
             medicine.strength,
             medicine.dosage_frequency,
-            medicine.total_quantity
+            medicine.duration_days
         ]
         medicine_data.append(medicine_row)
     
@@ -2548,6 +2548,11 @@ def book_appointment(request, doctor_id):
     
     patient = Patient.objects.get(id=user_id)
     doctor = Doctor.objects.get(id=doctor_id)
+    
+    # Check if doctor is active and has a location
+    if doctor.availability_status == 'inactive' or not doctor.location:
+        messages.error(request, f'Sorry, booking is currently unavailable for Dr. {doctor.first_name} {doctor.last_name}.')
+        return redirect('view_doctors')
     
     # Get cart count for the cart icon
     cart_count = Cart.objects.filter(patient=patient).count() if patient else 0
@@ -3092,6 +3097,73 @@ def pharmacist_orders(request):
     
     return render(request, 'pharmacist/orders.html', context)
 
+def pharmacist_order_details_ajax(request, order_id):
+    """AJAX view to return order details for the pharmacist's modal"""
+    from django.http import JsonResponse
+    
+    pharmacist_id = request.session.get('pharmacist_id')
+    if not pharmacist_id:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+    
+    try:
+        pharmacist = Pharmacist.objects.get(id=pharmacist_id)
+        # Fetch the order and ensure it has items from this pharmacist
+        order = Order.objects.prefetch_related(
+            'items__medicine__pharmacist', 
+            'patient'
+        ).get(id=order_id)
+        
+        # Verify permissions: does this order contain medicines from this pharmacist?
+        pharmacist_medicines = Medicine.objects.filter(pharmacist=pharmacist)
+        order_items = OrderItem.objects.filter(order=order, medicine__in=pharmacist_medicines)
+        
+        if not order_items.exists():
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        # Build the response data
+        data = {
+            'success': True,
+            'order': {
+                'id': order.id,
+                'status_display': order.get_status_display(),
+                'created_at': order.created_at.strftime('%b %d, %Y %H:%M'),
+                'delivery_mode_display': order.get_delivery_mode_display(),
+                'delivery_address': order.delivery_address or '',
+                'scheduled_delivery_date': order.scheduled_delivery_date.strftime('%b %d, %Y %H:%M') if order.scheduled_delivery_date else '',
+                'total_amount': str(order.total_amount),
+                'gst_amount': str(order.gst_amount),
+                'patient': {
+                    'first_name': order.patient.first_name,
+                    'last_name': order.patient.last_name,
+                    'email': order.patient.email or 'N/A',
+                    'phone_number': order.patient.phone_number or 'N/A',
+                    'blood_group': order.patient.get_blood_group_display() if hasattr(order.patient, 'get_blood_group_display') else (order.patient.blood_group or 'N/A')
+                },
+                'items': []
+            }
+        }
+        
+        # Add order items belonging to this pharmacist (or all if we want full visibility)
+        # The template shows all items in the order.
+        for item in order.items.all():
+            data['order']['items'].append({
+                'medicine': {
+                    'brand_name': item.medicine.brand_name if item.medicine else 'Unknown',
+                    'generic_name': item.medicine.generic_name if item.medicine else 'Unknown',
+                    'strength': item.medicine.strength if item.medicine else 'N/A',
+                    'formulation': item.medicine.formulation if item.medicine else 'N/A'
+                },
+                'quantity': item.quantity,
+                'price_at_order': str(item.price_at_order),
+                'subtotal': str(item.get_subtotal())
+            })
+            
+        return JsonResponse(data)
+    except (Order.DoesNotExist, Pharmacist.DoesNotExist):
+        return JsonResponse({'success': False, 'error': 'Order or Pharmacist not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 def pharmacist_notifications(request):
     pharmacist_id = request.session.get('pharmacist_id')
     if not pharmacist_id:
@@ -3486,6 +3558,7 @@ def update_order_status(request, order_id):
                 'pending': 'Your order is being processed',
                 'preparing': 'Your order is being prepared',
                 'out_for_delivery': 'Your order is out for delivery',
+                'ready_for_pickup': 'Your order is ready for pickup at the store',
                 'completed': 'Your order has been completed',
                 'delayed': 'Your order has been delayed',
                 'failed': 'Your order could not be fulfilled'
@@ -5605,6 +5678,8 @@ def process_payment(request):
     card_name = request.POST.get('card_name', '').strip()
     card_number = request.POST.get('card_number', '').replace(' ', '')
     card_cvv = request.POST.get('card_cvv', '').strip()
+    delivery_mode = request.POST.get('delivery_mode', 'home_delivery')
+    delivery_address = request.POST.get('delivery_address', '').strip()
     
     # Validate payment details (basic validation)
     if not card_name or not card_number or not card_cvv:
@@ -5626,12 +5701,19 @@ def process_payment(request):
         gst_amount=Decimal(str(pending_order['gst_amount'])),
         status='pending',  # Set status to successful upon successful payment
     )
+    # Explicitly set and save delivery fields to ensure they are persisted
+    order.delivery_mode = delivery_mode
+    if delivery_mode == 'home_delivery':
+        order.delivery_address = delivery_address
+    else:
+        order.delivery_address = None
+    order.save()
     
     # Log the successful order for earnings tracking
     log_user_action(
         patient.user if hasattr(patient, 'user') else None,
         'order_completed',
-        f'Order #{order.id} created and marked as successful. Earnings: ₹{order.total_amount}',
+        f'Order #{order.id} created (Mode: {order.delivery_mode}). Earnings: ₹{order.total_amount}',
         related_object=order,
         request=request
     )

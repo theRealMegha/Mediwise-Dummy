@@ -71,7 +71,7 @@ urlpatterns = [
     path('pharmacist/medicine/delete/<int:pk>/', views.delete_medicine, name='delete_medicine'),
     path('pharmacist/orders/', views.pharmacist_orders, name='pharmacist_orders'),
     path('pharmacist/order/<int:order_id>/update-status/', views.update_order_status, name='update_order_status'),
-    # path('pharmacist/order/<int:order_id>/details/', views.pharmacist_order_details_ajax, name='pharmacist_order_details'),  # View function not implemented
+    path('pharmacist/order/<int:order_id>/details/', views.pharmacist_order_details_ajax, name='pharmacist_order_details'),
 
     path('pharmacist/customers/', views.pharmacist_customers, name='pharmacist_customers'),
     path('pharmacist/customer-details/<int:patient_id>/', views.pharmacist_customer_details_ajax, name='pharmacist_customer_details_ajax'),

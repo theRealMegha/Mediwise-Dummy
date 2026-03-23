@@ -1,3 +1,5 @@
+{% load custom_filters %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -270,36 +272,54 @@
                                     <span class="status-dot"></span>
                                     {{ order.get_status_display }}
                                 </span>
+                                <!-- Delivery Mode Badge -->
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider 
+                                    {% if order.delivery_mode == 'home_delivery' %}bg-blue-50 text-blue-600{% else %}bg-amber-50 text-amber-600{% endif %}">
+                                    <i class="fas {% if order.delivery_mode == 'home_delivery' %}fa-truck{% else %}fa-store{% endif %} mr-1"></i>
+                                    {% if order.delivery_mode == 'home_delivery' %}Home Delivery{% else %}In-Store Pickup{% endif %}
+                                </span>
                             </div>
                             <p class="text-xs text-slate-500">{{ order.created_at|date:"M d, Y" }} • {{ order.items.count }} item{{ order.items.count|pluralize }}</p>
                         </div>
                     </div>
 
-                    <!-- Center: Items Preview (if any) -->
-                    {% if order.items.count > 0 %}
-                    <div class="hidden md:flex items-center gap-2 flex-1 px-6">
-                        <div class="flex -space-x-2">
-                            {% for item in order.items.all|slice:":3" %}
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-white flex items-center justify-center">
-                                <i class="fas fa-capsules text-blue-600 text-[10px]"></i>
-                            </div>
-                            {% endfor %}
+                    <!-- Center: Items Preview & Delivery Info -->
+                    <div class="hidden md:flex flex-col gap-2 flex-1 px-6 border-l border-slate-100">
+                        {% if order.delivery_mode == 'home_delivery' %}
+                        <div class="flex items-center gap-2 text-[#880E4F]">
+                            <i class="fas fa-location-arrow text-[10px]"></i>
+                            <span class="text-xs font-bold">Track Shipment</span>
                         </div>
-                        <p class="text-xs text-slate-600 font-medium">
-                            {% if order.items.count <= 3 %}
-                                {{ order.items.count }} item{{ order.items.count|pluralize }}
-                            {% else %}
-                                +{{ order.items.count|add:"-3" }} more
-                            {% endif %}
-                        </p>
+                        {% else %}
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Pickup Store</span>
+                            <span class="text-xs font-bold text-slate-800 truncate">
+                                {% if order.unique_pharmacists %}
+                                    {{ order.unique_pharmacists.0.pharmacy_name }}
+                                {% else %}
+                                    Mediwise Pharmacy
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex items-center gap-2">
+                            <div class="flex -space-x-2">
+                                {% for item in order.items.all|slice:":3" %}
+                                <div class="w-6 h-6 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center">
+                                    <i class="fas fa-pills text-[#880E4F] text-[8px]"></i>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <p class="text-[10px] text-slate-500">
+                                {% if order.items.count <= 3 %}
+                                    {{ order.items.count }} item{{ order.items.count|pluralize }}
+                                {% else %}
+                                    +{{ order.items.count|add:"-3" }} more
+                                {% endif %}
+                            </p>
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="hidden md:flex items-center gap-2 flex-1 px-6">
-                        <a href="#" data-order-id="{{ order.id }}" class="view-order-link text-xs text-emerald-600 font-medium hover:text-emerald-700 transition-colors">
-                            View Details →
-                        </a>
-                    </div>
-                    {% endif %}
 
                     <!-- Right: Amount -->
                     <div class="text-right flex-shrink-0">

@@ -327,11 +327,20 @@
                                 <i class="fas fa-pills"></i>
                             </div>
                             {% endfor %}
-                            {% if prescription.medicines.count > 2 %}
+                            
+                            {% for lab_test in prescription.lab_tests.all|slice:":2" %}
+                            <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 text-xs shadow-inner" title="{{ lab_test.test_name }}">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            {% endfor %}
+
+                            {% with total_items=prescription.medicines.count|add:prescription.lab_tests.count %}
+                            {% if total_items > 4 %}
                             <div class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 text-[10px] font-bold border border-dashed border-gray-200">
-                                +{{ prescription.medicines.count|add:"-2" }}
+                                +{{ total_items|add:"-4" }}
                             </div>
                             {% endif %}
+                            {% endwith %}
                         </div>
 
                         <div class="flex md:flex-col gap-2">
@@ -476,28 +485,28 @@
                 {% if prescription.lab_tests.all %}
                 <div class="mb-8">
                     <h3 class="text-lg font-bold text-[#1e293b] mb-4 flex items-center gap-2">
-                        <i class="fas fa-flask text-blue-500"></i>
+                        <i class="fas fa-flask text-purple-600"></i>
                         Lab Tests ({{ prescription.lab_tests.count }})
                     </h3>
                     <div class="space-y-4">
                         {% for lab_test in prescription.lab_tests.all %}
-                        <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <div class="p-4 bg-purple-50 rounded-xl border border-purple-200">
                             <div class="flex justify-between items-start mb-3">
-                                <h4 class="font-bold text-blue-900">{{ lab_test.test_name }}</h4>
+                                <h4 class="font-bold text-purple-900">{{ lab_test.test_name }}</h4>
                                 <span class="px-3 py-1 rounded-full text-xs font-bold {% if lab_test.priority == 'urgent' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
                                     {{ lab_test.priority|title }}
                                 </span>
                             </div>
-                            <div class="text-sm text-blue-700 mb-2">
+                            <div class="text-sm text-purple-700 mb-2">
                                 <span class="font-semibold">Category:</span> {{ lab_test.get_test_category_display }}
                             </div>
                             {% if lab_test.test_description %}
-                            <div class="text-sm text-blue-700 mb-2">
+                            <div class="text-sm text-purple-700 mb-2">
                                 <span class="font-semibold">Description:</span> {{ lab_test.test_description }}
                             </div>
                             {% endif %}
                             {% if lab_test.instructions %}
-                            <div class="text-sm text-blue-800 bg-blue-100 p-3 rounded-lg mt-2">
+                            <div class="text-sm text-purple-800 bg-purple-100 p-3 rounded-lg mt-2">
                                 <span class="font-semibold">Instructions:</span> {{ lab_test.instructions }}
                             </div>
                             {% endif %}
@@ -524,10 +533,12 @@
             <!-- Sidebar Footer Actions -->
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex flex-col gap-3">
+                    {% if prescription.medicines.all %}
                     <a href="{% url 'prescription_medicines_all_pharmacies' %}?prescription_id={{ prescription.id }}" 
                        class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-2">
                         <i class="fas fa-building"></i> View Medicines & All Pharmacies
                     </a>
+                    {% endif %}
                     {% if prescription.next_appointment_date %}
                     <a href="{% url 'book_appointment' prescription.doctor.id %}?preferred_date={{ prescription.next_appointment_date|date:'Y-m-d' }}" 
                        class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-2">

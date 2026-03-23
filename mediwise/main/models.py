@@ -152,6 +152,7 @@ class Order(models.Model):
         ('pending', 'Pending'),
         ('preparing', 'Preparing'),
         ('out_for_delivery', 'Out for Delivery'),
+        ('ready_for_pickup', 'Ready for Pickup'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
         ('delayed', 'Delayed'),

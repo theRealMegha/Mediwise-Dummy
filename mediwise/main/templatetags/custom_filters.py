@@ -94,3 +94,29 @@ def age(date_of_birth):
         age_years -= 1
     
     return age_years
+
+@register.filter
+def is_within_hours(doctor):
+    """
+    Check if the current time is within the doctor's consultation hours.
+    """
+    from datetime import datetime
+    if not doctor.consulting_time_from or not doctor.consulting_time_to:
+        return False
+    
+    # Get current local time
+    now = datetime.now().time()
+    start = doctor.consulting_time_from
+    end = doctor.consulting_time_to
+    
+    if start <= end:
+        return start <= now <= end
+    else: # Overnight shift
+        return now >= start or now <= end
+@register.filter
+def replace(value, arg):
+    if not value or not arg or ',' not in arg:
+        return value
+    old, new = arg.split(',', 1)
+    return str(value).replace(old, new) 
+

@@ -349,7 +349,7 @@ class DoctorProfileUpdateForm(forms.ModelForm):
         # Removed 'password' from fields
         fields = [
             'first_name', 'last_name', 'email', 'phone_number', 
-            'speciality', 'qualification', 'address', 
+            'speciality', 'qualification', 'address', 'location', 
             'license_number', 'cureentHospital', 'description', 'profile_picture',
             'consulting_time_from', 'consulting_time_to'
         ]
@@ -362,6 +362,7 @@ class DoctorProfileUpdateForm(forms.ModelForm):
             'speciality': forms.TextInput(attrs={'placeholder': 'Specialty', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
             'qualification': forms.TextInput(attrs={'placeholder': 'Qualification', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
             'address': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Clinic/Home Address', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
+            'location': forms.TextInput(attrs={'placeholder': 'Clinic Location (City, Area)', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
             'license_number': forms.TextInput(attrs={'placeholder': 'License Number', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
             'cureentHospital': forms.TextInput(attrs={'placeholder': 'Current Hospital', 'class': 'w-full p-4 pl-12 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
             'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Professional Bio', 'class': 'w-full p-4 pl-0 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500/20 outline-none transition-all'}),
