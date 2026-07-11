@@ -30,7 +30,7 @@ SECRET_KEY = "django-insecure-661&5j49q##vp=ep6-7yr-=r0p%zv5$jab4n3nptuvj4ie&cmu
 DEBUG = True
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
