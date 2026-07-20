@@ -1,0 +1,29 @@
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+.vercel/
+
+# Local database
+db.sqlite3
+*.sqlite3
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Static and media files (if handled externally or generated during build)
+media/
+staticfiles/
+node_modules/
+
+# Git history
+.git/
+.gitignore
+
+# Environment variables / local settings
+.env
+.env.local
